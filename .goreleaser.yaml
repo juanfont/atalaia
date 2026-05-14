@@ -1,0 +1,48 @@
+version: 2
+
+project_name: atalaia
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: atalaia
+    main: ./cmd/atalaia
+    binary: atalaia
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/juanfont/atalaia.Version={{ .Version }}
+
+archives:
+  - id: atalaia
+    formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    files:
+      - LICENSE
+      - README.md
+      - config.example.yaml
+      - prompts/*
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^chore:'
+      - '^test:'
+      - '^ci:'
+
+snapshot:
+  version_template: '{{ incpatch .Version }}-next'
+
+release:
+  draft: false
+  prerelease: auto

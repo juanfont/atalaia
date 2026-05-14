@@ -51,8 +51,8 @@ type CheckResponse struct {
 }
 
 type HealthzResponse struct {
-	Status        string `json:"status"`
-	LLMReachable  bool   `json:"llm_reachable"`
+	Status       string `json:"status"`
+	LLMReachable bool   `json:"llm_reachable"`
 }
 
 type VersionResponse struct {

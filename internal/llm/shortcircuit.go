@@ -19,9 +19,9 @@ var Sentinels = map[string]string{
 // SentinelPrefixes match anything starting with these strings.
 // Vendor-specific test-token families fall here.
 var SentinelPrefixes = []string{
-	"sk-test-",  // OpenAI / Stripe-style test prefix
-	"pk_test_",  // Stripe publishable test key
-	"sk_test_",  // Stripe secret test key
+	"sk-test-",   // OpenAI / Stripe-style test prefix
+	"pk_test_",   // Stripe publishable test key
+	"sk_test_",   // Stripe secret test key
 	"ya29.dummy", // Google OAuth dummy token
 }
 

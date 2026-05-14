@@ -40,7 +40,7 @@ type DetectorsConfig struct {
 	ParallelTimeout time.Duration
 	Gitleaks        GitleaksConfig
 	Trufflehog      TrufflehogConfig
-	Kingfisher     KingfisherConfig
+	Kingfisher      KingfisherConfig
 }
 
 type GitleaksConfig struct {

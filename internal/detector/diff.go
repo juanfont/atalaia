@@ -23,10 +23,10 @@ type AddedBlock struct {
 // deleted to /dev/null are dropped.
 func WalkDiff(diff []byte) []AddedBlock {
 	var (
-		blocks    []AddedBlock
-		path      string
-		newLine   int
-		blockBuf  []string
+		blocks     []AddedBlock
+		path       string
+		newLine    int
+		blockBuf   []string
 		blockStart int
 	)
 
