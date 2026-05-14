@@ -27,6 +27,57 @@ archives:
       - config.example.yaml
       - prompts/*
 
+dockers:
+  - id: atalaia-amd64
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-amd64'
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.source=https://github.com/juanfont/atalaia
+      - --label=org.opencontainers.image.title=atalaia
+      - --label=org.opencontainers.image.description=Secret-scan filter with a local LLM
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=Apache-2.0
+    extra_files:
+      - prompts
+      - LICENSE
+      - README.md
+
+  - id: atalaia-arm64
+    goos: linux
+    goarch: arm64
+    image_templates:
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-arm64'
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.source=https://github.com/juanfont/atalaia
+      - --label=org.opencontainers.image.title=atalaia
+      - --label=org.opencontainers.image.description=Secret-scan filter with a local LLM
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=Apache-2.0
+    extra_files:
+      - prompts
+      - LICENSE
+      - README.md
+
+docker_manifests:
+  - name_template: 'ghcr.io/juanfont/atalaia:{{ .Version }}'
+    image_templates:
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-amd64'
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-arm64'
+  - name_template: 'ghcr.io/juanfont/atalaia:latest'
+    image_templates:
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-amd64'
+      - 'ghcr.io/juanfont/atalaia:{{ .Version }}-arm64'
+
 checksum:
   name_template: 'checksums.txt'
 

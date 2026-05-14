@@ -88,6 +88,35 @@ Verify the config parses and required binaries are reachable:
 
 `POST /check` accepts either `text/x-diff` (raw unified diff) or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is the liveness probe (always 200 if the process is up); `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
 
+## Container
+
+Each tagged release publishes a multi-arch image to GHCR with `atalaia` plus pinned versions of `trufflehog` and `kingfisher` baked in (~110 MB, runs as a non-root user):
+
+```sh
+docker pull ghcr.io/juanfont/atalaia:latest
+```
+
+Defaults work out of the box for both subprocess detectors (built-in rulesets) — point at an LLM endpoint and go:
+
+```sh
+docker run --rm -p 8080:8080 \
+  -e ATALAIA_LLM_ENDPOINT=http://vllm:8000/v1 \
+  -e ATALAIA_LLM_MODEL=google/gemma-4-E2B-it \
+  ghcr.io/juanfont/atalaia:latest
+```
+
+For custom rulesets, bind-mount the config files into `/etc/atalaia/` and point `atalaia.yaml` at the in-container paths:
+
+```sh
+docker run --rm -p 8080:8080 \
+  -v $PWD/atalaia.yaml:/etc/atalaia/atalaia.yaml:ro \
+  -v $PWD/gitleaks.toml:/etc/atalaia/gitleaks.toml:ro \
+  -e ATALAIA_LLM_ENDPOINT=http://vllm:8000/v1 \
+  ghcr.io/juanfont/atalaia:latest
+```
+
+The prompts live at `/etc/atalaia/prompts/` inside the image and the binary defaults already reference that path. Trufflehog is AGPL-3.0 — see [LICENSE](LICENSE) and the upstream source at [trufflesecurity/trufflehog](https://github.com/trufflesecurity/trufflehog).
+
 ## Configuration
 
 Every key in `atalaia.yaml` is overridable via env vars with the `ATALAIA_` prefix and dots replaced by underscores — `llm.endpoint` becomes `ATALAIA_LLM_ENDPOINT`. Search path: `./atalaia.yaml`, `$HOME/.atalaia/atalaia.yaml`, `/etc/atalaia/atalaia.yaml`. CLI `-c` overrides both.

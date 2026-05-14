@@ -24,6 +24,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   counts, and stage timings. No raw matches.
 - README "Network posture" section covering loopback + reverse
   proxy and the tailscale-only alternatives.
+- Multi-arch container image published to `ghcr.io/juanfont/atalaia`
+  on each tag. Bundles pinned `trufflehog` and `kingfisher`,
+  runs as a non-root user, includes the default prompts at
+  `/etc/atalaia/prompts/`. See README "Container" section.
 
 ### Changed
 
