@@ -28,6 +28,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   on each tag. Bundles pinned `trufflehog` and `kingfisher`,
   runs as a non-root user, includes the default prompts at
   `/etc/atalaia/prompts/`. See README "Container" section.
+- New `docs/deployment.md` covering systemd / container / reverse
+  proxy / tailscale shapes, probe + auth wiring, and a worked
+  GitLab webhook integration (compact Go watcher sketch + the
+  operational checklist).
+
+### Changed
+
+- README "Roadmap" table removed — v1 has shipped and the
+  CHANGELOG is the canonical record from here.
+- README logo bumped from 160px to 240px wide.
 
 ### Changed
 

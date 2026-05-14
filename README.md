@@ -1,6 +1,6 @@
 # Atalaia
 
-<p align="center"><img src="atalaia_logo.png" alt="Atalaia logo" width="160"/></p>
+<p align="center"><img src="atalaia_logo.png" alt="Atalaia logo" width="240"/></p>
 
 <p align="center">
   <a href="https://github.com/juanfont/atalaia/actions/workflows/ci.yml"><img src="https://github.com/juanfont/atalaia/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
@@ -147,25 +147,9 @@ For either posture, optionally gate `/check` with a bearer token (`server.auth_t
 
 ## Integration
 
-Atalaia is source-agnostic — anything that can produce a unified diff can call `/check`. Common patterns:
-
-1. **Source-host webhooks** (GitLab system hooks, GitHub push events): a small watcher subscribes, fetches the commit diff, POSTs it.
-2. **Pre-commit hooks**: pipe `git diff --staged` to `curl` before the commit lands.
-3. **CI gates**: compare the merge target against the source branch and POST the diff as a required-status check.
+Atalaia is source-agnostic — anything that can produce a unified diff can call `/check`. Common patterns: GitLab/GitHub push-event watchers, pre-commit hooks, CI gates. See [docs/deployment.md](docs/deployment.md) for end-to-end deployment shapes and a worked GitLab integration.
 
 Atalaia returns verdicts; the caller decides whether to block, notify, or log. It never stores diffs, findings, or verdicts.
-
-## Roadmap
-
-| Milestone | Scope                                                                                                  | Status |
-| --------- | ------------------------------------------------------------------------------------------------------ | ------ |
-| 1         | Foundation: config schema, CLI tree (`serve`/`validate`/`probe`/`version`), HTTP shell with `/metrics` | done   |
-| 2         | Detector layer: gitleaks (library), trufflehog (subprocess), kingfisher (subprocess), dedup, redaction | done   |
-| 3         | API surface: `POST /check`, `GET /healthz`, `GET /version` returning findings (pre-LLM)                | done   |
-| 4         | LLM filter: OpenAI client, semaphore, schema-constrained verdicts, sentinel/verified short-circuits    | done   |
-| 5         | Context tiering & batching for large diffs                                                             | done   |
-| 6         | Full Prometheus metrics + opt-in audit log                                                             | done   |
-| 7         | Optional Tailscale (`tsnet`) listener                                                                  | done   |
 
 ## Security and threat model
 
