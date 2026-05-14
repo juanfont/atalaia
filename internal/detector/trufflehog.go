@@ -46,7 +46,10 @@ func (t *Trufflehog) Scan(ctx context.Context, diff []byte) ([]Finding, error) {
 		bin = "trufflehog"
 	}
 
-	args := []string{"stdin", "--json"}
+	// --no-update suppresses trufflehog's self-update check, which
+	// fails (and exits 1) whenever the binary isn't writable — CI
+	// runners, containers, and any non-root install path.
+	args := []string{"stdin", "--json", "--no-update"}
 	if !t.cfg.Verify {
 		args = append(args, "--no-verification")
 	}
