@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# Internal operational notes (not for public commits)
+internal-docs/
+
 # Editor/IDE
 # .idea/
 # .vscode/

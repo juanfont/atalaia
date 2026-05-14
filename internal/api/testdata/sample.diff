@@ -1,0 +1,9 @@
+diff --git a/keys.py b/keys.py
+index aaaaaaa..bbbbbbb 100644
+--- a/keys.py
++++ b/keys.py
+@@ -1,2 +1,4 @@
+ # config
+ import os
++
++access_key = "AKIA1234ABCDEFGHIJKL"

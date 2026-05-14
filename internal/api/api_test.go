@@ -1,0 +1,293 @@
+package api
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/juanfont/atalaia/internal/detector"
+	"github.com/juanfont/atalaia/internal/llm"
+	"github.com/juanfont/atalaia/internal/types"
+)
+
+// fakeAdjudicator is a deterministic stand-in for the API tests. It
+// returns one "confirmed" verdict per finding by default and lets the
+// test override Probe + Adjudicate behavior.
+type fakeAdjudicator struct {
+	probeErr     error
+	adjudicate   func(deduped []detector.DedupedFinding) (llm.AdjudicateResult, error)
+	captureFinds *[]detector.DedupedFinding
+}
+
+func (f *fakeAdjudicator) Probe(_ context.Context) error { return f.probeErr }
+
+func (f *fakeAdjudicator) Adjudicate(_ context.Context, _ []byte, deduped []detector.DedupedFinding) (llm.AdjudicateResult, error) {
+	if f.captureFinds != nil {
+		*f.captureFinds = append(*f.captureFinds, deduped...)
+	}
+	if f.adjudicate != nil {
+		return f.adjudicate(deduped)
+	}
+	verdicts := make([]llm.Verdict, len(deduped))
+	for i, d := range deduped {
+		verdicts[i] = llm.Verdict{
+			FindingID:  d.ID,
+			Verdict:    llm.VerdictConfirmed,
+			Confidence: 0.5,
+			Reason:     "fake",
+		}
+	}
+	return llm.AdjudicateResult{
+		Result: llm.Result{
+			Verdicts:   verdicts,
+			LLMInvoked: len(verdicts) > 0,
+			LLMCalls:   1,
+			LLMLatency: 7 * time.Millisecond,
+		},
+	}, nil
+}
+
+func newTestServer(t *testing.T, adj Adjudicator) *httptest.Server {
+	t.Helper()
+	cfg := &types.Config{
+		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
+		Detectors: types.DetectorsConfig{Enabled: []string{"gitleaks"}},
+		LLM:       types.LLMConfig{Model: "test-model"},
+	}
+	g, err := detector.NewGitleaks(cfg.Detectors.Gitleaks)
+	if err != nil {
+		t.Fatalf("gitleaks: %v", err)
+	}
+
+	router := mux.NewRouter()
+	if _, err := NewApp(context.Background(), Deps{
+		Config:      cfg,
+		Detectors:   []detector.Detector{g},
+		Adjudicator: adj,
+		Version:     "test",
+		Router:      router,
+	}); err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	return httptest.NewServer(router)
+}
+
+func loadFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join("testdata", name))
+	if err != nil {
+		t.Fatalf("read %s: %v", name, err)
+	}
+	return b
+}
+
+func TestCheck_RawDiff(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+
+	body := loadFixture(t, "sample.diff")
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST /check: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status=%d body=%s", resp.StatusCode, raw)
+	}
+
+	var out CheckResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if out.RequestID == "" {
+		t.Errorf("missing request_id")
+	}
+	if len(out.Verdicts) == 0 {
+		t.Fatalf("expected at least one verdict, got 0")
+	}
+	for _, v := range out.Verdicts {
+		if v.Verdict != VerdictConfirmed {
+			t.Errorf("verdict=%q, want confirmed (fake adjudicator)", v.Verdict)
+		}
+		if v.MatchPreview == "AKIA1234ABCDEFGHIJKL" {
+			t.Errorf("match_preview leaked raw match: %q", v.MatchPreview)
+		}
+		if !strings.Contains(v.MatchPreview, "****") {
+			t.Errorf("match_preview missing mask: %q", v.MatchPreview)
+		}
+		if len(v.Detections) == 0 {
+			t.Errorf("verdict missing detections trail: %+v", v)
+		}
+	}
+	if !out.Stats.LLMInvoked {
+		t.Errorf("Stats.LLMInvoked=false, want true")
+	}
+	if out.Stats.LLMCalls != 1 {
+		t.Errorf("Stats.LLMCalls=%d, want 1", out.Stats.LLMCalls)
+	}
+	if out.Stats.Confirmed != len(out.Verdicts) {
+		t.Errorf("Stats.Confirmed=%d, want %d", out.Stats.Confirmed, len(out.Verdicts))
+	}
+}
+
+func TestCheck_JSONBody(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+
+	diff := string(loadFixture(t, "sample.diff"))
+	reqBody, _ := json.Marshal(CheckRequest{Diff: diff})
+	resp, err := http.Post(srv.URL+"/check", "application/json", bytes.NewReader(reqBody))
+	if err != nil {
+		t.Fatalf("POST /check: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status=%d body=%s", resp.StatusCode, raw)
+	}
+}
+
+func TestCheck_IDStableAcrossRequests(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	body := loadFixture(t, "sample.diff")
+
+	post := func() CheckResponse {
+		resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(body))
+		if err != nil {
+			t.Fatalf("POST: %v", err)
+		}
+		defer resp.Body.Close()
+		var out CheckResponse
+		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		return out
+	}
+
+	a, b := post(), post()
+	if a.RequestID == b.RequestID {
+		t.Errorf("request_id should differ across requests, got %q twice", a.RequestID)
+	}
+	if len(a.Verdicts) != len(b.Verdicts) {
+		t.Fatalf("verdict count differs: %d vs %d", len(a.Verdicts), len(b.Verdicts))
+	}
+	for i := range a.Verdicts {
+		if a.Verdicts[i].ID != b.Verdicts[i].ID {
+			t.Errorf("verdict[%d].id not stable: %q vs %q", i, a.Verdicts[i].ID, b.Verdicts[i].ID)
+		}
+	}
+}
+
+func TestCheck_EmptyBody(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(nil))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("empty body status=%d, want 400", resp.StatusCode)
+	}
+}
+
+func TestCheck_QueueFullReturns503(t *testing.T) {
+	adj := &fakeAdjudicator{
+		adjudicate: func([]detector.DedupedFinding) (llm.AdjudicateResult, error) {
+			return llm.AdjudicateResult{}, llm.ErrQueueFull
+		},
+	}
+	srv := newTestServer(t, adj)
+	defer srv.Close()
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(loadFixture(t, "sample.diff")))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("status=%d, want 503", resp.StatusCode)
+	}
+}
+
+func TestCheck_LLMErrorReturns502(t *testing.T) {
+	adj := &fakeAdjudicator{
+		adjudicate: func([]detector.DedupedFinding) (llm.AdjudicateResult, error) {
+			return llm.AdjudicateResult{}, errors.New("upstream boom")
+		},
+	}
+	srv := newTestServer(t, adj)
+	defer srv.Close()
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(loadFixture(t, "sample.diff")))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadGateway {
+		t.Errorf("status=%d, want 502", resp.StatusCode)
+	}
+}
+
+func TestHealthz_OK(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/healthz")
+	if err != nil {
+		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status=%d, want 200", resp.StatusCode)
+	}
+	var h HealthzResponse
+	if err := json.NewDecoder(resp.Body).Decode(&h); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if !h.LLMReachable {
+		t.Errorf("LLMReachable=false, want true (probeErr nil)")
+	}
+}
+
+func TestHealthz_UnreachableLLM(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{probeErr: errors.New("connect refused")})
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/healthz")
+	if err != nil {
+		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("status=%d, want 503", resp.StatusCode)
+	}
+}
+
+func TestVersion(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/version")
+	if err != nil {
+		t.Fatalf("GET /version: %v", err)
+	}
+	defer resp.Body.Close()
+	var v VersionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if v.Atalaia != "test" {
+		t.Errorf("Atalaia=%q, want test", v.Atalaia)
+	}
+	if v.LLMModel != "test-model" {
+		t.Errorf("LLMModel=%q, want test-model", v.LLMModel)
+	}
+}

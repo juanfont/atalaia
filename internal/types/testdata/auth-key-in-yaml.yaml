@@ -1,0 +1,14 @@
+server:
+  listen: "127.0.0.1:8080"
+
+detectors:
+  enabled: [gitleaks]
+
+llm:
+  endpoint: "http://127.0.0.1:8000/v1"
+  model: "google/gemma-4-E2B-it"
+
+tailscale:
+  enabled: true
+  hostname: atalaia
+  auth_key: "tskey-auth-bad-leak-into-yaml"

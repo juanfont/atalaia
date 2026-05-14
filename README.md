@@ -110,10 +110,10 @@ Atalaia returns verdicts; the caller decides whether to block, notify, or log. I
 | 1         | Foundation: config schema, CLI tree (`serve`/`validate`/`probe`/`version`), HTTP shell with `/metrics` | done   |
 | 2         | Detector layer: gitleaks (library), trufflehog (subprocess), kingfisher (subprocess), dedup, redaction | done   |
 | 3         | API surface: `POST /check`, `GET /healthz`, `GET /version` returning findings (pre-LLM)                | done   |
-| 4         | LLM filter: OpenAI client, semaphore, schema-constrained verdicts, sentinel/verified short-circuits    | next   |
-| 5         | Context tiering & batching for large diffs                                                             |        |
-| 6         | Full Prometheus metrics + opt-in audit log                                                             |        |
-| 7         | Optional Tailscale (`tsnet`) listener                                                                  |        |
+| 4         | LLM filter: OpenAI client, semaphore, schema-constrained verdicts, sentinel/verified short-circuits    | done   |
+| 5         | Context tiering & batching for large diffs                                                             | done   |
+| 6         | Full Prometheus metrics + opt-in audit log                                                             | done   |
+| 7         | Optional Tailscale (`tsnet`) listener                                                                  | done   |
 
 ## Security and threat model
 

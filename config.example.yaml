@@ -1,0 +1,77 @@
+# Atalaia example configuration.
+# Copy to /etc/atalaia/atalaia.yaml (or pass with -c) and adjust.
+# Every key is overridable via ATALAIA_* env vars; dots become underscores
+# (e.g. llm.endpoint -> ATALAIA_LLM_ENDPOINT).
+
+server:
+  listen: "0.0.0.0:8080"
+  read_timeout: 30s
+  write_timeout: 120s
+  max_body_bytes: 10485760   # 10 MiB; cap on /check request bodies
+
+detectors:
+  enabled: [gitleaks, trufflehog]   # add "kingfisher" when installed
+  parallel_timeout: 10s
+
+  gitleaks:
+    # Custom gitleaks TOML (rules + allowlists). Omit to use gitleaks' built-in defaults.
+    config: /etc/atalaia/gitleaks.toml
+    max_target_megabytes: 0         # 0 = no per-fragment size cap
+    ignore_path: ""                 # path to a .gitleaksignore
+    baseline: ""                    # path to a gitleaks baseline JSON
+
+  trufflehog:
+    binary: /usr/local/bin/trufflehog
+    verify: false                   # true => reach provider APIs (breaks no-egress posture)
+    config: ""                      # path to a trufflehog YAML config (custom detectors)
+    include_detectors: []           # e.g. ["aws", "gcp"]
+    exclude_detectors: []           # e.g. ["generic"]
+    extra_args: []                  # escape hatch for any flag not modeled above
+
+  kingfisher:
+    binary: /usr/local/bin/kingfisher
+    rules: /etc/atalaia/kingfisher-rules.yaml
+    confidence: ""                  # "low" | "medium" | "high" — empty = kingfisher default
+    extra_args: []
+
+llm:
+  endpoint: http://127.0.0.1:8000/v1
+  model: google/gemma-4-E4B-it
+  max_inflight: 1                   # concurrent LLM calls; match vLLM --max-num-seqs
+  queue_max: 16                     # beyond this Atalaia returns 503
+  request_timeout: 90s
+  profile: gemma4
+  max_findings_per_request: 200     # hard cap; truncated:true beyond this
+  context_budget:
+    input_tokens: 80000
+    output_tokens: 8000
+    finding_context_lines: 30       # +/- lines around each finding in per-finding mode
+  profiles:
+    gemma4:
+      system_template: /etc/atalaia/prompts/gemma4_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_user.tmpl
+      response_format: json_schema
+
+observability:
+  log_level: info
+  metrics_addr: "0.0.0.0:9090"      # /metrics binds here, separate from the main HTTP port
+  audit:
+    enabled: false                  # opt-in
+    path: /var/lib/atalaia/audit.jsonl
+    reveal_matches: false           # true => raw matched values land in the audit log (opt-in)
+
+# Optional: have Atalaia listen on a Tailscale / Headscale tailnet.
+# auth_key MUST come from the environment (ATALAIA_TAILSCALE_AUTH_KEY),
+# never this file.
+tailscale:
+  enabled: false
+  hostname: atalaia
+  state_dir: /var/lib/atalaia/tsnet
+  control_url: ""                   # set for Headscale
+  ephemeral: false
+  listen_only: true                 # when true, the host listener is disabled
+
+log:
+  level: info                       # trace|debug|info|warn|error
+  format: text                      # text|json
+  with_caller: false

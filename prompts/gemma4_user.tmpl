@@ -1,0 +1,19 @@
+Findings to adjudicate:
+{{range .Findings}}
+  finding_id={{.ID}} file={{.File}} line={{.Line}}
+    detectors:{{range .Detections}} {{.DetectorType}}/{{.Rule}}{{if .Verified}} (verified){{end}};{{end}}
+    match: {{.Match}}
+{{- if .Context}}
+    context:
+{{.Context}}
+{{- end}}
+{{end}}
+{{- if .Diff}}
+
+Diff under review:
+```
+{{.Diff}}
+```
+{{- end}}
+
+Return a verdict for every finding_id above.

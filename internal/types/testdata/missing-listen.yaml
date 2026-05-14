@@ -1,0 +1,9 @@
+server:
+  listen: ""
+
+detectors:
+  enabled: [gitleaks]
+
+llm:
+  endpoint: "http://127.0.0.1:8000/v1"
+  model: "google/gemma-4-E4B-it"

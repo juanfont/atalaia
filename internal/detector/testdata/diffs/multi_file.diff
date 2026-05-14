@@ -1,0 +1,27 @@
+diff --git a/src/db.py b/src/db.py
+index aaaaaaa..bbbbbbb 100644
+--- a/src/db.py
++++ b/src/db.py
+@@ -10,3 +10,5 @@ def connect():
+     pass
+
+-DSN = ""
++DSN = "postgresql://admin:s3cret@db.example.com:5432/prod"
++
++TOKEN = "AKIAIOSFODNN7EXAMPLE"
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,2 @@
++# atalaia
++just a doc line
+diff --git a/dead.txt b/dead.txt
+deleted file mode 100644
+index 3333333..0000000
+--- a/dead.txt
++++ /dev/null
+@@ -1,2 +0,0 @@
+-old line one
+-old line two
