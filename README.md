@@ -11,6 +11,11 @@ Secret detection for git commits, with a local LLM cutting the false positives.
 
 Atalaia is a stateless HTTP service: clients POST a unified diff, Atalaia runs `gitleaks` and `trufflehog` against it, hands the resulting findings to a local OpenAI-compatible LLM (default: [vLLM](https://docs.vllm.ai) serving Gemma 4 E4B), and returns one verdict per finding — `confirmed` or `dismissed`. The detectors keep the recall of regex scanning; the LLM lifts the precision close enough that confirmed findings can drive direct developer notifications without a human triage step.
 
+Two deployment shapes the service is designed for:
+
+- **CI / CD or pre-commit**: drop a curl into your pipeline (or hook) to gate merges and commits before secrets land.
+- **Source-host instance-wide detection**: a single Atalaia behind a GitLab / GitHub / Bitbucket webhook scans every push across every project — no per-repo configuration, no developer-side setup. Either alone is useful; together they cover both the "before the commit lands" and "we missed one" cases.
+
 Everything runs on your own infrastructure. No outbound calls in the default posture.
 
 > _atalaia_, from Andalusi Arabic _ṭalāyiʿ_ through Galician-Portuguese, the watchtower posted ahead of the army to see what is coming.
@@ -161,5 +166,9 @@ Atalaia returns verdicts; the caller decides whether to block, notify, or log. I
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
+
+## Disclosure
+
+Most of this codebase was produced with the help of AI tooling under close human supervision — every line was reviewed, run, and tested before being merged. The bootstrap (config loader, viper plumbing, log/init scaffolding) was also blatantly stolen from [Headscale](https://github.com/juanfont/headscale) :)
 
 ---
