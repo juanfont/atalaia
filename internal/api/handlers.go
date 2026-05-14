@@ -93,19 +93,55 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	metrics.CheckRequestsTotal.WithLabelValues("200").Inc()
 	writeJSON(w, http.StatusOK, resp)
 
+	a.logger.Info().
+		Str("request_id", reqID).
+		Str("remote_addr", r.RemoteAddr).
+		Int("diff_bytes", len(diff)).
+		Int("raw_findings", len(raw)).
+		Int("after_dedup", len(deduped)).
+		Int("confirmed", confirmed).
+		Int("dismissed", dismissed).
+		Bool("llm_invoked", result.LLMInvoked).
+		Int("llm_calls", result.LLMCalls).
+		Int64("llm_latency_ms", result.LLMLatency.Milliseconds()).
+		Int64("total_ms", total.Milliseconds()).
+		Bool("truncated", result.Truncated).
+		Msg("check")
+
 	a.writeAudit(reqID, r, diff, raw, deduped, &resp)
 }
 
+// Healthz is the liveness probe: it returns 200 as long as the process
+// is up. Orchestrator restart loops should target /healthz, not /readyz —
+// a slow LLM endpoint shouldn't trigger a pod restart.
 func (a *App) Healthz(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, HealthzResponse{
+		Status:       "ok",
+		LLMReachable: true, // backwards compat — see /readyz for the real signal
+	})
+}
+
+// Readyz is the readiness probe: it probes the LLM endpoint and returns
+// 200/503 based on reachability. Load balancers / k8s readiness should
+// target this; a /readyz=503 takes the pod out of the rotation but
+// doesn't restart it.
+func (a *App) Readyz(w http.ResponseWriter, r *http.Request) {
 	reachable := a.adjudicator.Probe(r.Context()) == nil
 	status := http.StatusOK
 	if !reachable {
 		status = http.StatusServiceUnavailable
 	}
 	writeJSON(w, status, HealthzResponse{
-		Status:       "ok",
+		Status:       readyzStatus(reachable),
 		LLMReachable: reachable,
 	})
+}
+
+func readyzStatus(reachable bool) string {
+	if reachable {
+		return "ready"
+	}
+	return "not_ready"
 }
 
 func (a *App) Version(w http.ResponseWriter, r *http.Request) {

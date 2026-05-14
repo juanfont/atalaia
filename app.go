@@ -107,6 +107,7 @@ func (a *App) Serve() error {
 		Handler:      mainRouter,
 		ReadTimeout:  a.config.Server.ReadTimeout,
 		WriteTimeout: a.config.Server.WriteTimeout,
+		IdleTimeout:  a.config.Server.IdleTimeout,
 	}
 
 	// Metrics listener stays on the host network — scraping should
@@ -181,6 +182,7 @@ func (a *App) buildMainListener() (net.Listener, error) {
 		Handler:      a.mainServer.Handler,
 		ReadTimeout:  a.mainServer.ReadTimeout,
 		WriteTimeout: a.mainServer.WriteTimeout,
+		IdleTimeout:  a.mainServer.IdleTimeout,
 	}
 	go func() {
 		log.Info().Str("addr", a.config.Server.Listen).Msg("Atalaia host listener (alongside tsnet)")

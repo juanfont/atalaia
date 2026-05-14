@@ -12,6 +12,26 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - goreleaser config and tag-triggered release workflow producing
   linux/darwin × amd64/arm64 tarballs with the `atalaia.Version`
   ldflag wired.
+- Optional bearer-token auth on `/check`. Set `server.auth_token`
+  (or `ATALAIA_SERVER_AUTH_TOKEN`); requests need
+  `Authorization: Bearer <token>`. `/healthz`, `/readyz`, `/version`
+  stay open.
+- `/readyz` readiness probe (probes the LLM, returns 200/503).
+  `/healthz` is now the liveness probe and always returns 200 if
+  the process is up.
+- `server.idle_timeout` (default 120s) wired into `http.Server`.
+- Per-request structured log line with request_id, sizes, verdict
+  counts, and stage timings. No raw matches.
+- README "Network posture" section covering loopback + reverse
+  proxy and the tailscale-only alternatives.
+
+### Changed
+
+- **Breaking** for orchestrator probes: `/healthz` no longer reports
+  LLM reachability and never returns 503. Point readiness probes at
+  `/readyz` instead.
+- `trufflehog` invocations include `--no-update` to keep the binary
+  from auto-rewriting itself in containers / non-root installs.
 
 ## [0.1.0] — v1
 

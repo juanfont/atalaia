@@ -239,12 +239,28 @@ func TestCheck_LLMErrorReturns502(t *testing.T) {
 	}
 }
 
-func TestHealthz_OK(t *testing.T) {
-	srv := newTestServer(t, &fakeAdjudicator{})
+func TestHealthz_AlwaysOK(t *testing.T) {
+	// /healthz is the liveness probe — it should stay 200 even when
+	// the LLM is unreachable so orchestrators don't restart the pod
+	// over an upstream blip.
+	srv := newTestServer(t, &fakeAdjudicator{probeErr: errors.New("connect refused")})
 	defer srv.Close()
 	resp, err := http.Get(srv.URL + "/healthz")
 	if err != nil {
 		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status=%d, want 200 (liveness independent of LLM)", resp.StatusCode)
+	}
+}
+
+func TestReadyz_OK(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/readyz")
+	if err != nil {
+		t.Fatalf("GET /readyz: %v", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -255,20 +271,120 @@ func TestHealthz_OK(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 	if !h.LLMReachable {
-		t.Errorf("LLMReachable=false, want true (probeErr nil)")
+		t.Errorf("LLMReachable=false, want true")
 	}
 }
 
-func TestHealthz_UnreachableLLM(t *testing.T) {
+func TestReadyz_LLMUnreachable(t *testing.T) {
 	srv := newTestServer(t, &fakeAdjudicator{probeErr: errors.New("connect refused")})
 	defer srv.Close()
-	resp, err := http.Get(srv.URL + "/healthz")
+	resp, err := http.Get(srv.URL + "/readyz")
 	if err != nil {
-		t.Fatalf("GET /healthz: %v", err)
+		t.Fatalf("GET /readyz: %v", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusServiceUnavailable {
 		t.Errorf("status=%d, want 503", resp.StatusCode)
+	}
+}
+
+func newAuthedServer(t *testing.T, token string) *httptest.Server {
+	t.Helper()
+	cfg := &types.Config{
+		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20, AuthToken: token},
+		Detectors: types.DetectorsConfig{Enabled: []string{"gitleaks"}},
+		LLM:       types.LLMConfig{Model: "test-model"},
+	}
+	g, err := detector.NewGitleaks(cfg.Detectors.Gitleaks)
+	if err != nil {
+		t.Fatalf("gitleaks: %v", err)
+	}
+	router := mux.NewRouter()
+	if _, err := NewApp(context.Background(), Deps{
+		Config:      cfg,
+		Detectors:   []detector.Detector{g},
+		Adjudicator: &fakeAdjudicator{},
+		Version:     "test",
+		Router:      router,
+	}); err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	return httptest.NewServer(router)
+}
+
+func TestAuth_NoTokenConfigured_StaysOpen(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(loadFixture(t, "sample.diff")))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status=%d, want 200 (no token configured -> open)", resp.StatusCode)
+	}
+}
+
+func TestAuth_MissingHeader_Returns401(t *testing.T) {
+	srv := newAuthedServer(t, "s3cret-token")
+	defer srv.Close()
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(loadFixture(t, "sample.diff")))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("status=%d, want 401", resp.StatusCode)
+	}
+	if got := resp.Header.Get("WWW-Authenticate"); got == "" {
+		t.Errorf("missing WWW-Authenticate header on 401")
+	}
+}
+
+func TestAuth_WrongToken_Returns401(t *testing.T) {
+	srv := newAuthedServer(t, "s3cret-token")
+	defer srv.Close()
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/check", bytes.NewReader(loadFixture(t, "sample.diff")))
+	req.Header.Set("Content-Type", "text/x-diff")
+	req.Header.Set("Authorization", "Bearer wrong-token")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("status=%d, want 401", resp.StatusCode)
+	}
+}
+
+func TestAuth_CorrectToken_PassesThrough(t *testing.T) {
+	srv := newAuthedServer(t, "s3cret-token")
+	defer srv.Close()
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/check", bytes.NewReader(loadFixture(t, "sample.diff")))
+	req.Header.Set("Content-Type", "text/x-diff")
+	req.Header.Set("Authorization", "Bearer s3cret-token")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status=%d, want 200", resp.StatusCode)
+	}
+}
+
+func TestAuth_HealthzAndReadyzStayOpen(t *testing.T) {
+	srv := newAuthedServer(t, "s3cret-token")
+	defer srv.Close()
+	for _, path := range []string{"/healthz", "/readyz", "/version"} {
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", path, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusUnauthorized {
+			t.Errorf("%s returned 401; orchestrator probes must stay open", path)
+		}
 	}
 }
 

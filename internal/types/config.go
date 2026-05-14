@@ -32,7 +32,13 @@ type ServerConfig struct {
 	Listen       string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
 	MaxBodyBytes int64
+	// AuthToken, when non-empty, gates /check with
+	// Authorization: Bearer <token>. /healthz, /readyz, /version stay
+	// open so orchestrator probes work without secrets. Set this via
+	// the environment (ATALAIA_SERVER_AUTH_TOKEN) — never the YAML.
+	AuthToken string
 }
 
 type DetectorsConfig struct {
@@ -175,6 +181,7 @@ func setDefaults() {
 	viper.SetDefault("server.listen", "0.0.0.0:8080")
 	viper.SetDefault("server.read_timeout", "30s")
 	viper.SetDefault("server.write_timeout", "120s")
+	viper.SetDefault("server.idle_timeout", "120s")
 	viper.SetDefault("server.max_body_bytes", int64(10*1024*1024))
 
 	// detectors
@@ -239,7 +246,9 @@ func readServerConfig() ServerConfig {
 		Listen:       viper.GetString("server.listen"),
 		ReadTimeout:  viper.GetDuration("server.read_timeout"),
 		WriteTimeout: viper.GetDuration("server.write_timeout"),
+		IdleTimeout:  viper.GetDuration("server.idle_timeout"),
 		MaxBodyBytes: viper.GetInt64("server.max_body_bytes"),
+		AuthToken:    viper.GetString("server.auth_token"),
 	}
 }
 

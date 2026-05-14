@@ -86,7 +86,7 @@ Verify the config parses and required binaries are reachable:
 ./atalaia serve    -c /etc/atalaia/atalaia.yaml
 ```
 
-`POST /check` accepts either `text/x-diff` (raw unified diff) or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` reports LLM reachability. `GET /version` reports atalaia, detector, and LLM-model versions. (`/check` and friends land in milestone 3; today only `/metrics` is bound.)
+`POST /check` accepts either `text/x-diff` (raw unified diff) or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is the liveness probe (always 200 if the process is up); `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
 
 ## Configuration
 
@@ -97,6 +97,24 @@ See [config.example.yaml](config.example.yaml) for the full schema. Highlights:
 - **Detectors**: pick which to run (`detectors.enabled`), supply custom rule files (`detectors.gitleaks.config`, `detectors.trufflehog.config`, `detectors.kingfisher.rules`), include/exclude trufflehog detectors, and pass arbitrary additional CLI flags via per-detector `extra_args`.
 - **LLM**: any OpenAI-compatible chat-completions endpoint; tune the queue (`max_inflight`, `queue_max`), context budgets, and the prompt profile.
 - **Tailscale**: opt-in `tsnet` listener so Atalaia is reachable only from your tailnet — ACLs replace IP allowlists. `auth_key` must come from `ATALAIA_TAILSCALE_AUTH_KEY`, never from the YAML.
+
+## Network posture
+
+Atalaia is plain HTTP. There are two recommended deployment shapes:
+
+**1. Loopback Atalaia behind a TLS-terminating reverse proxy.** Bind Atalaia to `127.0.0.1:8080`, run caddy/nginx/envoy on `:443` with a cert, forward `/check` to the local port. Auth and rate-limiting live at the proxy; bearer tokens via `ATALAIA_SERVER_AUTH_TOKEN` are a defence-in-depth layer.
+
+Minimal Caddyfile:
+
+```
+atalaia.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+**2. Tailscale-only via the built-in `tsnet` listener.** Set `tailscale.enabled: true` and `tailscale.listen_only: true` in the config; supply the auth key via `ATALAIA_TAILSCALE_AUTH_KEY`. The host port stays unbound and only tailnet peers allowed by ACL can reach `/check`. No TLS termination needed — the tailnet is already encrypted.
+
+For either posture, optionally gate `/check` with a bearer token (`server.auth_token`). `/healthz`, `/readyz`, and `/version` stay open so orchestrator probes work without secrets. `/metrics` is on its own listener (`observability.metrics_addr`) so the main port can be locked down without losing scrape access.
 
 ## Integration
 

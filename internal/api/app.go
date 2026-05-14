@@ -56,8 +56,9 @@ func NewApp(_ context.Context, d Deps) (*App, error) {
 		version:     d.Version,
 		logger:      log.Logger,
 	}
-	d.Router.HandleFunc("/check", app.Check).Methods("POST")
+	d.Router.HandleFunc("/check", bearerAuth(d.Config.Server.AuthToken, app.Check)).Methods("POST")
 	d.Router.HandleFunc("/healthz", app.Healthz).Methods("GET")
+	d.Router.HandleFunc("/readyz", app.Readyz).Methods("GET")
 	d.Router.HandleFunc("/version", app.Version).Methods("GET")
 	return app, nil
 }
