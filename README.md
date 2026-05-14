@@ -1,5 +1,7 @@
 # Atalaia
 
+<p align="center"><img src="atalaia_logo.png" alt="Atalaia logo" width="160"/></p>
+
 Secret detection for git commits, with a local LLM cutting the false positives.
 
 Atalaia is a stateless HTTP service: clients POST a unified diff, Atalaia runs `gitleaks` and `trufflehog` against it, hands the resulting findings to a local OpenAI-compatible LLM (default: [vLLM](https://docs.vllm.ai) serving Gemma 4 E4B), and returns one verdict per finding — `confirmed` or `dismissed`. The detectors keep the recall of regex scanning; the LLM lifts the precision close enough that confirmed findings can drive direct developer notifications without a human triage step.
@@ -107,8 +109,8 @@ Atalaia returns verdicts; the caller decides whether to block, notify, or log. I
 | --------- | ------------------------------------------------------------------------------------------------------ | ------ |
 | 1         | Foundation: config schema, CLI tree (`serve`/`validate`/`probe`/`version`), HTTP shell with `/metrics` | done   |
 | 2         | Detector layer: gitleaks (library), trufflehog (subprocess), kingfisher (subprocess), dedup, redaction | done   |
-| 3         | API surface: `POST /check`, `GET /healthz`, `GET /version` returning findings (pre-LLM)                | next   |
-| 4         | LLM filter: OpenAI client, semaphore, schema-constrained verdicts, sentinel/verified short-circuits    |        |
+| 3         | API surface: `POST /check`, `GET /healthz`, `GET /version` returning findings (pre-LLM)                | done   |
+| 4         | LLM filter: OpenAI client, semaphore, schema-constrained verdicts, sentinel/verified short-circuits    | next   |
 | 5         | Context tiering & batching for large diffs                                                             |        |
 | 6         | Full Prometheus metrics + opt-in audit log                                                             |        |
 | 7         | Optional Tailscale (`tsnet`) listener                                                                  |        |
