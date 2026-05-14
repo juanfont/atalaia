@@ -9,12 +9,12 @@
 
 Secret detection for git commits, with a local LLM cutting the false positives.
 
-Atalaia is a stateless HTTP service: clients POST a unified diff, Atalaia runs `gitleaks` and `trufflehog` against it, hands the resulting findings to a local OpenAI-compatible LLM (default: [vLLM](https://docs.vllm.ai) serving Gemma 4 E4B), and returns one verdict per finding — `confirmed` or `dismissed`. The detectors keep the recall of regex scanning; the LLM lifts the precision close enough that confirmed findings can drive direct developer notifications without a human triage step.
+Atalaia is a stateless HTTP service. Clients POST a unified diff. Atalaia runs `gitleaks` and `trufflehog`, hands the findings to a local OpenAI-compatible LLM (default: [vLLM](https://docs.vllm.ai) serving Gemma 4 E4B), and returns one verdict per finding, `confirmed` or `dismissed`. Detectors give you recall. The LLM gives you precision good enough that confirmed findings can drive direct developer notifications without a human triage step.
 
-Two deployment shapes the service is designed for:
+Two ways to run it:
 
-- **CI / CD or pre-commit**: drop a curl into your pipeline (or hook) to gate merges and commits before secrets land.
-- **Source-host instance-wide detection**: a single Atalaia behind a GitLab / GitHub / Bitbucket webhook scans every push across every project — no per-repo configuration, no developer-side setup. Either alone is useful; together they cover both the "before the commit lands" and "we missed one" cases.
+- **CI / CD or pre-commit.** Drop a curl into your pipeline or hook to gate merges and commits before secrets land.
+- **Source-host instance-wide.** One Atalaia behind a GitLab / GitHub / Bitbucket webhook scans every push across every project, no per-repo config, no developer-side setup.
 
 Everything runs on your own infrastructure. No outbound calls in the default posture.
 
@@ -22,9 +22,9 @@ Everything runs on your own infrastructure. No outbound calls in the default pos
 
 ## Why
 
-Open-source secret scanners are precision-bound: a typical repo run produces enough false positives that real findings get lost. Verifying every hit against a provider API (as trufflehog does) helps for some credential types but doesn't catch the rest. A small language model reading each finding in context can sort the two piles cheaply.
+Open-source secret scanners are precision-bound. A typical repo run produces enough false positives that real findings get lost. Verifying every hit against a provider API helps for some credentials but not most. A small language model reading each finding in context sorts the two piles cheaply.
 
-Atalaia is the regex-then-LLM pattern packaged as a self-hostable service with a local LLM. The LLM does not detect; it decides.
+Atalaia is the regex-then-LLM pattern packaged as a self-hostable service. The LLM does not detect, it decides.
 
 ## Architecture
 
@@ -57,18 +57,16 @@ Atalaia is the regex-then-LLM pattern packaged as a self-hostable service with a
                 └───────────────────────────────────────────────┘
 ```
 
-Atalaia is one Go binary. The LLM is a sibling process (vLLM, llama.cpp, Ollama, anything OpenAI-compatible). They share a host or talk across a private network.
+One Go binary. The LLM is a sibling process (vLLM, llama.cpp, Ollama, anything OpenAI-compatible). Same host or private network.
 
 ## Quickstart
 
-Build the binary:
-
 ```sh
-make build         # produces ./atalaia
+make build               # produces ./atalaia
 make install-detectors   # pins and installs trufflehog and kingfisher
 ```
 
-Start an OpenAI-compatible model server. For vLLM on a 10 GB-VRAM GPU:
+Start an OpenAI-compatible model server. vLLM on a 10 GB-VRAM GPU:
 
 ```sh
 vllm serve google/gemma-4-E4B-it \
@@ -77,31 +75,31 @@ vllm serve google/gemma-4-E4B-it \
     --host 127.0.0.1 --port 8000
 ```
 
-Copy the example config and adjust:
+Copy the example config:
 
 ```sh
 cp config.example.yaml /etc/atalaia/atalaia.yaml
 ```
 
-Verify the config parses and required binaries are reachable:
+Verify and run:
 
 ```sh
 ./atalaia validate -c /etc/atalaia/atalaia.yaml
-./atalaia probe    -c /etc/atalaia/atalaia.yaml   # lands in milestone 4
+./atalaia probe    -c /etc/atalaia/atalaia.yaml
 ./atalaia serve    -c /etc/atalaia/atalaia.yaml
 ```
 
-`POST /check` accepts either `text/x-diff` (raw unified diff) or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is the liveness probe (always 200 if the process is up); `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
+`POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
 
 ## Container
 
-Each tagged release publishes a multi-arch image to GHCR with `atalaia` plus pinned versions of `trufflehog` and `kingfisher` baked in (~110 MB, runs as a non-root user):
+Tagged releases publish a multi-arch image to GHCR. `atalaia` plus pinned `trufflehog` and `kingfisher`, around 110 MB, non-root:
 
 ```sh
 docker pull ghcr.io/juanfont/atalaia:latest
 ```
 
-Defaults work out of the box for both subprocess detectors (built-in rulesets) — point at an LLM endpoint and go:
+Defaults work out of the box. Point at an LLM and go:
 
 ```sh
 docker run --rm -p 8080:8080 \
@@ -110,7 +108,7 @@ docker run --rm -p 8080:8080 \
   ghcr.io/juanfont/atalaia:latest
 ```
 
-For custom rulesets, bind-mount the config files into `/etc/atalaia/` and point `atalaia.yaml` at the in-container paths:
+For custom rulesets, bind-mount config files into `/etc/atalaia/` and point `atalaia.yaml` at the in-container paths:
 
 ```sh
 docker run --rm -p 8080:8080 \
@@ -120,23 +118,23 @@ docker run --rm -p 8080:8080 \
   ghcr.io/juanfont/atalaia:latest
 ```
 
-The prompts live at `/etc/atalaia/prompts/` inside the image and the binary defaults already reference that path. Trufflehog is AGPL-3.0 — see [LICENSE](LICENSE) and the upstream source at [trufflesecurity/trufflehog](https://github.com/trufflesecurity/trufflehog).
+Prompts live at `/etc/atalaia/prompts/` inside the image. Trufflehog is AGPL-3.0, see [LICENSE](LICENSE) and the upstream source at [trufflesecurity/trufflehog](https://github.com/trufflesecurity/trufflehog).
 
 ## Configuration
 
-Every key in `atalaia.yaml` is overridable via env vars with the `ATALAIA_` prefix and dots replaced by underscores — `llm.endpoint` becomes `ATALAIA_LLM_ENDPOINT`. Search path: `./atalaia.yaml`, `$HOME/.atalaia/atalaia.yaml`, `/etc/atalaia/atalaia.yaml`. CLI `-c` overrides both.
+Every key in `atalaia.yaml` is overridable via env vars with the `ATALAIA_` prefix and dots replaced by underscores. `llm.endpoint` becomes `ATALAIA_LLM_ENDPOINT`. Search path: `./atalaia.yaml`, `$HOME/.atalaia/atalaia.yaml`, `/etc/atalaia/atalaia.yaml`. CLI `-c` overrides both.
 
 See [config.example.yaml](config.example.yaml) for the full schema. Highlights:
 
-- **Detectors**: pick which to run (`detectors.enabled`), supply custom rule files (`detectors.gitleaks.config`, `detectors.trufflehog.config`, `detectors.kingfisher.rules`), include/exclude trufflehog detectors, and pass arbitrary additional CLI flags via per-detector `extra_args`.
-- **LLM**: any OpenAI-compatible chat-completions endpoint; tune the queue (`max_inflight`, `queue_max`), context budgets, and the prompt profile.
-- **Tailscale**: opt-in `tsnet` listener so Atalaia is reachable only from your tailnet — ACLs replace IP allowlists. `auth_key` must come from `ATALAIA_TAILSCALE_AUTH_KEY`, never from the YAML.
+- **Detectors.** Pick which to run (`detectors.enabled`), supply custom rule files (`detectors.gitleaks.config`, `detectors.trufflehog.config`, `detectors.kingfisher.rules`), include/exclude trufflehog detectors, pass arbitrary CLI flags via per-detector `extra_args`.
+- **LLM.** Any OpenAI-compatible chat-completions endpoint. Tune the queue (`max_inflight`, `queue_max`), context budgets, and the prompt profile.
+- **Tailscale.** Opt-in `tsnet` listener so Atalaia is reachable only from your tailnet. ACLs replace IP allowlists. `auth_key` must come from `ATALAIA_TAILSCALE_AUTH_KEY`, never the YAML.
 
 ## Network posture
 
-Atalaia is plain HTTP. There are two recommended deployment shapes:
+Atalaia is plain HTTP. Two shapes:
 
-**1. Loopback Atalaia behind a TLS-terminating reverse proxy.** Bind Atalaia to `127.0.0.1:8080`, run caddy/nginx/envoy on `:443` with a cert, forward `/check` to the local port. Auth and rate-limiting live at the proxy; bearer tokens via `ATALAIA_SERVER_AUTH_TOKEN` are a defence-in-depth layer.
+**1. Loopback Atalaia behind a TLS-terminating reverse proxy.** Bind to `127.0.0.1:8080`, run caddy/nginx/envoy on `:443` with a cert, forward `/check` to the local port. Auth and rate-limiting live at the proxy. Bearer tokens via `ATALAIA_SERVER_AUTH_TOKEN` are defence in depth.
 
 Minimal Caddyfile:
 
@@ -146,22 +144,22 @@ atalaia.example.com {
 }
 ```
 
-**2. Tailscale-only via the built-in `tsnet` listener.** Set `tailscale.enabled: true` and `tailscale.listen_only: true` in the config; supply the auth key via `ATALAIA_TAILSCALE_AUTH_KEY`. The host port stays unbound and only tailnet peers allowed by ACL can reach `/check`. No TLS termination needed — the tailnet is already encrypted.
+**2. Tailscale-only via the built-in `tsnet` listener.** Set `tailscale.enabled: true` and `tailscale.listen_only: true`. Auth key via `ATALAIA_TAILSCALE_AUTH_KEY`. The host port stays unbound. Only tailnet peers allowed by ACL can reach `/check`. The tailnet is already encrypted, no TLS terminator needed.
 
-For either posture, optionally gate `/check` with a bearer token (`server.auth_token`). `/healthz`, `/readyz`, and `/version` stay open so orchestrator probes work without secrets. `/metrics` is on its own listener (`observability.metrics_addr`) so the main port can be locked down without losing scrape access.
+Either way, optionally gate `/check` with a bearer token (`server.auth_token`). `/healthz`, `/readyz`, `/version` stay open so orchestrator probes work without secrets. `/metrics` is on its own listener (`observability.metrics_addr`) so the main port can be locked down without losing scrape access.
 
 ## Integration
 
-Atalaia is source-agnostic — anything that can produce a unified diff can call `/check`. Common patterns: GitLab/GitHub push-event watchers, pre-commit hooks, CI gates. See [docs/deployment.md](docs/deployment.md) for end-to-end deployment shapes and a worked GitLab integration.
+Atalaia is source-agnostic. Anything that produces a unified diff can call `/check`. Common patterns: GitLab/GitHub push-event watchers, pre-commit hooks, CI gates. See [docs/deployment.md](docs/deployment.md) for end-to-end deployment shapes and a worked GitLab integration.
 
-Atalaia returns verdicts; the caller decides whether to block, notify, or log. It never stores diffs, findings, or verdicts.
+Atalaia returns verdicts. The caller decides whether to block, notify, or log. It never stores diffs, findings, or verdicts.
 
 ## Security and threat model
 
 - **In-memory only.** Atalaia never persists the diff, findings, or verdicts. Logs carry redacted previews, never raw matches.
-- **No outbound calls in the default config.** Trufflehog runs with `--no-verification`. The only egress is Atalaia → the configured LLM endpoint.
-- **License fence.** Trufflehog is AGPL-3.0; Atalaia invokes it as a subprocess and never imports it as a Go module. Atalaia ships under Apache 2.0.
-- **The LLM endpoint must be trusted.** Prompts contain raw matches — the model needs to see the value to judge it. Run vLLM on the same network as Atalaia, or point at a third-party provider only when policy allows.
+- **No outbound calls in the default config.** Trufflehog runs with `--no-verification`. The only egress is Atalaia to its configured LLM endpoint.
+- **License fence.** Trufflehog is AGPL-3.0. Atalaia invokes it as a subprocess and never imports it as a Go module. Atalaia ships under Apache 2.0.
+- **The LLM endpoint must be trusted.** Prompts contain raw matches because the model needs to see the value to judge it. Run vLLM on the same network as Atalaia, or point at a third-party provider only when policy allows.
 
 ## License
 
@@ -169,6 +167,6 @@ Apache 2.0. See [LICENSE](LICENSE).
 
 ## Disclosure
 
-Most of this codebase was produced with the help of AI tooling under close human supervision — every line was reviewed, run, and tested before being merged. The bootstrap (config loader, viper plumbing, log/init scaffolding) was also blatantly stolen from [Headscale](https://github.com/juanfont/headscale) :)
+Most of this was written with AI tooling under close human supervision. Every line reviewed, run, tested. The bootstrap (config loader, viper plumbing, log/init scaffolding) was also blatantly stolen from [Headscale](https://github.com/juanfont/headscale) :)
 
 ---

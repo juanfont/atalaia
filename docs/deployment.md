@@ -1,24 +1,22 @@
 # Deploying Atalaia
 
-This guide covers the practical end-to-end story: how to stand up Atalaia + the LLM, how to put it on a network, and how to wire it into common source hosts. The worked example for integrations is GitLab; GitHub Enterprise / Bitbucket / Gitea look almost identical.
-
-The README has the elevator pitch and config reference. This document is the operational manual.
+How to stand Atalaia up, put it on a network, and wire it into a source host. Worked example: GitLab. GitHub Enterprise, Bitbucket, Gitea look almost identical.
 
 ## Pieces
 
-A typical deployment has three moving parts:
+Three moving parts:
 
-1. **An LLM serving an OpenAI-compatible API.** Default is [vLLM](https://docs.vllm.ai) on a single 10 GB-VRAM GPU host. Anything that speaks `/v1/chat/completions` works (Ollama, llama.cpp's `llama-server`, mistral.rs, TGI, SGLang).
+1. **An LLM serving an OpenAI-compatible API.** Default: [vLLM](https://docs.vllm.ai) on a 10 GB-VRAM GPU. Anything that speaks `/v1/chat/completions` works (Ollama, llama.cpp's `llama-server`, mistral.rs, TGI, SGLang).
 2. **Atalaia itself.** One Go binary, sibling process to the LLM. Holds nothing on disk between requests.
-3. **A caller.** Either an event-driven watcher (webhook → fetch diff → POST), a pre-commit hook, or a CI gate.
+3. **A caller.** Event-driven watcher (webhook → fetch diff → POST), pre-commit hook, or CI gate.
 
-Atalaia and the LLM can run on the same host (loopback), on a private VLAN, or on a tailnet.
+Same host (loopback), private VLAN, or tailnet. Pick one.
 
 ## Where to run Atalaia
 
 ### 1. systemd unit
 
-The reference shape. One Go binary, a system user, hardened service unit.
+The reference shape. One binary, system user, hardened service unit.
 
 ```ini
 # /etc/systemd/system/atalaia.service
@@ -47,15 +45,15 @@ ReadWritePaths=/var/lib/atalaia
 WantedBy=multi-user.target
 ```
 
-Secrets (`ATALAIA_SERVER_AUTH_TOKEN`, `ATALAIA_TAILSCALE_AUTH_KEY`) live in `/etc/atalaia/atalaia.env` (mode `0600`) and are pulled in via `EnvironmentFile=`. Keep them out of the YAML.
+Secrets (`ATALAIA_SERVER_AUTH_TOKEN`, `ATALAIA_TAILSCALE_AUTH_KEY`) go in `/etc/atalaia/atalaia.env` (mode `0600`), pulled in via `EnvironmentFile=`. Keep them out of the YAML.
 
-vLLM is a sibling `vllm.service` per the layout in [internal-docs](../internal-docs/) (or your own deployment notes).
+vLLM is a sibling `vllm.service`.
 
 ### 2. Container
 
-`docker pull ghcr.io/juanfont/atalaia:latest`. The image bundles pinned `trufflehog` and `kingfisher`, runs as non-root (uid 65532), and the prompts live at `/etc/atalaia/prompts/` so the binary defaults already point at them.
+`docker pull ghcr.io/juanfont/atalaia:latest`. Bundles pinned `trufflehog` and `kingfisher`, runs as uid 65532, prompts at `/etc/atalaia/prompts/`.
 
-Minimal run with the LLM on the host:
+LLM on the host:
 
 ```sh
 docker run --rm --name atalaia -p 8080:8080 \
@@ -65,7 +63,7 @@ docker run --rm --name atalaia -p 8080:8080 \
   ghcr.io/juanfont/atalaia:latest
 ```
 
-With custom detector configs bind-mounted in:
+Custom detector configs bind-mounted:
 
 ```sh
 docker run --rm -p 8080:8080 \
@@ -75,13 +73,11 @@ docker run --rm -p 8080:8080 \
   ghcr.io/juanfont/atalaia:latest
 ```
 
-Compose example with a sibling vLLM container is in the upstream docs; pin the model and reserve the GPU there.
-
 ## Network posture
 
 ### Reverse proxy + TLS (recommended default)
 
-Bind Atalaia to `127.0.0.1:8080`, terminate TLS at caddy/nginx/envoy on `:443`. The reverse proxy handles certs, rate limits, and IP-level access controls; the bearer token (`server.auth_token`) is defence in depth.
+Bind Atalaia to `127.0.0.1:8080`, terminate TLS at caddy/nginx/envoy on `:443`. The reverse proxy handles certs, rate limits, and IP-level access controls. Bearer token (`server.auth_token`) is defence in depth.
 
 ```caddy
 atalaia.example.com {
@@ -91,15 +87,15 @@ atalaia.example.com {
 
 ### Tailscale-only
 
-The built-in `tsnet` listener (`tailscale.enabled: true`, `tailscale.listen_only: true`) joins Atalaia directly to a Tailscale or Headscale tailnet. The host port stays unbound; only tailnet nodes allowed by ACL can reach `/check`. The tailnet is already encrypted, so no TLS terminator is needed.
+`tailscale.enabled: true`, `tailscale.listen_only: true` joins Atalaia to a Tailscale or Headscale tailnet. Host port stays unbound. Only tailnet nodes allowed by ACL reach `/check`. The tailnet is already encrypted, no TLS terminator needed.
 
-Tag the Atalaia node (`tag:atalaia`) and the calling watcher (`tag:webhook-watcher`); grant only `tag:webhook-watcher → tag:atalaia:8080` in your ACLs.
+Tag the Atalaia node (`tag:atalaia`) and the caller (`tag:webhook-watcher`). Grant `tag:webhook-watcher → tag:atalaia:8080`.
 
 ### Probes
 
-- `/healthz` — liveness. Always 200 if the process is up. Use this for restart loops.
-- `/readyz` — readiness. Probes the LLM and returns 200/503. Use this for load-balancer health and orchestrator readiness gates.
-- `/metrics` — Prometheus surface on a separate listener (`observability.metrics_addr`).
+- `/healthz`, liveness. Always 200 if the process is up. Use this for restart loops.
+- `/readyz`, readiness. Probes the LLM, returns 200/503. Use this for load-balancer health and orchestrator readiness gates.
+- `/metrics`, Prometheus surface on a separate listener (`observability.metrics_addr`).
 
 ### Auth
 
@@ -117,7 +113,7 @@ Content-Type: text/x-diff
 
 ### Pre-commit hook
 
-The lightest integration. Block a commit when Atalaia returns at least one `confirmed` verdict on the staged diff.
+Block the commit when Atalaia returns at least one `confirmed` verdict.
 
 ```sh
 #!/usr/bin/env bash
@@ -136,14 +132,14 @@ RESP=$(printf '%s' "$DIFF" | curl -fsS \
 CONFIRMED=$(printf '%s' "$RESP" | jq -r '.stats.confirmed')
 if [ "$CONFIRMED" -gt 0 ]; then
     printf '%s' "$RESP" | jq -r '.verdicts[] | select(.verdict=="confirmed") | "\(.file):\(.line)  \(.match_preview)  \(.reason)"'
-    echo "atalaia: $CONFIRMED confirmed secret(s) in staged diff — commit blocked."
+    echo "atalaia: $CONFIRMED confirmed secret(s) in staged diff. Commit blocked."
     exit 1
 fi
 ```
 
 ### CI gate
 
-Same idea on the CI side. Diff merge-base..HEAD, POST, fail the job on any `confirmed`.
+Same shape on the CI side. Diff merge-base..HEAD, POST, fail on any `confirmed`.
 
 ```yaml
 # GitLab CI snippet
@@ -165,7 +161,7 @@ secret-scan:
 
 ## GitLab webhook integration (worked example)
 
-The most useful shape: a small watcher service that subscribes to GitLab push events, fetches each commit's diff, hands it to Atalaia, and acts on `confirmed` verdicts.
+A small watcher service subscribes to GitLab push events, fetches each commit's diff, hands it to Atalaia, acts on `confirmed` verdicts.
 
 ### Architecture
 
@@ -181,7 +177,7 @@ GitLab ── push hook ──►  watcher (your service)
                             └─ ack to GitLab (under the 10s timeout)
 ```
 
-Atalaia is stateless and source-agnostic by design. The *watcher* is where you put policy:
+Atalaia is stateless. The *watcher* is where you put policy:
 
 - which projects to scan
 - who to notify
@@ -197,7 +193,7 @@ In **Admin Area → System Hooks** (or per-project **Settings → Webhooks**) ad
 - **Secret token**: a long random string (verify in the handler)
 - **SSL verification**: enabled
 
-GitLab sends `application/json` push payloads and expects a 200 within ~10 seconds. Anything slower trips the retry queue, so the watcher must **ACK immediately and adjudicate asynchronously** — Atalaia + the LLM can easily exceed 10 s.
+GitLab sends `application/json` push payloads and expects a 200 within ~10 seconds. Anything slower trips the retry queue. The watcher must **ACK immediately and adjudicate asynchronously**. Atalaia + the LLM can easily exceed 10s.
 
 ### Watcher (compact Go sketch)
 
@@ -270,7 +266,7 @@ func handlePush(glab *gitlab.Client, hookToken, atalaiaURL, atalaiaToken string)
             http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }
-        // 2. ACK immediately. GitLab times push hooks out around 10 s.
+        // 2. ACK immediately. GitLab times push hooks out around 10s.
         w.WriteHeader(http.StatusAccepted)
 
         // 3. Adjudicate asynchronously.
@@ -366,15 +362,15 @@ func notify(projectID int, sha string, v verdict) {
 
 ### Things to get right
 
-- **ACK fast, adjudicate slow.** GitLab's 10 s window is a hard ceiling. Do the LLM round-trip in the goroutine, never in the request handler.
-- **Verify the hook token.** It's the only thing standing between your watcher and a public unauthenticated POST endpoint. The header is `X-Gitlab-Token`.
-- **Deduplicate alerts.** The watcher receives every commit. If you alert per-commit you'll spam on rebases. Key dedup on `(project_id, finding_id)` — Atalaia's `finding_id` is stable across re-runs (it's `sha256(file:line:match)[:12]`).
-- **Pick the right LLM context.** For typical commits (small, < 32K tokens) the default config is fine. For monorepo merges that touch hundreds of files, see `llm.max_findings_per_request` and `llm.context_budget.input_tokens` — the response carries `stats.truncated: true` when the cap kicks in.
-- **Policy lives in the watcher, not in Atalaia.** Atalaia returns verdicts; whether to block the MR / open an issue / page someone is your call, and changes over time. Keep that policy out of the secret-scanner so you can re-tune without redeploying it.
+- **ACK fast, adjudicate slow.** GitLab's 10s window is a hard ceiling. LLM round-trip goes in the goroutine, never in the request handler.
+- **Verify the hook token.** It's the only thing between your watcher and a public unauthenticated POST endpoint. Header: `X-Gitlab-Token`.
+- **Deduplicate alerts.** Watcher receives every commit. Alert per-commit and you spam on rebases. Key dedup on `(project_id, finding_id)`. Atalaia's `finding_id` is stable across re-runs (`sha256(file:line:match)[:12]`).
+- **Pick the right LLM context.** For typical commits (< 32K tokens) defaults are fine. For monorepo merges touching hundreds of files, see `llm.max_findings_per_request` and `llm.context_budget.input_tokens`. Response carries `stats.truncated: true` when the cap kicks in.
+- **Policy lives in the watcher, not in Atalaia.** Atalaia returns verdicts. Whether to block the MR, open an issue, page someone is your call and will change over time. Keep policy out of the secret-scanner so you can re-tune without redeploying it.
 
 ### Operational checklist
 
-- [ ] Atalaia + LLM healthchecked from your monitoring (scrape `/metrics`, alert on `atalaia_check_requests_total{status="5xx"}` non-zero, on `atalaia_llm_queue_depth` saturating, on `atalaia_llm_missing_verdict_total` ticking up).
+- [ ] Atalaia + LLM healthchecked from your monitoring. Scrape `/metrics`, alert on `atalaia_check_requests_total{status="5xx"}` non-zero, on `atalaia_llm_queue_depth` saturating, on `atalaia_llm_missing_verdict_total` ticking up.
 - [ ] `ATALAIA_SERVER_AUTH_TOKEN` rotated whenever the watcher's credential is rotated.
 - [ ] Audit log opted in *only* on a separate, restricted volume. Raw matches land there when `observability.audit.reveal_matches: true`.
-- [ ] Detector binaries (trufflehog/kingfisher) pinned via the container image or Makefile — bump deliberately, not on every release.
+- [ ] Detector binaries (trufflehog, kingfisher) pinned via the container image or Makefile. Bump deliberately, not on every release.
