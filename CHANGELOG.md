@@ -4,46 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
-### Added
+## [0.1.0], 2026-05-14
 
-- GitHub Actions CI workflow (unit + integration jobs).
-- goreleaser config and tag-triggered release workflow producing
-  linux/darwin × amd64/arm64 tarballs with the `atalaia.Version`
-  ldflag wired.
-- Optional bearer-token auth on `/check`. Set `server.auth_token`
-  (or `ATALAIA_SERVER_AUTH_TOKEN`). Requests need
-  `Authorization: Bearer <token>`. `/healthz`, `/readyz`, `/version`
-  stay open.
-- `/readyz` readiness probe. Probes the LLM, returns 200/503.
-  `/healthz` is now liveness, always 200 if the process is up.
-- `server.idle_timeout` (default 120s) wired into `http.Server`.
-- Per-request structured log line with request_id, sizes, verdict
-  counts, and stage timings. No raw matches.
-- README "Network posture" section covering loopback + reverse
-  proxy and the tailscale-only alternatives.
-- Multi-arch container image published to `ghcr.io/juanfont/atalaia`
-  on each tag. Bundles pinned `trufflehog` and `kingfisher`,
-  runs as a non-root user, prompts at `/etc/atalaia/prompts/`.
-- New `docs/deployment.md` covering systemd, container, reverse
-  proxy, tailscale shapes, probe and auth wiring, and a worked
-  GitLab webhook integration (compact Go watcher sketch +
-  operational checklist).
-
-### Changed
-
-- **Breaking** for orchestrator probes: `/healthz` no longer reports
-  LLM reachability and never returns 503. Point readiness probes at
-  `/readyz` instead.
-- `trufflehog` invocations include `--no-update` to keep the binary
-  from auto-rewriting itself in containers and non-root installs.
-- README "Roadmap" table removed. v1 has shipped, CHANGELOG is the
-  canonical record from here.
-- README logo bumped from 160px to 240px wide.
-
-## [0.1.0], v1
-
-First end-to-end release. The regex-then-LLM secret filter described
-in the design doc, in seven milestones.
+First public release. The regex-then-LLM secret filter described in
+the design doc, plus CI, container, and the first round of operational
+hardening (auth, readiness split, structured logs).
 
 ### Added
 
@@ -91,6 +56,28 @@ in the design doc, in seven milestones.
   the additional host listener. Auth key must come from
   `ATALAIA_TAILSCALE_AUTH_KEY`. A YAML-level linter rejects it
   appearing literally in the config file.
+- **Bearer-token auth on `/check`**. Set `server.auth_token` (or
+  `ATALAIA_SERVER_AUTH_TOKEN`). Requests need
+  `Authorization: Bearer <token>`. `/healthz`, `/readyz`, `/version`
+  stay open.
+- **`/readyz` readiness probe.** Probes the LLM, returns 200/503.
+  `/healthz` is now liveness, always 200 if the process is up.
+- `server.idle_timeout` (default 120s) wired into `http.Server`.
+- Per-request structured log line with `request_id`, sizes, verdict
+  counts, stage timings. No raw matches.
+- GitHub Actions CI (unit + integration jobs).
+- goreleaser config and tag-triggered release workflow producing
+  linux/darwin × amd64/arm64 tarballs with the `atalaia.Version`
+  ldflag wired.
+- Multi-arch container image published to `ghcr.io/juanfont/atalaia`
+  on each tag. Bundles pinned `trufflehog` and `kingfisher`, runs
+  as a non-root user, prompts at `/etc/atalaia/prompts/`.
+- `docs/deployment.md`: systemd, container, reverse proxy, tailscale
+  shapes; probe and auth wiring; worked GitLab webhook integration
+  (Go watcher sketch + operational checklist).
+- `make test-integration` (mirrors the CI integration job) and
+  `make smoke CONFIG=...` (end-to-end against a real LLM via
+  `scripts/smoke.sh`).
 
 ### Security
 

@@ -8,13 +8,28 @@ KINGFISHER_VERSION ?= 1.27.0
 
 PREFIX ?= /usr/local
 
-.PHONY: build test vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
+.PHONY: build test test-integration smoke vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
 
 build:
 	go build -ldflags '$(GO_LDFLAGS)' -o atalaia ./cmd/atalaia
 
 test:
 	go test ./...
+
+# Mirror the CI integration job locally. Subprocess detector tests
+# t.Skip when the binary isn't on PATH, so this target checks first
+# and points at `make install-trufflehog` if it's missing.
+test-integration:
+	@command -v trufflehog >/dev/null || { \
+	    echo "trufflehog not on PATH. run: make install-trufflehog"; \
+	    exit 1; \
+	}
+	go test -count=1 -timeout 180s ./internal/detector
+
+# End-to-end smoke against a real LLM. Override CONFIG to point at
+# your own config file. Defaults to internal-docs/smoke.yaml.
+smoke:
+	CONFIG=$(CONFIG) ./scripts/smoke.sh
 
 vet:
 	go vet ./...
