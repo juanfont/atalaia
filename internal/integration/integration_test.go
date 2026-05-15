@@ -22,11 +22,11 @@
 //
 // Soft fails (per-fixture log, summary failure at end): the verdict
 // for a given match disagrees with expectations, or atalaia gap-fills
-// because the model returned no verdict for that finding_id. Small
-// models are allowed to be wrong some of the time; the suite fails if
-// overall agreement drops below INTEGRATION_MIN_AGREEMENT (default
-// 0.5, chosen to accommodate observed Gemma 4 E2B variance, run 2-3
-// times for a trend).
+// because the model returned no verdict for that finding_id. The
+// suite fails if overall agreement drops below INTEGRATION_MIN_AGREEMENT
+// (default 0.75). Qwen2.5-7B-Instruct-AWQ scores 6/6 cleanly on every
+// observed run with the schema-example prompt; smaller models will
+// gap-fill more and may warrant a lower floor via env override.
 package integration
 
 import (
@@ -87,7 +87,7 @@ func minAgreement(t *testing.T) float64 {
 	t.Helper()
 	raw := os.Getenv("INTEGRATION_MIN_AGREEMENT")
 	if raw == "" {
-		return 0.5
+		return 0.75
 	}
 	v, err := strconv.ParseFloat(raw, 64)
 	if err != nil {

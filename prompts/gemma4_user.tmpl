@@ -16,4 +16,6 @@ Diff under review:
 ```
 {{- end}}
 
-Return a verdict for every finding_id above.
+Return a JSON object of this exact shape, one verdict per finding_id above, no extra text:
+
+{"verdicts":[{"finding_id":"<id>","verdict":"confirmed"|"dismissed","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}
