@@ -133,8 +133,7 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 			return AdjudicateResult{}, fmt.Errorf("render batch %d/%d: %w", i+1, len(batches), err)
 		}
 
-		start := time.Now()
-		resp, err := a.client.Complete(callCtx, ChatRequest{
+		req := ChatRequest{
 			Model: a.cfg.Model,
 			Messages: []Message{
 				{Role: "system", Content: system},
@@ -144,23 +143,39 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 			Temperature: 0,
 			// ResponseFormat omitted: vLLM's xgrammar wedges on some
 			// small-model + nested-required-fields combinations (see
-			// internal-docs/vllm-host.md). Rely on prompt-driven JSON
-			// plus parseVerdictResponse's fenced-block tolerance.
-		})
+			// internal-docs/vllm-host.md). The use-tools path (below)
+			// is the principled fix for backends that support it.
+		}
+		if a.cfg.UseTools {
+			req.Tools = []Tool{VerdictTool()}
+			req.ToolChoice = map[string]any{
+				"type":     "function",
+				"function": map[string]any{"name": VerdictToolName},
+			}
+		}
+
+		start := time.Now()
+		resp, err := a.client.Complete(callCtx, req)
 		totalLatency += time.Since(start)
 		if err != nil {
 			return AdjudicateResult{}, fmt.Errorf("llm call batch %d/%d: %w", i+1, len(batches), err)
 		}
 
-		raw := resp.Choices[0].Message.Content
-		parsed, err := parseVerdictResponse(raw)
+		msg := resp.Choices[0].Message
+		var parsed []Verdict
+		switch {
+		case a.cfg.UseTools && len(msg.ToolCalls) > 0:
+			parsed, err = parseToolCallVerdicts(msg.ToolCalls)
+		default:
+			parsed, err = parseVerdictResponse(msg.Content)
+		}
 		if err != nil {
-			preview := raw
+			preview := msg.Content
 			if len(preview) > 400 {
 				preview = preview[:400] + "..."
 			}
-			return AdjudicateResult{}, fmt.Errorf("parse llm response batch %d/%d (%d chars): %w; head=%q",
-				i+1, len(batches), len(raw), err, preview)
+			return AdjudicateResult{}, fmt.Errorf("parse llm response batch %d/%d (%d chars, %d tool_calls): %w; head=%q",
+				i+1, len(batches), len(msg.Content), len(msg.ToolCalls), err, preview)
 		}
 		llmVerdicts = append(llmVerdicts, parsed...)
 	}
@@ -185,6 +200,24 @@ type rawVerdict struct {
 	Verdict    string  `json:"verdict"`
 	Confidence float64 `json:"confidence"`
 	Reason     string  `json:"reason"`
+}
+
+// parseToolCallVerdicts pulls verdicts out of the OpenAI tool_calls
+// response shape. The model invokes VerdictToolName with the
+// VerdictSchema-shaped arguments as a JSON string; we delegate the
+// actual decode to parseVerdictResponse so envelope vs bare-array
+// handling stays in one place.
+func parseToolCallVerdicts(calls []ToolCall) ([]Verdict, error) {
+	if len(calls) == 0 {
+		return nil, fmt.Errorf("no tool_calls in response")
+	}
+	for _, c := range calls {
+		if c.Function.Name != VerdictToolName {
+			continue
+		}
+		return parseVerdictResponse(c.Function.Arguments)
+	}
+	return nil, fmt.Errorf("no %q tool_call in response", VerdictToolName)
 }
 
 // parseVerdictResponse decodes the JSON the model produced. It tolerates:

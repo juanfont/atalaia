@@ -97,6 +97,12 @@ type LLMConfig struct {
 	MaxFindingsPerRequest int
 	ContextBudget         ContextBudgetConfig
 	Profiles              map[string]LLMProfile
+	// UseTools opts into the OpenAI tool-calling path instead of
+	// content-parsing. The model receives the verdict shape as a
+	// function-calling tool and replies via tool_calls; atalaia parses
+	// the structured arguments. Eliminates gap-fills on any
+	// tool-supporting backend (Gemma 4, Qwen 2.5, Mistral, etc).
+	UseTools bool
 }
 
 type ContextBudgetConfig struct {
@@ -294,6 +300,7 @@ func readLLMConfig() LLMConfig {
 			FindingContextLines: viper.GetInt("llm.context_budget.finding_context_lines"),
 		},
 		Profiles: map[string]LLMProfile{},
+		UseTools: viper.GetBool("llm.use_tools"),
 	}
 
 	raw := viper.GetStringMap("llm.profiles")

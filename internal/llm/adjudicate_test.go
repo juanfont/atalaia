@@ -251,6 +251,59 @@ func TestAdjudicate_PerFindingMode_SplitsBatches(t *testing.T) {
 	}
 }
 
+func TestAdjudicate_UseTools_ParsesToolCallArguments(t *testing.T) {
+	fc := &fakeClient{respond: func(req ChatRequest) (ChatResponse, error) {
+		// When tools are on, atalaia must send the verdict tool and
+		// force tool_choice to submit_verdicts.
+		if len(req.Tools) != 1 || req.Tools[0].Function.Name != VerdictToolName {
+			t.Errorf("expected one tool=%q, got %+v", VerdictToolName, req.Tools)
+		}
+		if req.ToolChoice == nil {
+			t.Errorf("ToolChoice not set with use_tools")
+		}
+		// Echo back via a tool_call instead of plain content.
+		args := `{"verdicts":[{"finding_id":"a","verdict":"confirmed","confidence":0.9,"reason":"live"}]}`
+		return ChatResponse{Choices: []struct {
+			Message Message `json:"message"`
+		}{{Message: Message{
+			Role: "assistant",
+			ToolCalls: []ToolCall{{
+				ID: "call_1", Type: "function",
+				Function: ToolCallFunction{Name: VerdictToolName, Arguments: args},
+			}},
+		}}}}, nil
+	}}
+
+	a := newAdjudicator(t, fc)
+	a.cfg.UseTools = true
+
+	res, err := a.Adjudicate(context.Background(), []byte("diff"),
+		[]detector.DedupedFinding{{ID: "a", Match: "real-token"}})
+	if err != nil {
+		t.Fatalf("Adjudicate: %v", err)
+	}
+	if len(res.Verdicts) != 1 || res.Verdicts[0].FindingID != "a" || res.Verdicts[0].Verdict != VerdictConfirmed {
+		t.Errorf("verdicts wrong: %+v", res.Verdicts)
+	}
+}
+
+func TestAdjudicate_UseTools_MissingToolCallErrors(t *testing.T) {
+	fc := &fakeClient{respond: func(ChatRequest) (ChatResponse, error) {
+		// Model returns plain content even though tools were requested.
+		return ChatResponse{Choices: []struct {
+			Message Message `json:"message"`
+		}{{Message: Message{Role: "assistant", Content: "ignored"}}}}, nil
+	}}
+	a := newAdjudicator(t, fc)
+	a.cfg.UseTools = true
+
+	_, err := a.Adjudicate(context.Background(), []byte("diff"),
+		[]detector.DedupedFinding{{ID: "a", Match: "x"}})
+	if err == nil {
+		t.Error("expected error when tools enabled but response has no tool_calls")
+	}
+}
+
 func TestAdjudicate_LLMError_Surfaces(t *testing.T) {
 	fc := &fakeClient{respond: func(ChatRequest) (ChatResponse, error) {
 		return ChatResponse{}, errors.New("backend exploded")

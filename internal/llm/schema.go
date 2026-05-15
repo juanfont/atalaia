@@ -57,6 +57,28 @@ func ResponseFormat() map[string]any {
 	}
 }
 
+// VerdictToolName is the function name atalaia advertises when the
+// tool-calling path is enabled. Models that support tool calls
+// (Gemma 4, Qwen 2.5, Mistral with the matching parser) invoke this
+// to submit the adjudicated verdicts. The function arguments match
+// VerdictSchema, so the parser is shared.
+const VerdictToolName = "submit_verdicts"
+
+// VerdictTool returns the tool definition used when llm.use_tools is
+// on. Tool-call mode is the principled fix for backends that drop
+// fields when asked for free-form JSON: the schema is enforced by
+// the function-calling machinery, not by prompt engineering.
+func VerdictTool() Tool {
+	return Tool{
+		Type: "function",
+		Function: ToolFunction{
+			Name:        VerdictToolName,
+			Description: "Submit one verdict per finding_id from the input. confirmed = real credential; dismissed = false positive (test fixture, doc example, placeholder, pattern collision).",
+			Parameters:  VerdictSchema,
+		},
+	}
+}
+
 const (
 	VerdictConfirmed = "confirmed"
 	VerdictDismissed = "dismissed"

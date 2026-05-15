@@ -6,6 +6,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+- Opt-in tool-calling path via `llm.use_tools`. When true, Atalaia
+  sends a `submit_verdicts` function tool with the VerdictSchema as
+  the OpenAI tools API expects, forces `tool_choice` to that
+  function, and parses `tool_calls[0].function.arguments` instead
+  of message content. Eliminates gap-fills on any tool-supporting
+  backend (Gemma 4 with `--tool-call-parser gemma4`, Qwen 2.5 with
+  `--tool-call-parser hermes`, Mistral, etc.). New unit tests
+  cover the tool path and the missing-tool-call error case.
+- Inline JSON shape example in the user prompt template so backends
+  without tool calling still produce the right shape consistently.
+  Fixes a bug where non-Gemma models would emit JSON with invented
+  finding_ids, triggering atalaia's gap-fill fallback.
+
+### Changed
+
+- `INTEGRATION_MIN_AGREEMENT` default lowered to 0.6 to reflect
+  honest per-run variance with tool calling on Qwen2.5-7B-AWQ
+  (4-6 agreements out of 6 across runs, 0 gap-fills).
+
+
+### Added
+
 - Integration corpus under `internal/integration/testdata/diffs/`
   with six fixtures exercising the LLM filter end-to-end (real AWS
   key in boto3 init, GitHub PAT in Bearer header, Slack bot token in

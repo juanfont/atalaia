@@ -12,10 +12,37 @@ import (
 	"time"
 )
 
-// Message is one chat turn in an OpenAI-style request.
+// Message is one chat turn in an OpenAI-style request. ToolCalls is
+// populated on response messages when the backend invokes a tool.
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role      string     `json:"role"`
+	Content   string     `json:"content,omitempty"`
+	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+}
+
+// Tool is an OpenAI tool definition; only "function" type is used here.
+type Tool struct {
+	Type     string       `json:"type"`
+	Function ToolFunction `json:"function"`
+}
+
+type ToolFunction struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Parameters  map[string]any `json:"parameters"`
+}
+
+// ToolCall is one tool invocation in a response. Arguments is a JSON
+// string (the backend serializes the function call payload).
+type ToolCall struct {
+	ID       string           `json:"id"`
+	Type     string           `json:"type"`
+	Function ToolCallFunction `json:"function"`
+}
+
+type ToolCallFunction struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"`
 }
 
 // ChatRequest is the trimmed shape Atalaia sends. Unset optional fields
@@ -26,6 +53,8 @@ type ChatRequest struct {
 	MaxTokens      int            `json:"max_tokens,omitempty"`
 	Temperature    float64        `json:"temperature,omitempty"`
 	ResponseFormat map[string]any `json:"response_format,omitempty"`
+	Tools          []Tool         `json:"tools,omitempty"`
+	ToolChoice     any            `json:"tool_choice,omitempty"`
 }
 
 // ChatResponse captures only the fields we read. The full OpenAI

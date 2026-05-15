@@ -47,6 +47,7 @@ llm:
   request_timeout: 90s
   profile: gemma4
   max_findings_per_request: 200     # hard cap; truncated:true beyond this
+  use_tools: false                  # true => use OpenAI tool calling for guaranteed schema (Gemma 4, Qwen 2.5 with --tool-call-parser, etc)
   context_budget:
     input_tokens: 80000
     output_tokens: 8000
