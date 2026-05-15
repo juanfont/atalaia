@@ -1,0 +1,7 @@
+{
+  "description": "An os.environ.get fallback whose default is a high-entropy literal explicitly prefixed PLACEHOLDER and called out as not-a-real-credential in the surrounding comment. The LLM should dismiss.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "PLACEHOLDER9KQp2RvX7sZn4mLb8hT3yJgWeFd0HuMc", "verdict": "dismissed" }
+  ]
+}

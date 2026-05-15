@@ -30,6 +30,9 @@ go.work.sum
 # Internal operational notes (not for public commits)
 internal-docs/
 
+# Built binary (produced by `make build`).
+/atalaia
+
 # Editor/IDE
 # .idea/
 # .vscode/

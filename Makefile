@@ -8,7 +8,7 @@ KINGFISHER_VERSION ?= 1.27.0
 
 PREFIX ?= /usr/local
 
-.PHONY: build test test-integration smoke vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
+.PHONY: build test test-integration smoke smoke-corpus vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
 
 build:
 	go build -ldflags '$(GO_LDFLAGS)' -o atalaia ./cmd/atalaia
@@ -30,6 +30,13 @@ test-integration:
 # your own config file. Defaults to internal-docs/smoke.yaml.
 smoke:
 	CONFIG=$(CONFIG) ./scripts/smoke.sh
+
+# Full integration corpus against a real LLM. Builds atalaia,
+# spins it up, runs every fixture under internal/integration/testdata
+# and grades overall agreement. Override INTEGRATION_MIN_AGREEMENT
+# to tune the pass threshold (default 0.75).
+smoke-corpus:
+	CONFIG=$(CONFIG) ./scripts/smoke-corpus.sh
 
 vet:
 	go vet ./...

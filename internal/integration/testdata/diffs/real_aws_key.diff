@@ -1,0 +1,17 @@
+diff --git a/services/storage.py b/services/storage.py
+index aaaaaaa..bbbbbbb 100644
+--- a/services/storage.py
++++ b/services/storage.py
+@@ -1,7 +1,11 @@
+ import boto3
+ import os
+
+-s3 = boto3.client("s3")
++s3 = boto3.client(
++    "s3",
++    aws_access_key_id="AKIA5JNQXQABCDEFGHIJ",
++    aws_secret_access_key="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",
++)
+
+ def upload(name: str, data: bytes) -> None:
+     s3.put_object(Bucket="prod-uploads", Key=name, Body=data)

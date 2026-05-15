@@ -1,0 +1,16 @@
+diff --git a/tests/fixtures/aws.py b/tests/fixtures/aws.py
+index aaaaaaa..bbbbbbb 100644
+--- a/tests/fixtures/aws.py
++++ b/tests/fixtures/aws.py
+@@ -1,3 +1,10 @@
++# Fake AWS credentials used by the moto-backed unit tests. These never
++# leave the test environment and the moto mock ignores their value.
++FAKE_AWS_ACCESS_KEY_ID = "AKIA5JNQXQABCDEFGHIJ"
++FAKE_AWS_SECRET_ACCESS_KEY = "abcd1234EFGH5678ijkl9012MNOPqrst3456UVWX"
++
+ def build_s3_client():
+-    pass
++    import boto3
++    from moto import mock_aws
++    with mock_aws():
++        return boto3.client("s3", aws_access_key_id=FAKE_AWS_ACCESS_KEY_ID, aws_secret_access_key=FAKE_AWS_SECRET_ACCESS_KEY)

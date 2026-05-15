@@ -1,0 +1,7 @@
+{
+  "description": "Real-looking AWS access key in a boto3.client init wired to a prod-named bucket. The LLM should confirm.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "AKIA5JNQXQABCDEFGHIJ", "verdict": "confirmed" }
+  ]
+}

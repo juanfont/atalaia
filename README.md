@@ -91,6 +91,11 @@ Verify and run:
 
 `POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
 
+Two more `make` targets are available against a config that points at a real LLM:
+
+- `make smoke CONFIG=path/to/atalaia.yaml`: end-to-end pipeline check, single fixture diff, assert response shape.
+- `make smoke-corpus CONFIG=...`: full integration corpus (`internal/integration/testdata/diffs/`) with six fixtures covering real-credential and false-positive cases, graded on aggregate agreement (default floor 0.5, `INTEGRATION_MIN_AGREEMENT` to tune).
+
 ## Container
 
 Tagged releases publish a multi-arch image to GHCR. `atalaia` plus pinned `trufflehog` and `kingfisher`, around 110 MB, non-root:

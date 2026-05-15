@@ -1,0 +1,14 @@
+diff --git a/config.py b/config.py
+index aaaaaaa..bbbbbbb 100644
+--- a/config.py
++++ b/config.py
+@@ -1,4 +1,8 @@
+ import os
+
+-API_KEY = os.environ["API_KEY"]
++# Read the API key from the environment. The literal below is only
++# there so local-dev imports don't blow up before .env is sourced;
++# production deployments set API_KEY for real. The opaque string is a
++# placeholder, not a real credential.
++API_KEY = os.environ.get("API_KEY", "PLACEHOLDER9KQp2RvX7sZn4mLb8hT3yJgWeFd0HuMc")
+ ENV = os.environ.get("ENV", "production")

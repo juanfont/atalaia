@@ -1,0 +1,7 @@
+{
+  "description": "Same AKIA-format key, inside a docs Markdown fenced block introduced by 'An example ... looks like'. The LLM should dismiss.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "AKIA5JNQXQABCDEFGHIJ", "verdict": "dismissed" }
+  ]
+}

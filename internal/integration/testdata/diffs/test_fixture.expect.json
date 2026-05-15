@@ -1,0 +1,7 @@
+{
+  "description": "Same AKIA-format key, but in tests/fixtures/aws.py with a 'fake / moto' comment and a moto-mocked client. The LLM should dismiss.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "AKIA5JNQXQABCDEFGHIJ", "verdict": "dismissed" }
+  ]
+}

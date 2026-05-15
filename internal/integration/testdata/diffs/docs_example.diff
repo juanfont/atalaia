@@ -1,0 +1,19 @@
+diff --git a/docs/aws_setup.md b/docs/aws_setup.md
+index aaaaaaa..bbbbbbb 100644
+--- a/docs/aws_setup.md
++++ b/docs/aws_setup.md
+@@ -1,5 +1,15 @@
+ # AWS setup
+
+ Configure your credentials with `aws configure`.
++
++An example `~/.aws/credentials` file looks like:
++
++```ini
++[default]
++aws_access_key_id = AKIA5JNQXQABCDEFGHIJ
++aws_secret_access_key = abcd1234EFGH5678ijkl9012MNOPqrst3456UVWX
++```
++
++Replace both values with the keys from your own IAM user. Never check the
++real values into git.

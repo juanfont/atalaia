@@ -1,0 +1,18 @@
+diff --git a/services/alerts.py b/services/alerts.py
+index aaaaaaa..bbbbbbb 100644
+--- a/services/alerts.py
++++ b/services/alerts.py
+@@ -1,7 +1,11 @@
+ import requests
+
+-API_TOKEN = ""
++API_TOKEN = "9KQp2RvX7sZn4mLb8hT3yJgWeFd0HuMc6oP5iA1eY"
+
+ def page_oncall(message: str) -> None:
+-    pass
++    requests.post(
++        "https://alerts.prod.example.com/api/v2/page",
++        headers={"Authorization": f"Bearer {API_TOKEN}"},
++        json={"channel": "oncall-prod", "text": message},
++        timeout=10,
++    )

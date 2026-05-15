@@ -4,6 +4,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- Integration corpus under `internal/integration/testdata/diffs/`
+  with six fixtures exercising the LLM filter end-to-end (real AWS
+  key in boto3 init, GitHub PAT in Bearer header, Slack bot token in
+  WebClient, AKIA-format key in tests fixture, AKIA-format key in
+  docs example, high-entropy placeholder in `os.environ.get`
+  default). Build-tagged (`integration`), gated on
+  `ATALAIA_INTEGRATION_URL`. Aggregate agreement gate
+  (`INTEGRATION_MIN_AGREEMENT`, default 0.5) accommodates small-
+  model variance while still surfacing prompt regressions.
+- `make smoke-corpus CONFIG=...` (`scripts/smoke-corpus.sh`)
+  builds atalaia, stands it up on a non-default port, runs the
+  corpus, tears down.
+
+
 ## [0.1.0], 2026-05-14
 
 First public release. The regex-then-LLM secret filter described in

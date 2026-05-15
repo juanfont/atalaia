@@ -1,0 +1,7 @@
+{
+  "description": "High-entropy opaque API token wired into a Bearer header that calls a prod-named alerts endpoint. The LLM should confirm.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "9KQp2RvX7sZn4mLb8hT3yJgWeFd0HuMc6oP5iA1eY", "verdict": "confirmed" }
+  ]
+}
