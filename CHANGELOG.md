@@ -4,57 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
-### Added
-
-- Opt-in tool-calling path via `llm.use_tools`. When true, Atalaia
-  sends a `submit_verdicts` function tool with the VerdictSchema as
-  the OpenAI tools API expects, forces `tool_choice` to that
-  function, and parses `tool_calls[0].function.arguments` instead
-  of message content. Eliminates gap-fills on any tool-supporting
-  backend (Gemma 4 with `--tool-call-parser gemma4`, Qwen 2.5 with
-  `--tool-call-parser hermes`, Mistral, etc.). New unit tests
-  cover the tool path and the missing-tool-call error case.
-- Inline JSON shape example in the user prompt template so backends
-  without tool calling still produce the right shape consistently.
-  Fixes a bug where non-Gemma models would emit JSON with invented
-  finding_ids, triggering atalaia's gap-fill fallback.
-
-### Changed
-
-- **Breaking**: `llm.use_tools` now defaults to `true`. Tool calling
-  is the right mechanism for structured output and what the design
-  doc's reference vLLM deployment supports. Set `llm.use_tools: false`
-  for backends without a registered tool-call parser (some smaller
-  hosted providers, certain Ollama or llama.cpp builds, or vLLM
-  serving a model family for which no `--tool-call-parser` is wired).
-  vLLM with the wrong parser returns a clear 400 to `/check` which
-  atalaia surfaces as a 502; flip to false if you see that.
-- `INTEGRATION_MIN_AGREEMENT` default lowered to 0.6 to reflect
-  honest per-run variance with tool calling on Qwen2.5-7B-AWQ
-  (4-6 agreements out of 6 across runs, 0 gap-fills).
-
-
-### Added
-
-- Integration corpus under `internal/integration/testdata/diffs/`
-  with six fixtures exercising the LLM filter end-to-end (real AWS
-  key in boto3 init, GitHub PAT in Bearer header, Slack bot token in
-  WebClient, AKIA-format key in tests fixture, AKIA-format key in
-  docs example, high-entropy placeholder in `os.environ.get`
-  default). Build-tagged (`integration`), gated on
-  `ATALAIA_INTEGRATION_URL`. Aggregate agreement gate
-  (`INTEGRATION_MIN_AGREEMENT`, default 0.5) accommodates small-
-  model variance while still surfacing prompt regressions.
-- `make smoke-corpus CONFIG=...` (`scripts/smoke-corpus.sh`)
-  builds atalaia, stands it up on a non-default port, runs the
-  corpus, tears down.
-
-
-## [0.1.0], 2026-05-14
+## [0.1.0], 2026-05-15
 
 First public release. The regex-then-LLM secret filter described in
-the design doc, plus CI, container, and the first round of operational
-hardening (auth, readiness split, structured logs).
+the design doc, end to end: detectors, dedup, LLM adjudication with
+tool calling, observability, container, CI.
 
 ### Added
 
@@ -69,21 +23,37 @@ hardening (auth, readiness split, structured logs).
   tolerant of trailing-space-stripped context lines. Dedup by
   `(file, line, match)` with detection-trail preservation.
   Per-detector custom config files and `extra_args` escape hatches.
+  Trufflehog invocations include `--no-update` so the binary works
+  in read-only containers.
 - **Redaction** (`internal/redact`). URL-aware mask that keeps hosts
   visible, head/tail-keep fallback for opaque tokens.
-- **HTTP API**: `POST /check` (text/x-diff or JSON), `GET /healthz`,
-  `GET /version`. ULID request IDs. Max-body cap, parallel-detector
-  timeout.
+- **HTTP API**: `POST /check` (text/x-diff or JSON), `GET /healthz`
+  (liveness, always 200), `GET /readyz` (readiness, probes the LLM
+  and returns 200/503), `GET /version`. ULID request IDs. Max-body
+  cap, parallel-detector timeout, configurable idle timeout. Optional
+  bearer-token auth on `/check` via `server.auth_token` (or
+  `ATALAIA_SERVER_AUTH_TOKEN`); probes and `/version` stay open.
+  Per-request structured log line with request_id, sizes, verdict
+  counts, stage timings. No raw matches.
 - **LLM filter** (`internal/llm`):
   - OpenAI chat-completions client.
   - Semaphore with `queue_max` ⇒ HTTP 503 when full.
   - Short-circuits: verified ⇒ confirmed (1.0), known sentinels
     (`AKIAIOSFODNN7EXAMPLE`, `sk-test-…`, `ya29.dummy`, …) ⇒ dismissed
     (1.0).
+  - **Tool calling** (default on, `llm.use_tools: true`): sends a
+    `submit_verdicts` function with the verdict schema, parses
+    `tool_calls[0].function.arguments`. Eliminates structural
+    failures on any tool-supporting backend (Gemma 4 with
+    `--tool-call-parser gemma4`, Qwen 2.5 with
+    `--tool-call-parser hermes`, Mistral, etc.).
+  - Content-parsing fallback for backends without a tool-call
+    parser (`llm.use_tools: false`). Accepts both
+    `{"verdicts": [...]}` envelope and bare top-level arrays; the
+    user prompt template carries an inline JSON shape example so
+    non-Gemma backends still produce the right shape.
   - Gap-fill for findings the model didn't decide (conservative
     `confirmed` at confidence 0, metric-bumped).
-  - Response parser accepts both `{"verdicts": [...]}` envelope and
-    bare top-level arrays.
 - **Tiered context**: single-call when the diff fits the input
   budget. Per-finding mode otherwise, with ±N context windows packed
   into sequential batches under a single semaphore slot. Hard
@@ -102,28 +72,22 @@ hardening (auth, readiness split, structured logs).
   the additional host listener. Auth key must come from
   `ATALAIA_TAILSCALE_AUTH_KEY`. A YAML-level linter rejects it
   appearing literally in the config file.
-- **Bearer-token auth on `/check`**. Set `server.auth_token` (or
-  `ATALAIA_SERVER_AUTH_TOKEN`). Requests need
-  `Authorization: Bearer <token>`. `/healthz`, `/readyz`, `/version`
-  stay open.
-- **`/readyz` readiness probe.** Probes the LLM, returns 200/503.
-  `/healthz` is now liveness, always 200 if the process is up.
-- `server.idle_timeout` (default 120s) wired into `http.Server`.
-- Per-request structured log line with `request_id`, sizes, verdict
-  counts, stage timings. No raw matches.
-- GitHub Actions CI (unit + integration jobs).
-- goreleaser config and tag-triggered release workflow producing
+- **Release plumbing**: GitHub Actions CI (unit + integration jobs);
+  goreleaser config and tag-triggered release workflow producing
   linux/darwin × amd64/arm64 tarballs with the `atalaia.Version`
-  ldflag wired.
-- Multi-arch container image published to `ghcr.io/juanfont/atalaia`
-  on each tag. Bundles pinned `trufflehog` and `kingfisher`, runs
-  as a non-root user, prompts at `/etc/atalaia/prompts/`.
-- `docs/deployment.md`: systemd, container, reverse proxy, tailscale
-  shapes; probe and auth wiring; worked GitLab webhook integration
-  (Go watcher sketch + operational checklist).
-- `make test-integration` (mirrors the CI integration job) and
-  `make smoke CONFIG=...` (end-to-end against a real LLM via
-  `scripts/smoke.sh`).
+  ldflag wired; multi-arch container image published to
+  `ghcr.io/juanfont/atalaia` per tag, bundling pinned `trufflehog`
+  and `kingfisher`, runs as a non-root user, prompts at
+  `/etc/atalaia/prompts/`.
+- **Local make targets**: `make test-integration` mirrors the CI
+  integration job. `make smoke CONFIG=…` runs a single-fixture
+  end-to-end against a real LLM. `make smoke-corpus CONFIG=…` runs
+  the full integration corpus (six fixtures under
+  `internal/integration/testdata/diffs/`) and grades aggregate
+  agreement (`INTEGRATION_MIN_AGREEMENT`, default 0.6).
+- **Docs**: `docs/deployment.md` covers systemd, container, reverse
+  proxy + TLS, and tailscale-only shapes, plus a worked GitLab
+  webhook integration (Go watcher sketch + operational checklist).
 
 ### Security
 
