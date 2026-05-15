@@ -21,6 +21,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Changed
 
+- **Breaking**: `llm.use_tools` now defaults to `true`. Tool calling
+  is the right mechanism for structured output and what the design
+  doc's reference vLLM deployment supports. Set `llm.use_tools: false`
+  for backends without a registered tool-call parser (some smaller
+  hosted providers, certain Ollama or llama.cpp builds, or vLLM
+  serving a model family for which no `--tool-call-parser` is wired).
+  vLLM with the wrong parser returns a clear 400 to `/check` which
+  atalaia surfaces as a 502; flip to false if you see that.
 - `INTEGRATION_MIN_AGREEMENT` default lowered to 0.6 to reflect
   honest per-run variance with tool calling on Qwen2.5-7B-AWQ
   (4-6 agreements out of 6 across runs, 0 gap-fills).

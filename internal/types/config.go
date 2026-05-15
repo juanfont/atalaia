@@ -97,11 +97,13 @@ type LLMConfig struct {
 	MaxFindingsPerRequest int
 	ContextBudget         ContextBudgetConfig
 	Profiles              map[string]LLMProfile
-	// UseTools opts into the OpenAI tool-calling path instead of
-	// content-parsing. The model receives the verdict shape as a
-	// function-calling tool and replies via tool_calls; atalaia parses
-	// the structured arguments. Eliminates gap-fills on any
-	// tool-supporting backend (Gemma 4, Qwen 2.5, Mistral, etc).
+	// UseTools routes adjudication through the OpenAI tool-calling
+	// path: atalaia sends the verdict shape as a function-calling
+	// tool and parses tool_calls instead of message content. Default
+	// true. Set false only for backends without a registered
+	// tool-call parser (some hosted providers, certain Ollama /
+	// llama.cpp builds, vLLM without `--tool-call-parser`); the
+	// content-parsing fallback then takes over.
 	UseTools bool
 }
 
@@ -206,6 +208,7 @@ func setDefaults() {
 	viper.SetDefault("llm.context_budget.input_tokens", 80000)
 	viper.SetDefault("llm.context_budget.output_tokens", 8000)
 	viper.SetDefault("llm.context_budget.finding_context_lines", 30)
+	viper.SetDefault("llm.use_tools", true)
 
 	// observability
 	viper.SetDefault("observability.log_level", "info")
