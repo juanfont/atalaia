@@ -82,7 +82,9 @@ Also accepted: `text/plain`, `application/x-patch`, missing/blank Content-Type (
 
 #### `request_id`
 
-A ULID. Stable per call; appears in atalaia's per-request log line and the audit log entry (when enabled), so you can correlate a noisy alert back to the request that produced it.
+Stable per call. Appears in atalaia's per-request log line, the audit log entry (when enabled), and the `X-Request-ID` response header. Use it to correlate a noisy alert back to the request that produced it.
+
+If the caller sends an `X-Request-ID` header on the request, atalaia uses that value (validated: ≤ 128 chars, alphanumeric plus `-_.:`). Otherwise atalaia mints a fresh ULID. The chosen value always comes back on both the response header and the body field.
 
 #### `verdicts[]`
 

@@ -191,6 +191,59 @@ func TestCheck_IDStableAcrossRequests(t *testing.T) {
 	}
 }
 
+func TestCheck_AcceptsXRequestIDHeader(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/check", bytes.NewReader(loadFixture(t, "sample.diff")))
+	req.Header.Set("Content-Type", "text/x-diff")
+	req.Header.Set("X-Request-ID", "trace-abc.123:99")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+	if got := resp.Header.Get("X-Request-ID"); got != "trace-abc.123:99" {
+		t.Errorf("response X-Request-ID=%q, want caller-supplied", got)
+	}
+	var out apitypes.CheckResponse
+	_ = json.NewDecoder(resp.Body).Decode(&out)
+	if out.RequestID != "trace-abc.123:99" {
+		t.Errorf("body request_id=%q, want caller-supplied", out.RequestID)
+	}
+}
+
+func TestCheck_RejectsMalformedXRequestID(t *testing.T) {
+	srv := newTestServer(t, &fakeAdjudicator{})
+	defer srv.Close()
+	// net/http refuses to put control chars or newlines on the wire,
+	// so these cases all exercise the server-side validator on inputs
+	// the client will actually send.
+	cases := []string{
+		"has spaces inside",
+		"has/slash",
+		"has=equals",
+		"has(parens)",
+		strings.Repeat("a", 200),
+	}
+	for _, raw := range cases {
+		req, _ := http.NewRequest(http.MethodPost, srv.URL+"/check", bytes.NewReader(loadFixture(t, "sample.diff")))
+		req.Header.Set("Content-Type", "text/x-diff")
+		req.Header.Set("X-Request-ID", raw)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("POST: %v", err)
+		}
+		got := resp.Header.Get("X-Request-ID")
+		resp.Body.Close()
+		if got == raw {
+			t.Errorf("malformed X-Request-ID %q echoed back; should have been replaced with ULID", raw)
+		}
+		if got == "" {
+			t.Errorf("response missing X-Request-ID for malformed input %q", raw)
+		}
+	}
+}
+
 func TestCheck_EmptyBody(t *testing.T) {
 	srv := newTestServer(t, &fakeAdjudicator{})
 	defer srv.Close()

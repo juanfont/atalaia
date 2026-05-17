@@ -4,6 +4,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- `POST /check` accepts a caller-supplied `X-Request-ID` header
+  and uses it as the `request_id` (in the response body, the
+  per-request log line, the audit entry, and the `X-Request-ID`
+  response header). When the header is missing or fails validation
+  (≤ 128 chars, alphanumeric plus `-_.:`), atalaia mints a ULID
+  as before. Lets callers propagate their own trace IDs across
+  the stack.
+
 ## [0.2.0], 2026-05-15
 
 ### Added

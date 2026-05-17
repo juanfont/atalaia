@@ -22,7 +22,8 @@ import (
 
 func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	reqID := newRequestID()
+	reqID := requestID(r)
+	w.Header().Set("X-Request-ID", reqID)
 
 	diff, err := readDiff(r, a.config.Server.MaxBodyBytes)
 	if err != nil {
@@ -330,9 +331,37 @@ func detectorNames(dets []detector.Detector) []string {
 	return out
 }
 
-// newRequestID returns a fresh ULID string. The crypto/rand entropy
-// source is intentionally simple — IDs are correlation tokens, not
-// secrets.
-func newRequestID() string {
+// requestID returns the X-Request-ID header when the caller supplied
+// a well-shaped value; otherwise mints a fresh ULID. Callers that
+// already correlate logs across a distributed system can pass their
+// own ID through; standalone callers get atalaia's ULID for free.
+//
+// "Well-shaped" rejects anything that could leak into logs or audit
+// records badly: whitespace, control characters, non-ASCII, oversize
+// payloads. The character set is intentionally narrow so the ID can
+// land in a structured log line, a URL, and a JSON value without any
+// escaping concerns.
+func requestID(r *http.Request) string {
+	if id, ok := sanitizeRequestID(r.Header.Get("X-Request-ID")); ok {
+		return id
+	}
 	return ulid.MustNew(ulid.Now(), rand.Reader).String()
+}
+
+func sanitizeRequestID(raw string) (string, bool) {
+	id := strings.TrimSpace(raw)
+	if id == "" || len(id) > 128 {
+		return "", false
+	}
+	for _, c := range id {
+		switch {
+		case c >= 'a' && c <= 'z',
+			c >= 'A' && c <= 'Z',
+			c >= '0' && c <= '9',
+			c == '-', c == '_', c == '.', c == ':':
+		default:
+			return "", false
+		}
+	}
+	return id, true
 }
