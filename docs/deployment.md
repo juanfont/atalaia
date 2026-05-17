@@ -2,6 +2,8 @@
 
 How to stand Atalaia up, put it on a network, and wire it into a source host. Worked example: GitLab. GitHub Enterprise, Bitbucket, Gitea look almost identical.
 
+For the HTTP contract (request shapes, response anatomy, error codes), see [api.md](api.md). This doc covers everything around it.
+
 ## Pieces
 
 Three moving parts:

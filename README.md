@@ -89,7 +89,7 @@ Verify and run:
 ./atalaia serve    -c /etc/atalaia/atalaia.yaml
 ```
 
-`POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions.
+`POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions. See [docs/api.md](docs/api.md) for the full contract: request shapes, the per-verdict detection trail (which detector fired, which rule, plus the LLM's verdict and reason), stats, and error codes.
 
 Two more `make` targets are available against a config that points at a real LLM:
 
