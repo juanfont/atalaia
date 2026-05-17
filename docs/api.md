@@ -3,6 +3,11 @@
 The contract callers integrate against. Everything Atalaia exposes is
 HTTP. There are four endpoints. The interesting one is `POST /check`.
 
+Go consumers can skip the schema-redefining step: the wire types live
+in [`github.com/juanfont/atalaia/apitypes`](../apitypes), a
+stdlib-only public package. `import` it and decode `/check` responses
+into `apitypes.CheckResponse` directly.
+
 ## Endpoints
 
 | Method | Path | Purpose |
@@ -243,7 +248,7 @@ What each verdict tells the caller:
 - **Verdict 2**: detector said "github-pat", LLM saw it land in a Bearer header on a real client and confirmed.
 - **Verdict 3**: two detectors fired on the same line; that's why `raw_findings: 4` collapsed to `after_dedup: 3`. The merged `detections` list keeps both, so callers can see the corroboration.
 
-The caller's typical loop:
+The caller's typical loop, in Python:
 
 ```python
 for v in resp["verdicts"]:
@@ -252,6 +257,23 @@ for v in resp["verdicts"]:
     detectors = ", ".join(f"{d['detector_type']}/{d['rule']}" for d in v["detections"])
     print(f"{v['file']}:{v['line']}  {v['match_preview']}  ({detectors})  conf={v['confidence']}  {v['reason']}")
     notify_developer(v)  # or open an issue, fail the build, etc
+```
+
+In Go, via `apitypes`:
+
+```go
+import "github.com/juanfont/atalaia/apitypes"
+
+var resp apitypes.CheckResponse
+if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+    return err
+}
+for _, v := range resp.Verdicts {
+    if v.Verdict != apitypes.VerdictConfirmed {
+        continue
+    }
+    notifyDeveloper(v)
+}
 ```
 
 ### Status codes

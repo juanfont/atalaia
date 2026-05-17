@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.2.0], 2026-05-15
+
 ### Added
 
 - `github.com/juanfont/atalaia/apitypes`: public Go package with
@@ -14,6 +16,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   only, no transitive pull-in of gitleaks, vLLM SDKs, viper, or
   any other server-side weight. Includes a JSON-roundtrip test
   that locks down the tag set.
+- `docker-compose.yml` quickstart: bundles atalaia with a local
+  Ollama serving `qwen2.5:1.5b`. `docker compose up -d` then POST
+  diffs to `localhost:8080`. The first call triggers a one-time
+  model pull. Slow on CPU but good enough to try the pipeline end
+  to end without standing up a GPU.
 
 ### Changed
 
@@ -22,6 +29,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   directly. Flag-day rename, no compatibility aliases.
 - `VerdictPendingLLM` constant dropped. Was a milestone-3
   placeholder that never appeared in a shipped response.
+- README quickstart leads with the compose flow; the
+  build-from-source path moves to a subsection.
 
 ## [0.1.0], 2026-05-15
 

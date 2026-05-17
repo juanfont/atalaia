@@ -61,6 +61,19 @@ One Go binary. The LLM is a sibling process (vLLM, llama.cpp, Ollama, anything O
 
 ## Quickstart
 
+Try it in five minutes with the bundled `docker-compose.yml` (atalaia plus a local Ollama):
+
+```sh
+docker compose up -d
+curl -X POST -H 'content-type: text/x-diff' \
+    --data-binary @your.diff \
+    http://localhost:8080/check
+```
+
+The first `/check` triggers a one-time ~1 GB pull of `qwen2.5:1.5b` into the Ollama volume; subsequent calls are warm. Ollama on CPU is slow (tens of seconds per request) and only good for kicking the tyres; for real workloads point `ATALAIA_LLM_ENDPOINT` and `ATALAIA_LLM_MODEL` at vLLM or any other OpenAI-compatible backend.
+
+### Building from source
+
 ```sh
 make build               # produces ./atalaia
 make install-detectors   # pins and installs trufflehog and kingfisher
@@ -89,7 +102,7 @@ Verify and run:
 ./atalaia serve    -c /etc/atalaia/atalaia.yaml
 ```
 
-`POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions. See [docs/api.md](docs/api.md) for the full contract: request shapes, the per-verdict detection trail (which detector fired, which rule, plus the LLM's verdict and reason), stats, and error codes.
+`POST /check` accepts `text/x-diff` or `application/json` with `{"diff": "..."}` and returns a list of verdicts plus per-request stats. `GET /healthz` is liveness (200 if the process is up). `GET /readyz` is readiness (200/503 based on LLM reachability). `GET /version` reports atalaia, detector, and LLM-model versions. See [docs/api.md](docs/api.md) for the full contract: request shapes, the per-verdict detection trail (which detector fired, which rule, plus the LLM's verdict and reason), stats, and error codes. Go consumers can import the wire types from [`github.com/juanfont/atalaia/apitypes`](apitypes) (stdlib-only, no transitive Atalaia deps).
 
 Two more `make` targets are available against a config that points at a real LLM:
 

@@ -1,0 +1,46 @@
+# Atalaia quickstart. Two services: atalaia and a local Ollama LLM.
+# Run:
+#     docker compose up -d
+#     # first /check call triggers a one-time ~1 GB qwen2.5:1.5b pull
+#     curl -X POST -H 'content-type: text/x-diff' \
+#         --data-binary @your.diff \
+#         http://localhost:8080/check
+#
+# For real workloads, point ATALAIA_LLM_ENDPOINT/MODEL at vLLM or any
+# OpenAI-compatible backend (see docs/deployment.md). This compose is
+# the "try it in five minutes on a laptop" path.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: atalaia-ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  atalaia:
+    image: ghcr.io/juanfont/atalaia:latest
+    container_name: atalaia
+    ports:
+      - "8080:8080"     # /check, /healthz, /readyz, /version
+      - "9090:9090"     # /metrics
+    environment:
+      ATALAIA_LLM_ENDPOINT: http://ollama:11434/v1
+      ATALAIA_LLM_MODEL: qwen2.5:1.5b
+      # Tool calling needs --tool-call-parser configured per-model
+      # on the LLM side; Ollama's coverage is uneven, so the demo
+      # uses the content-parsing fallback. Flip to true once you
+      # move to vLLM with a matching parser.
+      ATALAIA_LLM_USE_TOOLS: "false"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  ollama-data:

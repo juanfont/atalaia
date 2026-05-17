@@ -148,6 +148,12 @@ unless `observability.audit.reveal_matches: true`.
   `/readyz`, `/version`). Bearer-token middleware on `/check` only.
   Per-request structured log line at the end of `Check` covers
   request_id, sizes, verdict counts, stage timings. No raw matches.
+  Handlers reference wire-shape types via `apitypes.X`; the types
+  themselves live in [apitypes](apitypes/) (public, stdlib-only).
+- [apitypes](apitypes/), the public Go package of wire-shape types
+  (`CheckResponse`, `Verdict`, `Detection`, `Stats`, etc). External
+  consumers `go get` this without pulling in any of atalaia's
+  server-side dependencies. JSON tags here are the contract.
 - [internal/detector](internal/detector/), `Detector` interface +
   gitleaks/trufflehog/kingfisher adapters + unified-diff walker +
   dedup + `FindingID` helper + `BuildEnabled` factory.
