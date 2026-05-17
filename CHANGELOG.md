@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.2.1], 2026-05-17
+
 ### Added
 
 - `POST /check` accepts a caller-supplied `X-Request-ID` header
