@@ -1,8 +1,6 @@
-package api
+package apitypes
 
-// Verdict is one decision per deduplicated finding. Until the LLM
-// filter lands in milestone 4, every non-short-circuited finding
-// comes back as "pending_llm" with zero confidence.
+// Verdict is one decision per deduplicated finding.
 type Verdict struct {
 	ID           string      `json:"id"`
 	File         string      `json:"file"`
@@ -40,21 +38,30 @@ type Stats struct {
 	Truncated      bool     `json:"truncated"`
 }
 
+// CheckRequest is the application/json body shape for POST /check.
+// Atalaia also accepts the raw unified diff as text/x-diff (or
+// text/plain / application/x-patch), in which case this struct is
+// not used.
 type CheckRequest struct {
 	Diff string `json:"diff"`
 }
 
+// CheckResponse is the POST /check 200 body.
 type CheckResponse struct {
 	RequestID string    `json:"request_id"`
 	Verdicts  []Verdict `json:"verdicts"`
 	Stats     Stats     `json:"stats"`
 }
 
+// HealthzResponse is the body for GET /healthz and GET /readyz.
+// /healthz always returns 200 if the process is up. /readyz returns
+// 200/503 based on LLM reachability.
 type HealthzResponse struct {
 	Status       string `json:"status"`
 	LLMReachable bool   `json:"llm_reachable"`
 }
 
+// VersionResponse is the body for GET /version.
 type VersionResponse struct {
 	Atalaia    string `json:"atalaia"`
 	LLMModel   string `json:"llm_model"`
@@ -63,14 +70,14 @@ type VersionResponse struct {
 	Kingfisher string `json:"kingfisher"`
 }
 
+// ErrorResponse is the body returned on every non-2xx from /check.
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// Verdict-string constants. "pending_llm" is the milestone-3 placeholder
-// returned for findings that have not yet been adjudicated by the LLM.
+// Verdict-string constants. The legal values of Verdict.Verdict in
+// API responses.
 const (
-	VerdictConfirmed  = "confirmed"
-	VerdictDismissed  = "dismissed"
-	VerdictPendingLLM = "pending_llm"
+	VerdictConfirmed = "confirmed"
+	VerdictDismissed = "dismissed"
 )

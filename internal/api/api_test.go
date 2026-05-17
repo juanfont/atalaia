@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/juanfont/atalaia/apitypes"
 	"github.com/juanfont/atalaia/internal/detector"
 	"github.com/juanfont/atalaia/internal/llm"
 	"github.com/juanfont/atalaia/internal/types"
@@ -106,7 +107,7 @@ func TestCheck_RawDiff(t *testing.T) {
 		t.Fatalf("status=%d body=%s", resp.StatusCode, raw)
 	}
 
-	var out CheckResponse
+	var out apitypes.CheckResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -117,7 +118,7 @@ func TestCheck_RawDiff(t *testing.T) {
 		t.Fatalf("expected at least one verdict, got 0")
 	}
 	for _, v := range out.Verdicts {
-		if v.Verdict != VerdictConfirmed {
+		if v.Verdict != apitypes.VerdictConfirmed {
 			t.Errorf("verdict=%q, want confirmed (fake adjudicator)", v.Verdict)
 		}
 		if v.MatchPreview == "AKIA1234ABCDEFGHIJKL" {
@@ -146,7 +147,7 @@ func TestCheck_JSONBody(t *testing.T) {
 	defer srv.Close()
 
 	diff := string(loadFixture(t, "sample.diff"))
-	reqBody, _ := json.Marshal(CheckRequest{Diff: diff})
+	reqBody, _ := json.Marshal(apitypes.CheckRequest{Diff: diff})
 	resp, err := http.Post(srv.URL+"/check", "application/json", bytes.NewReader(reqBody))
 	if err != nil {
 		t.Fatalf("POST /check: %v", err)
@@ -163,13 +164,13 @@ func TestCheck_IDStableAcrossRequests(t *testing.T) {
 	defer srv.Close()
 	body := loadFixture(t, "sample.diff")
 
-	post := func() CheckResponse {
+	post := func() apitypes.CheckResponse {
 		resp, err := http.Post(srv.URL+"/check", "text/x-diff", bytes.NewReader(body))
 		if err != nil {
 			t.Fatalf("POST: %v", err)
 		}
 		defer resp.Body.Close()
-		var out CheckResponse
+		var out apitypes.CheckResponse
 		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
@@ -266,7 +267,7 @@ func TestReadyz_OK(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status=%d, want 200", resp.StatusCode)
 	}
-	var h HealthzResponse
+	var h apitypes.HealthzResponse
 	if err := json.NewDecoder(resp.Body).Decode(&h); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -396,7 +397,7 @@ func TestVersion(t *testing.T) {
 		t.Fatalf("GET /version: %v", err)
 	}
 	defer resp.Body.Close()
-	var v VersionResponse
+	var v apitypes.VersionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

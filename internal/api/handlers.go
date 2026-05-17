@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/juanfont/atalaia/apitypes"
 	"github.com/juanfont/atalaia/internal/audit"
 	"github.com/juanfont/atalaia/internal/detector"
 	"github.com/juanfont/atalaia/internal/llm"
@@ -68,14 +69,14 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 
 	verdicts := mergeVerdicts(deduped, result.Verdicts)
 	confirmed, dismissed := countVerdicts(verdicts)
-	metrics.VerdictsTotal.WithLabelValues(VerdictConfirmed).Add(float64(confirmed))
-	metrics.VerdictsTotal.WithLabelValues(VerdictDismissed).Add(float64(dismissed))
+	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictConfirmed).Add(float64(confirmed))
+	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictDismissed).Add(float64(dismissed))
 
 	total := time.Since(start)
-	resp := CheckResponse{
+	resp := apitypes.CheckResponse{
 		RequestID: reqID,
 		Verdicts:  verdicts,
-		Stats: Stats{
+		Stats: apitypes.Stats{
 			DetectorsRun:   detectorNames(a.detectors),
 			RawFindings:    len(raw),
 			AfterDedup:     len(deduped),
@@ -115,7 +116,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 // is up. Orchestrator restart loops should target /healthz, not /readyz —
 // a slow LLM endpoint shouldn't trigger a pod restart.
 func (a *App) Healthz(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, HealthzResponse{
+	writeJSON(w, http.StatusOK, apitypes.HealthzResponse{
 		Status:       "ok",
 		LLMReachable: true, // backwards compat — see /readyz for the real signal
 	})
@@ -131,7 +132,7 @@ func (a *App) Readyz(w http.ResponseWriter, r *http.Request) {
 	if !reachable {
 		status = http.StatusServiceUnavailable
 	}
-	writeJSON(w, status, HealthzResponse{
+	writeJSON(w, status, apitypes.HealthzResponse{
 		Status:       readyzStatus(reachable),
 		LLMReachable: reachable,
 	})
@@ -145,7 +146,7 @@ func readyzStatus(reachable bool) string {
 }
 
 func (a *App) Version(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, VersionResponse{
+	writeJSON(w, http.StatusOK, apitypes.VersionResponse{
 		Atalaia:    a.version,
 		LLMModel:   a.config.LLM.Model,
 		Gitleaks:   "unknown",
@@ -157,7 +158,7 @@ func (a *App) Version(w http.ResponseWriter, r *http.Request) {
 // writeAudit fans the just-finished response out to the audit sink.
 // Raw matches are populated only when observability.audit.reveal_matches
 // is true — otherwise entries carry preview only.
-func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detector.Finding, deduped []detector.DedupedFinding, resp *CheckResponse) {
+func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detector.Finding, deduped []detector.DedupedFinding, resp *apitypes.CheckResponse) {
 	if a.audit == nil {
 		return
 	}
@@ -212,24 +213,24 @@ func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detec
 // one verdict per finding, so missing entries fall through to the
 // safe-fallback shape — this should not happen in practice, but the
 // API contract still demands a verdict per finding.
-func mergeVerdicts(deduped []detector.DedupedFinding, decisions []llm.Verdict) []Verdict {
+func mergeVerdicts(deduped []detector.DedupedFinding, decisions []llm.Verdict) []apitypes.Verdict {
 	byID := make(map[string]llm.Verdict, len(decisions))
 	for _, v := range decisions {
 		byID[v.FindingID] = v
 	}
 
-	out := make([]Verdict, 0, len(deduped))
+	out := make([]apitypes.Verdict, 0, len(deduped))
 	for _, d := range deduped {
 		v, ok := byID[d.ID]
 		if !ok {
 			v = llm.Verdict{
 				FindingID:  d.ID,
-				Verdict:    VerdictConfirmed,
+				Verdict:    apitypes.VerdictConfirmed,
 				Confidence: 0,
 				Reason:     "no verdict produced for this finding",
 			}
 		}
-		out = append(out, Verdict{
+		out = append(out, apitypes.Verdict{
 			ID:           d.ID,
 			File:         d.File,
 			Line:         d.Line,
@@ -243,12 +244,12 @@ func mergeVerdicts(deduped []detector.DedupedFinding, decisions []llm.Verdict) [
 	return out
 }
 
-func countVerdicts(vs []Verdict) (confirmed, dismissed int) {
+func countVerdicts(vs []apitypes.Verdict) (confirmed, dismissed int) {
 	for _, v := range vs {
 		switch v.Verdict {
-		case VerdictConfirmed:
+		case apitypes.VerdictConfirmed:
 			confirmed++
-		case VerdictDismissed:
+		case apitypes.VerdictDismissed:
 			dismissed++
 		}
 	}
@@ -272,7 +273,7 @@ func readDiff(r *http.Request, max int64) ([]byte, error) {
 
 	switch ct {
 	case "application/json":
-		var req CheckRequest
+		var req apitypes.CheckRequest
 		if err := json.NewDecoder(body).Decode(&req); err != nil {
 			return nil, &httpError{"invalid JSON body: " + err.Error()}
 		}
@@ -305,13 +306,13 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, ErrorResponse{Error: msg})
+	writeJSON(w, status, apitypes.ErrorResponse{Error: msg})
 }
 
-func convertDetections(in []detector.Detection) []Detection {
-	out := make([]Detection, len(in))
+func convertDetections(in []detector.Detection) []apitypes.Detection {
+	out := make([]apitypes.Detection, len(in))
 	for i, d := range in {
-		out[i] = Detection{
+		out[i] = apitypes.Detection{
 			DetectorType: d.DetectorType,
 			DetectorName: d.DetectorName,
 			Rule:         d.Rule,

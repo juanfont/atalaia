@@ -4,6 +4,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- `github.com/juanfont/atalaia/apitypes`: public Go package with
+  the wire-shape types (`CheckResponse`, `Verdict`, `Detection`,
+  `Stats`, `HealthzResponse`, `VersionResponse`, `ErrorResponse`,
+  `CheckRequest`, `Verdict*` constants). External consumers can
+  decode `/check` responses without redefining the schema. Stdlib
+  only, no transitive pull-in of gitleaks, vLLM SDKs, viper, or
+  any other server-side weight. Includes a JSON-roundtrip test
+  that locks down the tag set.
+
+### Changed
+
+- `internal/api/types.go` removed. Call sites in `internal/api`
+  now reference `apitypes.Verdict`, `apitypes.CheckResponse`, etc.
+  directly. Flag-day rename, no compatibility aliases.
+- `VerdictPendingLLM` constant dropped. Was a milestone-3
+  placeholder that never appeared in a shipped response.
+
 ## [0.1.0], 2026-05-15
 
 First public release. The regex-then-LLM secret filter described in
