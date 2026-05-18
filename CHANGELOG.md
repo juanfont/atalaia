@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Changed
+
+- `INTEGRATION_MIN_AGREEMENT` default bumped to 0.8. The corpus
+  hits 6/6 cleanly on Gemma 4 E4B with tools and FP8; a lower
+  floor wasn't catching regressions any more.
+
 ## [0.2.1], 2026-05-17
 
 ### Added

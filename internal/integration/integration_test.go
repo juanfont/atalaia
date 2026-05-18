@@ -24,10 +24,9 @@
 // for a given match disagrees with expectations, or atalaia gap-fills
 // because the model returned no verdict for that finding_id. The
 // suite fails if overall agreement drops below INTEGRATION_MIN_AGREEMENT
-// (default 0.6). Observed on Qwen2.5-7B-Instruct-AWQ with use_tools=true:
-// 0 gap-fills consistently (tool calling guarantees structure), 4-6
-// agreements out of 6 across runs (model occasionally mis-judges the
-// AKIA-in-docs and AKIA-in-tests cases). Bigger models close that gap.
+// (default 0.8). Observed on Gemma 4 E4B (FP8, tool calling): 6/6 hits
+// consistently across runs, ~650 ms median /check latency. Smaller
+// models warrant a lower floor via env override.
 package integration
 
 import (
@@ -88,7 +87,7 @@ func minAgreement(t *testing.T) float64 {
 	t.Helper()
 	raw := os.Getenv("INTEGRATION_MIN_AGREEMENT")
 	if raw == "" {
-		return 0.6
+		return 0.8
 	}
 	v, err := strconv.ParseFloat(raw, 64)
 	if err != nil {
