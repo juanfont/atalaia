@@ -290,6 +290,103 @@ for _, v := range resp.Verdicts {
 
 Errors all return `application/json` `{"error": "..."}`.
 
+### False-positive prevention
+
+The whole point of Atalaia is that the LLM removes noise the regex
+detectors would otherwise dump on a developer. That removal is already
+in the response: there's no separate endpoint or field to enable. A
+**dismissed** verdict is a prevented false positive. The consumer can
+surface this directly.
+
+What you have to work with:
+
+- `stats.dismissed` is the count of prevented false positives for this
+  request. `stats.confirmed` is what actually needs a human.
+- Each dismissed verdict in `verdicts[]` carries the full story: which
+  detector fired (`detections[].detector_type` / `rule`), what the
+  scanner thought it found, and why the LLM dismissed it (`reason`,
+  `confidence`).
+
+So "we prevented N false positives, here's what they were" is a filter
+over the response you already have.
+
+**Go**, using the [`apitypes`](../apitypes) package:
+
+```go
+import "github.com/juanfont/atalaia/apitypes"
+
+type Prevented struct {
+    File     string
+    Line     int
+    Detector string // e.g. "gitleaks/aws-access-token"
+    Reason   string // the LLM's rationale
+}
+
+func preventedFalsePositives(resp apitypes.CheckResponse) []Prevented {
+    var out []Prevented
+    for _, v := range resp.Verdicts {
+        if v.Verdict != apitypes.VerdictDismissed {
+            continue
+        }
+        det := ""
+        if len(v.Detections) > 0 {
+            det = v.Detections[0].DetectorType + "/" + v.Detections[0].Rule
+        }
+        out = append(out, Prevented{
+            File: v.File, Line: v.Line, Detector: det, Reason: v.Reason,
+        })
+    }
+    return out
+}
+
+// In the watcher:
+prevented := preventedFalsePositives(resp)
+if len(prevented) > 0 {
+    log.Printf("atalaia prevented %d false positive(s) on commit %s", len(prevented), sha)
+    for _, p := range prevented {
+        log.Printf("  %s:%d  %s  (%s)", p.File, p.Line, p.Detector, p.Reason)
+    }
+}
+```
+
+`resp.Stats.Dismissed` equals `len(prevented)`; use whichever reads
+better at the call site.
+
+**Python**:
+
+```python
+prevented = [v for v in resp["verdicts"] if v["verdict"] == "dismissed"]
+if prevented:
+    print(f"atalaia prevented {len(prevented)} false positive(s)")
+    for v in prevented:
+        det = v["detections"][0]
+        print(f"  {v['file']}:{v['line']}  "
+              f"{det['detector_type']}/{det['rule']}  "
+              f"({v['reason']})")
+```
+
+#### Surfacing it to developers
+
+How loud to be is a policy decision that lives in the consumer, not
+Atalaia. Common shapes:
+
+- **Silent win, counted.** Don't notify per-dismissal; just track
+  `stats.dismissed` over time. The `atalaia_verdicts_total{verdict="dismissed"}`
+  Prometheus counter already supports a "noise removed" dashboard with
+  no consumer code at all.
+- **Footnote on the confirmed alert.** When you notify a developer
+  about a confirmed finding, append "Atalaia also dismissed N
+  likely-false-positive matches in this diff" so they trust the filter.
+- **Audit trail only.** Write dismissals to your own store keyed on the
+  stable `id` (`sha256(file:line:match)[:12]`) so you can later answer
+  "did we ever see this string and decide it was fine?" without
+  re-running.
+
+A dismissed verdict is not a guarantee. The LLM can be wrong, and the
+`reason` / `confidence` fields are there so the consumer can choose how
+much to trust a given dismissal. A common rule: surface dismissals with
+`confidence < 0.7` for spot-checking, swallow the rest.
+
 ## GET /healthz
 
 Liveness. Returns 200 as long as the process is up. **Never** returns 503. Use this for restart loops.
