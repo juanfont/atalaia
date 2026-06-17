@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.3.0], 2026-06-17
+
 ### Added
 
 - Background LLM reachability watcher. A goroutine pings the LLM
