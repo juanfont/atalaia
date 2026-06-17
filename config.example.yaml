@@ -45,6 +45,7 @@ llm:
   max_inflight: 1                   # concurrent LLM calls; match vLLM --max-num-seqs
   queue_max: 16                     # beyond this Atalaia returns 503
   request_timeout: 90s
+  healthcheck_interval: 30s         # background ping cadence; /readyz reads the cached result
   profile: gemma4
   max_findings_per_request: 200     # hard cap; truncated:true beyond this
   use_tools: true                   # default true; set false only for backends without a tool-call parser (compatibility fallback)

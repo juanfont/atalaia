@@ -302,7 +302,7 @@ The `llm_reachable: true` is a backwards-compat field, not the real readiness si
 
 ## GET /readyz
 
-Readiness. Probes the LLM with a one-token completion and returns 200/503 based on the result. Use this for load-balancer health and orchestrator readiness gates. A `/readyz=503` should take the pod out of rotation but **not** restart it.
+Readiness. Returns 200/503 based on a cached LLM-reachability state that a background goroutine refreshes every `llm.healthcheck_interval` (default 30 s). The cache means a busy load balancer can't turn /readyz into an LLM DoS amplifier; the staleness check inside the watcher means a wedged poller fails closed to "not ready" instead of serving stale "ready" answers (threshold is 3× the interval). Use this for load-balancer health and orchestrator readiness gates. A `/readyz=503` should take the pod out of rotation but **not** restart it.
 
 200:
 ```json

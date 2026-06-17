@@ -123,12 +123,17 @@ func (a *App) Healthz(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Readyz is the readiness probe: it probes the LLM endpoint and returns
-// 200/503 based on reachability. Load balancers / k8s readiness should
-// target this; a /readyz=503 takes the pod out of the rotation but
-// doesn't restart it.
+// Readyz is the readiness probe: it returns 200/503 based on a cached
+// LLM-reachability state that a background goroutine refreshes on the
+// `llm.healthcheck_interval` cadence. The cache means a busy load
+// balancer can't turn /readyz into an LLM DoS amplifier; the staleness
+// check inside Reachability.Ready() means a wedged watcher fails open
+// to "not ready" rather than serving stale "ready" answers.
+//
+// Load balancers / k8s readiness should target this; a /readyz=503
+// takes the pod out of the rotation but doesn't restart it.
 func (a *App) Readyz(w http.ResponseWriter, r *http.Request) {
-	reachable := a.adjudicator.Probe(r.Context()) == nil
+	reachable := a.reachability != nil && a.reachability.Ready()
 	status := http.StatusOK
 	if !reachable {
 		status = http.StatusServiceUnavailable

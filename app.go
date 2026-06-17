@@ -30,6 +30,7 @@ type App struct {
 	metricsServer *http.Server
 	tsnetServer   *tsnet.Server
 	audit         audit.Writer
+	reachability  *llm.ReachabilityWatcher
 }
 
 func NewAtalaiaApp(config *types.Config) *App {
@@ -60,6 +61,9 @@ func (a *App) Shutdown(ctx context.Context) error {
 	if a.tsnetServer != nil {
 		track(a.tsnetServer.Close(), "tsnet close")
 	}
+	if a.reachability != nil {
+		a.reachability.Stop()
+	}
 	if a.audit != nil {
 		track(a.audit.Close(), "audit close")
 	}
@@ -85,6 +89,9 @@ func (a *App) Serve() error {
 		return err
 	}
 
+	a.reachability = llm.NewReachabilityWatcher(llmClient, a.config.LLM.HealthcheckInterval)
+	a.reachability.Start()
+
 	auditWriter, err := audit.New(a.config.Observability.Audit)
 	if err != nil {
 		return err
@@ -93,12 +100,13 @@ func (a *App) Serve() error {
 
 	mainRouter := mux.NewRouter()
 	if _, err := api.NewApp(context.Background(), api.Deps{
-		Config:      a.config,
-		Detectors:   dets,
-		Adjudicator: adjudicator,
-		Audit:       auditWriter,
-		Version:     Version,
-		Router:      mainRouter,
+		Config:       a.config,
+		Detectors:    dets,
+		Adjudicator:  adjudicator,
+		Reachability: a.reachability,
+		Audit:        auditWriter,
+		Version:      Version,
+		Router:       mainRouter,
 	}); err != nil {
 		return err
 	}

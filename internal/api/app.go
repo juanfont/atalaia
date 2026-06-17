@@ -19,25 +19,35 @@ type Adjudicator interface {
 	Probe(ctx context.Context) error
 }
 
+// Reachability is the seam for /readyz. *llm.ReachabilityWatcher
+// implements it by polling the LLM in the background; tests fake it.
+// Returns true when the last cached probe was both successful and
+// recent.
+type Reachability interface {
+	Ready() bool
+}
+
 // Deps bundles everything the API layer needs from the lifecycle owner.
 // Keeping this in one struct keeps the call site readable as the dep
 // list grows (LLM client lands in milestone 4).
 type Deps struct {
-	Config      *types.Config
-	Detectors   []detector.Detector
-	Adjudicator Adjudicator
-	Audit       audit.Writer
-	Version     string
-	Router      *mux.Router
+	Config       *types.Config
+	Detectors    []detector.Detector
+	Adjudicator  Adjudicator
+	Reachability Reachability
+	Audit        audit.Writer
+	Version      string
+	Router       *mux.Router
 }
 
 type App struct {
-	config      *types.Config
-	detectors   []detector.Detector
-	adjudicator Adjudicator
-	audit       audit.Writer
-	version     string
-	logger      zerolog.Logger
+	config       *types.Config
+	detectors    []detector.Detector
+	adjudicator  Adjudicator
+	reachability Reachability
+	audit        audit.Writer
+	version      string
+	logger       zerolog.Logger
 }
 
 // NewApp registers the API handlers on the shared router. The LLM
@@ -49,12 +59,13 @@ func NewApp(_ context.Context, d Deps) (*App, error) {
 		auditWriter = audit.Nop()
 	}
 	app := &App{
-		config:      d.Config,
-		detectors:   d.Detectors,
-		adjudicator: d.Adjudicator,
-		audit:       auditWriter,
-		version:     d.Version,
-		logger:      log.Logger,
+		config:       d.Config,
+		detectors:    d.Detectors,
+		adjudicator:  d.Adjudicator,
+		reachability: d.Reachability,
+		audit:        auditWriter,
+		version:      d.Version,
+		logger:       log.Logger,
 	}
 	d.Router.HandleFunc("/check", bearerAuth(d.Config.Server.AuthToken, app.Check)).Methods("POST")
 	d.Router.HandleFunc("/healthz", app.Healthz).Methods("GET")

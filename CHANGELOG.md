@@ -4,6 +4,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- Background LLM reachability watcher. A goroutine pings the LLM
+  every `llm.healthcheck_interval` (default 30 s) and caches the
+  result; `/readyz` reads the cached state instead of probing on
+  every call. The cache caps probe traffic at a steady 2 req/min
+  regardless of how often the orchestrator hits /readyz. If the
+  goroutine dies or the host wedges (last probe older than 3×
+  interval), the cache fails closed to "not ready" so traffic is
+  shifted off the pod instead of serving stale 200s.
+
 ### Changed
 
 - `INTEGRATION_MIN_AGREEMENT` default bumped to 0.8. The corpus

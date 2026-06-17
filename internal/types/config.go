@@ -93,6 +93,7 @@ type LLMConfig struct {
 	MaxInflight           int
 	QueueMax              int
 	RequestTimeout        time.Duration
+	HealthcheckInterval   time.Duration
 	Profile               string
 	MaxFindingsPerRequest int
 	ContextBudget         ContextBudgetConfig
@@ -203,6 +204,7 @@ func setDefaults() {
 	viper.SetDefault("llm.max_inflight", 1)
 	viper.SetDefault("llm.queue_max", 16)
 	viper.SetDefault("llm.request_timeout", "90s")
+	viper.SetDefault("llm.healthcheck_interval", "30s")
 	viper.SetDefault("llm.profile", "gemma4")
 	viper.SetDefault("llm.max_findings_per_request", 200)
 	viper.SetDefault("llm.context_budget.input_tokens", 80000)
@@ -295,6 +297,7 @@ func readLLMConfig() LLMConfig {
 		MaxInflight:           viper.GetInt("llm.max_inflight"),
 		QueueMax:              viper.GetInt("llm.queue_max"),
 		RequestTimeout:        viper.GetDuration("llm.request_timeout"),
+		HealthcheckInterval:   viper.GetDuration("llm.healthcheck_interval"),
 		Profile:               viper.GetString("llm.profile"),
 		MaxFindingsPerRequest: viper.GetInt("llm.max_findings_per_request"),
 		ContextBudget: ContextBudgetConfig{

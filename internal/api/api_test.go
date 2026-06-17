@@ -23,7 +23,9 @@ import (
 
 // fakeAdjudicator is a deterministic stand-in for the API tests. It
 // returns one "confirmed" verdict per finding by default and lets the
-// test override Probe + Adjudicate behavior.
+// test override Adjudicate behavior. Probe is unused by /readyz now
+// (the Reachability watcher owns reachability) but stays on the
+// interface to satisfy *llm.Adjudicator.
 type fakeAdjudicator struct {
 	probeErr     error
 	adjudicate   func(deduped []detector.DedupedFinding) (llm.AdjudicateResult, error)
@@ -31,6 +33,11 @@ type fakeAdjudicator struct {
 }
 
 func (f *fakeAdjudicator) Probe(_ context.Context) error { return f.probeErr }
+
+// fakeReachability lets a test pin the cached readiness state.
+type fakeReachability struct{ ready bool }
+
+func (f fakeReachability) Ready() bool { return f.ready }
 
 func (f *fakeAdjudicator) Adjudicate(_ context.Context, _ []byte, deduped []detector.DedupedFinding) (llm.AdjudicateResult, error) {
 	if f.captureFinds != nil {
@@ -59,6 +66,13 @@ func (f *fakeAdjudicator) Adjudicate(_ context.Context, _ []byte, deduped []dete
 }
 
 func newTestServer(t *testing.T, adj Adjudicator) *httptest.Server {
+	// Default reachability matches the previous /readyz behavior:
+	// "ready" unless the test explicitly says otherwise. Use
+	// newTestServerWithReachability for the not-ready case.
+	return newTestServerWithReachability(t, adj, fakeReachability{ready: true})
+}
+
+func newTestServerWithReachability(t *testing.T, adj Adjudicator, r Reachability) *httptest.Server {
 	t.Helper()
 	cfg := &types.Config{
 		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
@@ -72,11 +86,12 @@ func newTestServer(t *testing.T, adj Adjudicator) *httptest.Server {
 
 	router := mux.NewRouter()
 	if _, err := NewApp(context.Background(), Deps{
-		Config:      cfg,
-		Detectors:   []detector.Detector{g},
-		Adjudicator: adj,
-		Version:     "test",
-		Router:      router,
+		Config:       cfg,
+		Detectors:    []detector.Detector{g},
+		Adjudicator:  adj,
+		Reachability: r,
+		Version:      "test",
+		Router:       router,
 	}); err != nil {
 		t.Fatalf("NewApp: %v", err)
 	}
@@ -297,7 +312,7 @@ func TestHealthz_AlwaysOK(t *testing.T) {
 	// /healthz is the liveness probe — it should stay 200 even when
 	// the LLM is unreachable so orchestrators don't restart the pod
 	// over an upstream blip.
-	srv := newTestServer(t, &fakeAdjudicator{probeErr: errors.New("connect refused")})
+	srv := newTestServerWithReachability(t, &fakeAdjudicator{}, fakeReachability{ready: false})
 	defer srv.Close()
 	resp, err := http.Get(srv.URL + "/healthz")
 	if err != nil {
@@ -330,7 +345,7 @@ func TestReadyz_OK(t *testing.T) {
 }
 
 func TestReadyz_LLMUnreachable(t *testing.T) {
-	srv := newTestServer(t, &fakeAdjudicator{probeErr: errors.New("connect refused")})
+	srv := newTestServerWithReachability(t, &fakeAdjudicator{}, fakeReachability{ready: false})
 	defer srv.Close()
 	resp, err := http.Get(srv.URL + "/readyz")
 	if err != nil {
@@ -355,11 +370,12 @@ func newAuthedServer(t *testing.T, token string) *httptest.Server {
 	}
 	router := mux.NewRouter()
 	if _, err := NewApp(context.Background(), Deps{
-		Config:      cfg,
-		Detectors:   []detector.Detector{g},
-		Adjudicator: &fakeAdjudicator{},
-		Version:     "test",
-		Router:      router,
+		Config:       cfg,
+		Detectors:    []detector.Detector{g},
+		Adjudicator:  &fakeAdjudicator{},
+		Reachability: fakeReachability{ready: true},
+		Version:      "test",
+		Router:       router,
 	}); err != nil {
 		t.Fatalf("NewApp: %v", err)
 	}
