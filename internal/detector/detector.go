@@ -27,6 +27,24 @@ type Detector interface {
 	Scan(ctx context.Context, diff []byte) ([]Finding, error)
 }
 
+// inProcessDetector is an optional capability. A detector that reports
+// InProcess() == true runs inside this process (no subprocess spawn)
+// and is therefore exempt from the subprocess concurrency semaphore:
+// gating it would only add queue latency for no resource benefit.
+// Detectors that don't implement this are assumed to spawn a
+// subprocess and are gated. See Run.
+type inProcessDetector interface {
+	InProcess() bool
+}
+
+// gated reports whether d should be bounded by the subprocess
+// concurrency semaphore. In-process detectors run immediately;
+// everything else (and anything that doesn't declare itself) is gated.
+func gated(d Detector) bool {
+	ip, ok := d.(inProcessDetector)
+	return !ok || !ip.InProcess()
+}
+
 // FindingID returns the stable 12-hex-char ID for a (file, line, match)
 // triple. Same triple across re-runs yields the same ID; opaque enough
 // not to leak the match value.

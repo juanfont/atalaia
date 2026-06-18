@@ -36,6 +36,20 @@ type Stats struct {
 	LLMLatencyMs   int64    `json:"llm_latency_ms"`
 	TotalLatencyMs int64    `json:"total_latency_ms"`
 	Truncated      bool     `json:"truncated"`
+	// DetectorErrors lists detectors that failed to complete this
+	// scan (timeout, crash, kill). Present only when non-empty. A
+	// caller that sees entries here must NOT treat a zero-finding
+	// response as authoritative "clean" — one or more detectors did
+	// not run. When every detector fails and nothing was found,
+	// /check returns 503 instead of a 200 with empty verdicts.
+	DetectorErrors []DetectorError `json:"detector_errors,omitempty"`
+}
+
+// DetectorError reports a single detector that failed during a scan.
+// The Error string is diagnostic only and never carries a raw match.
+type DetectorError struct {
+	Detector string `json:"detector"`
+	Error    string `json:"error"`
 }
 
 // CheckRequest is the application/json body shape for POST /check.

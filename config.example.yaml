@@ -16,8 +16,11 @@ server:
 
 detectors:
   enabled: [gitleaks, trufflehog]   # add "kingfisher" when installed
-  parallel_timeout: 10s
-  max_concurrent_scans: 1           # detector scans run at once across all requests; raise for throughput, <=0 = unbounded
+  parallel_timeout: 10s             # max time for a single scan once it starts (not queue wait); guards a hung scan
+  # max_concurrent_scans: caps concurrent *subprocess* scans (trufflehog/kingfisher).
+  # Defaults to GOMAXPROCS when unset. Set explicitly to a positive number to pin it,
+  # or <= 0 for unbounded. gitleaks (in-process) is never gated.
+  # max_concurrent_scans: 8
 
   gitleaks:
     # Custom gitleaks TOML (rules + allowlists). Omit to use gitleaks' built-in defaults.

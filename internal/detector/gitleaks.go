@@ -69,6 +69,10 @@ func buildGitleaksDetector(cfg types.GitleaksConfig) (*detect.Detector, error) {
 
 func (g *Gitleaks) Name() string { return "gitleaks" }
 
+// InProcess reports that gitleaks runs as an in-process library (MIT),
+// so it is exempt from the subprocess concurrency semaphore.
+func (g *Gitleaks) InProcess() bool { return true }
+
 func (g *Gitleaks) Scan(ctx context.Context, diff []byte) ([]Finding, error) {
 	blocks := WalkDiff(diff)
 	var out []Finding

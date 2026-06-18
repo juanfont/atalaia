@@ -477,3 +477,92 @@ func TestVersion(t *testing.T) {
 		t.Errorf("LLMModel=%q, want test-model", v.LLMModel)
 	}
 }
+
+// stubDetector is a test detector with controllable output. It spawns
+// nothing; it just returns whatever the test wires up.
+type stubDetector struct {
+	name string
+	find []detector.Finding
+	err  error
+}
+
+func (s stubDetector) Name() string { return s.name }
+func (s stubDetector) Scan(context.Context, []byte) ([]detector.Finding, error) {
+	return s.find, s.err
+}
+
+func newTestServerWithDetectors(t *testing.T, adj Adjudicator, dets ...detector.Detector) *httptest.Server {
+	t.Helper()
+	cfg := &types.Config{
+		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
+		Detectors: types.DetectorsConfig{Enabled: []string{"stub"}},
+		LLM:       types.LLMConfig{Model: "test-model"},
+	}
+	router := mux.NewRouter()
+	if _, err := NewApp(context.Background(), Deps{
+		Config:       cfg,
+		Detectors:    dets,
+		Adjudicator:  adj,
+		Reachability: fakeReachability{ready: true},
+		Version:      "test",
+		Router:       router,
+	}); err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	return httptest.NewServer(router)
+}
+
+// A scan where every detector failed and nothing was found must not
+// report a false "clean": it returns a retryable 503, not 200.
+func TestCheck_InconclusiveScanReturns503(t *testing.T) {
+	srv := newTestServerWithDetectors(t, &fakeAdjudicator{},
+		stubDetector{name: "trufflehog", err: errors.New("signal: killed")})
+	defer srv.Close()
+
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", strings.NewReader("diff --git a/x b/x\n+secret\n"))
+	if err != nil {
+		t.Fatalf("POST /check: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		raw, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status=%d, want 503; body=%s", resp.StatusCode, raw)
+	}
+	raw, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(raw), "trufflehog") {
+		t.Errorf("503 body should name the failed detector; got %s", raw)
+	}
+}
+
+// A partial failure (one detector errors, another finds something)
+// must still return 200 with verdicts, and surface the failure in
+// stats.detector_errors so the caller knows the scan was incomplete.
+func TestCheck_PartialFailureSurfacesInStats(t *testing.T) {
+	found := []detector.Finding{{
+		DetectorType: "gitleaks", DetectorName: "generic", File: "x", Line: 1, Match: "AKIA1234ABCDEFGHIJKL",
+	}}
+	srv := newTestServerWithDetectors(t, &fakeAdjudicator{},
+		stubDetector{name: "gitleaks", find: found},
+		stubDetector{name: "trufflehog", err: errors.New("signal: killed")})
+	defer srv.Close()
+
+	resp, err := http.Post(srv.URL+"/check", "text/x-diff", strings.NewReader("diff --git a/x b/x\n+AKIA1234ABCDEFGHIJKL\n"))
+	if err != nil {
+		t.Fatalf("POST /check: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status=%d, want 200; body=%s", resp.StatusCode, raw)
+	}
+	var out apitypes.CheckResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(out.Stats.DetectorErrors) != 1 || out.Stats.DetectorErrors[0].Detector != "trufflehog" {
+		t.Fatalf("want one detector_errors entry for trufflehog, got %+v", out.Stats.DetectorErrors)
+	}
+	if len(out.Verdicts) == 0 {
+		t.Errorf("partial failure should still report the finding gitleaks produced")
+	}
+}

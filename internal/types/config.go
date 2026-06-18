@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -42,15 +43,24 @@ type ServerConfig struct {
 }
 
 type DetectorsConfig struct {
-	Enabled         []string
+	Enabled []string
+	// ParallelTimeout bounds a single detector scan, measured from
+	// when the detector starts scanning (after acquiring its slot),
+	// not from request arrival. It guards a hung/runaway scan; it does
+	// not bound queue wait (that's the client's request deadline).
 	ParallelTimeout time.Duration
-	// MaxConcurrentScans caps how many detector scans run at once
-	// across all in-flight requests. Subprocess detectors
-	// (trufflehog, kingfisher) are expensive to start; without a
-	// cap, a burst of concurrent /check calls fan-bombs the host
-	// with processes that then blow ParallelTimeout and get killed.
-	// Default 1 (one scan at a time, matching the LLM's queue-of-one
-	// posture). <= 0 means unbounded.
+	// MaxConcurrentScans caps how many *subprocess* detector scans
+	// (trufflehog, kingfisher) run at once across all in-flight
+	// requests. Each pays its full startup cost per invocation, so an
+	// unbounded burst of concurrent /check calls fan-bombs the host
+	// with processes. In-process detectors (gitleaks) are exempt and
+	// always run immediately. Default GOMAXPROCS: enough overlap to
+	// drain a burst within the client's timeout, still bounded to the
+	// available cores. <= 0 means unbounded.
+	//
+	// Note: queue wait does NOT count against ParallelTimeout — the
+	// per-scan clock starts once a detector holds its slot — so a
+	// modest cap no longer risks killing requests that merely queued.
 	MaxConcurrentScans int
 	Gitleaks           GitleaksConfig
 	Trufflehog         TrufflehogConfig
@@ -204,7 +214,7 @@ func setDefaults() {
 	// detectors
 	viper.SetDefault("detectors.enabled", []string{"gitleaks", "trufflehog"})
 	viper.SetDefault("detectors.parallel_timeout", "10s")
-	viper.SetDefault("detectors.max_concurrent_scans", 1)
+	viper.SetDefault("detectors.max_concurrent_scans", runtime.GOMAXPROCS(0))
 	viper.SetDefault("detectors.trufflehog.binary", "trufflehog")
 	viper.SetDefault("detectors.trufflehog.verify", false)
 	viper.SetDefault("detectors.kingfisher.binary", "kingfisher")

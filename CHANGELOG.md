@@ -4,6 +4,39 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.0], 2026-06-18
+
+### Fixed
+
+- Detector scans no longer self-kill under a burst. The detect-stage
+  deadline (`detectors.parallel_timeout`) used to start at request
+  arrival and cover the time a scan spent *queued* behind the
+  concurrency cap. With `max_concurrent_scans=1`, a backfill burst
+  serialized every scan, so requests staircased past the 10s deadline
+  while still waiting in line and got killed (trufflehog `signal:
+  killed`, gitleaks `context deadline exceeded`) — each then returned
+  `200` with zero findings, a silent false "clean". The per-scan clock
+  now starts only once a detector holds its slot; queue wait is bounded
+  by the caller's request deadline instead.
+
+### Changed
+
+- An inconclusive scan (every detector failed and nothing was found)
+  now returns **503**, not a `200` with empty verdicts. A caller can no
+  longer mistake a scan that never ran for a clean diff; 503 is
+  retryable and matches the existing queue-full behaviour. Partial
+  failures (one detector errors, another produces findings) still
+  return `200` with the findings, and the failure is surfaced in the
+  new `stats.detector_errors[]` field (`{detector, error}`).
+- In-process gitleaks is exempt from `max_concurrent_scans`. It spawns
+  no process, so gating it only added queue latency. Only subprocess
+  detectors (trufflehog, kingfisher) — which pay full startup cost per
+  invocation — are bounded by the cap now.
+- `detectors.max_concurrent_scans` default is now `GOMAXPROCS` (was
+  `1`). With queue wait decoupled from the scan deadline and gitleaks
+  exempt, the cap's only job is bounding subprocess startup; `1`
+  needlessly serialized bursts. `<= 0` still means unbounded.
+
 ## [0.4.1], 2026-06-18
 
 ### Changed

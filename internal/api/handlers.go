@@ -1,12 +1,12 @@
 package api
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -33,14 +33,11 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ---- detect stage ----
+	// The request context (not an artificial stage deadline) bounds how
+	// long detectors may queue; the per-scan timeout lives inside Run
+	// and starts only once a detector holds its slot. See detector.Run.
 	detectStart := time.Now()
-	scanCtx := r.Context()
-	if a.config.Detectors.ParallelTimeout > 0 {
-		var cancel func()
-		scanCtx, cancel = context.WithTimeout(scanCtx, a.config.Detectors.ParallelTimeout)
-		defer cancel()
-	}
-	raw, errs := detector.Run(scanCtx, diff, a.detectors, a.detectSem)
+	raw, errs := detector.Run(r.Context(), diff, a.detectors, a.detectSem, a.config.Detectors.ParallelTimeout)
 	metrics.CheckDurationSeconds.WithLabelValues("detect").Observe(time.Since(detectStart).Seconds())
 
 	for name, err := range errs {
@@ -50,6 +47,19 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	for _, f := range raw {
 		metrics.DetectorFindingsTotal.WithLabelValues(f.DetectorType).Inc()
 	}
+
+	// A detector failed and we have nothing to show. Returning 200 with
+	// empty verdicts here would report a false "clean" — the caller
+	// cannot tell a real clean from a scan that never ran. Fail closed
+	// with a retryable 503 instead.
+	if len(errs) > 0 && len(raw) == 0 {
+		summary := detectorErrorSummary(errs)
+		a.logger.Warn().Str("request_id", reqID).Str("detectors", summary).Msg("scan inconclusive, returning 503")
+		metrics.CheckRequestsTotal.WithLabelValues("503").Inc()
+		writeError(w, http.StatusServiceUnavailable, "scan inconclusive: "+summary)
+		return
+	}
+
 	deduped := detector.Dedup(raw)
 
 	// ---- LLM stage ----
@@ -89,6 +99,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			LLMLatencyMs:   result.LLMLatency.Milliseconds(),
 			TotalLatencyMs: total.Milliseconds(),
 			Truncated:      result.Truncated,
+			DetectorErrors: detectorErrorList(errs),
 		},
 	}
 	metrics.CheckDurationSeconds.WithLabelValues("total").Observe(total.Seconds())
@@ -334,6 +345,31 @@ func detectorNames(dets []detector.Detector) []string {
 		out[i] = d.Name()
 	}
 	return out
+}
+
+// detectorErrorList turns the runner's error map into a stable,
+// name-sorted slice for the response stats. Returns nil when empty so
+// the field is omitted from the JSON.
+func detectorErrorList(errs map[string]error) []apitypes.DetectorError {
+	if len(errs) == 0 {
+		return nil
+	}
+	out := make([]apitypes.DetectorError, 0, len(errs))
+	for name, err := range errs {
+		out = append(out, apitypes.DetectorError{Detector: name, Error: err.Error()})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Detector < out[j].Detector })
+	return out
+}
+
+// detectorErrorSummary is a compact "name: err; name: err" string for
+// the 503 body and the inconclusive-scan log line.
+func detectorErrorSummary(errs map[string]error) string {
+	parts := make([]string, 0, len(errs))
+	for _, e := range detectorErrorList(errs) {
+		parts = append(parts, e.Detector+": "+e.Error)
+	}
+	return strings.Join(parts, "; ")
 }
 
 // requestID returns the X-Request-ID header when the caller supplied

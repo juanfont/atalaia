@@ -58,7 +58,7 @@ func TestRun_SemaphoreBoundsConcurrency(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		Run(context.Background(), nil, blockers(6, release, &current, &peak), sem)
+		Run(context.Background(), nil, blockers(6, release, &current, &peak), sem, 0)
 		close(done)
 	}()
 
@@ -81,7 +81,7 @@ func TestRun_NilSemaphoreUnbounded(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		Run(context.Background(), nil, blockers(n, release, &current, &peak), nil)
+		Run(context.Background(), nil, blockers(n, release, &current, &peak), nil, 0)
 		close(done)
 	}()
 	time.Sleep(50 * time.Millisecond)
@@ -113,7 +113,7 @@ func TestRun_CtxCancelTurnsAwayQueuedScans(t *testing.T) {
 	var errs map[string]error
 	done := make(chan struct{})
 	go func() {
-		_, errs = Run(ctx, nil, []Detector{queued}, sem)
+		_, errs = Run(ctx, nil, []Detector{queued}, sem, 0)
 		close(done)
 	}()
 
@@ -137,3 +137,37 @@ type detectorFunc struct {
 
 func (d detectorFunc) Name() string                                          { return d.name }
 func (d detectorFunc) Scan(ctx context.Context, _ []byte) ([]Finding, error) { return d.fn(ctx) }
+
+// inProcessFunc is a detectorFunc that declares itself in-process, so
+// Run must not gate it on the subprocess semaphore.
+type inProcessFunc struct{ detectorFunc }
+
+func (inProcessFunc) InProcess() bool { return true }
+
+func TestRun_InProcessDetectorBypassesSemaphore(t *testing.T) {
+	// Semaphore is full: a gated detector could never acquire. An
+	// in-process detector must still run immediately.
+	sem := make(chan struct{}, 1)
+	sem <- struct{}{}
+
+	var ran int32
+	inProc := inProcessFunc{detectorFunc{name: "gitleaks", fn: func(context.Context) ([]Finding, error) {
+		atomic.AddInt32(&ran, 1)
+		return nil, nil
+	}}}
+
+	done := make(chan struct{})
+	go func() {
+		Run(context.Background(), nil, []Detector{inProc}, sem, 0)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("in-process detector blocked on the full semaphore; it must be exempt")
+	}
+	if atomic.LoadInt32(&ran) != 1 {
+		t.Errorf("in-process detector did not run; ran=%d", ran)
+	}
+}
