@@ -1,0 +1,71 @@
+# Aggressive, high-recall gitleaks config for Atalaia.
+#
+# Extends the gitleaks default ruleset and adds one generic
+# secret-assignment rule tuned for recall over precision. The flood is
+# the point: Atalaia's LLM filter turns the recall back into precision
+# downstream, so a noisy detector that catches a low-entropy or
+# special-character secret is strictly better than a quiet one that
+# misses it. Detectors detect for recall; the model decides for
+# precision.
+#
+# Provenance of the added rule
+# ----------------------------
+# Modeled on gitleaks' own `generic-api-key` rule
+# (https://github.com/gitleaks/gitleaks, config/gitleaks.toml; we pin
+# gitleaks v8.30.1 in go.mod), with three deliberate deviations, each
+# of which gitleaks makes the opposite choice on to keep its default
+# ruleset quiet:
+#
+#   1. No entropy gate. gitleaks' rule has `entropy = 3.5`, which drops
+#      low-entropy assignments like `password: hunter2hunter2`.
+#   2. Wider value charset. gitleaks captures `[\w.=-]{10,150}`, which
+#      truncates at the first special character. A value like
+#      `a324kj\#ikodsfsjsdkfhksdf` stops at the backslash (6 chars),
+#      below its length floor, and is missed even with entropy off.
+#      We capture "anything but whitespace/quotes" so the value is
+#      taken whole.
+#   3. Lower min length (6, not 10).
+#
+# Net: this catches secrets gitleaks' generic rule is engineered to
+# skip. The cost is more false positives, which is exactly what the
+# LLM stage exists to remove.
+#
+# Point detectors.gitleaks.config at this file to enable it:
+#
+#   detectors:
+#     gitleaks:
+#       config: /etc/atalaia/gitleaks-aggressive.toml
+
+title = "atalaia-aggressive"
+
+[extend]
+# Inherit every curated default rule (AWS, GitHub, Stripe, … including
+# the stock entropy-gated generic-api-key) and add ours on top, rather
+# than replacing them. High-entropy secrets get gitleaks' curated
+# precision; the rule below adds the low-entropy / special-char tail.
+useDefault = true
+
+[[rules]]
+id = "atalaia-generic-secret-assignment"
+description = "Generic secret-like assignment, no entropy gate (high recall; LLM adjudicates)"
+# group 1: the secret-ish keyword; group 2: the assigned value.
+regex = '''(?i)\b(passwd|password|pwd|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)\b\s*[:=]\s*['"]?([^\s'"]{6,})'''
+secretGroup = 2
+keywords = [
+  "passwd",
+  "password",
+  "pwd",
+  "secret",
+  "token",
+  "apikey",
+  "api_key",
+  "api-key",
+  "accesskey",
+  "access_key",
+  "secretkey",
+  "secret_key",
+  "privatekey",
+  "private_key",
+  "credential",
+  "auth",
+]

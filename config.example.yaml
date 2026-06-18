@@ -21,7 +21,10 @@ detectors:
 
   gitleaks:
     # Custom gitleaks TOML (rules + allowlists). Omit to use gitleaks' built-in defaults.
-    config: /etc/atalaia/gitleaks.toml
+    # The bundled gitleaks-aggressive.toml extends the defaults with a high-recall
+    # secret-assignment rule (catches low-entropy / special-char secrets the stock
+    # rules skip); the LLM filter removes the extra noise. Recommended.
+    config: /etc/atalaia/gitleaks-aggressive.toml
     max_target_megabytes: 0         # 0 = no per-fragment size cap
     ignore_path: ""                 # path to a .gitleaksignore
     baseline: ""                    # path to a gitleaks baseline JSON

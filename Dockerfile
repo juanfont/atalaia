@@ -50,6 +50,7 @@ COPY --from=detectors --chown=nonroot:nonroot /kingfisher /usr/local/bin/kingfis
 COPY --chown=nonroot:nonroot atalaia /usr/local/bin/atalaia
 
 COPY --chown=nonroot:nonroot prompts /etc/atalaia/prompts
+COPY --chown=nonroot:nonroot gitleaks-aggressive.toml /etc/atalaia/gitleaks-aggressive.toml
 COPY --chown=nonroot:nonroot LICENSE /usr/share/doc/atalaia/LICENSE
 COPY --chown=nonroot:nonroot README.md /usr/share/doc/atalaia/README.md
 

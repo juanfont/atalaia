@@ -25,6 +25,7 @@ archives:
       - LICENSE
       - README.md
       - config.example.yaml
+      - gitleaks-aggressive.toml
       - prompts/*
 
 dockers:
@@ -47,6 +48,7 @@ dockers:
       - prompts
       - LICENSE
       - README.md
+      - gitleaks-aggressive.toml
 
   - id: atalaia-arm64
     goos: linux
@@ -67,6 +69,7 @@ dockers:
       - prompts
       - LICENSE
       - README.md
+      - gitleaks-aggressive.toml
 
 docker_manifests:
   - name_template: 'ghcr.io/juanfont/atalaia:{{ .Version }}'

@@ -45,6 +45,58 @@ func TestGitleaks_DetectsRealLookingKey(t *testing.T) {
 	}
 }
 
+// TestGitleaks_AggressiveConfig guards the shipped gitleaks-aggressive.toml:
+// it must load (so [extend] + our rule parse), catch a low-entropy /
+// special-character secret the default ruleset misses, and still fire
+// the inherited default rules.
+func TestGitleaks_AggressiveConfig(t *testing.T) {
+	const cfg = "../../gitleaks-aggressive.toml"
+
+	// password value: low entropy AND a special char (backslash). The
+	// default ruleset misses it on both counts; the aggressive config
+	// must catch it.
+	lowEntropy := []byte(`diff --git a/conf.yml b/conf.yml
+new file mode 100644
+--- /dev/null
++++ b/conf.yml
+@@ -0,0 +1,2 @@
++    username: juanfont
++    password: a324kj\#ikodsfsjsdkfhksdf
+`)
+
+	def, err := NewGitleaks(types.GitleaksConfig{})
+	if err != nil {
+		t.Fatalf("default: %v", err)
+	}
+	aggr, err := NewGitleaks(types.GitleaksConfig{Config: cfg})
+	if err != nil {
+		t.Fatalf("load aggressive config %q: %v", cfg, err)
+	}
+
+	if fs, _ := def.Scan(context.Background(), lowEntropy); len(fs) != 0 {
+		t.Errorf("baseline assumption broken: default config flagged the low-entropy password: %+v", fs)
+	}
+
+	fs, err := aggr.Scan(context.Background(), lowEntropy)
+	if err != nil {
+		t.Fatalf("aggressive scan: %v", err)
+	}
+	var saw bool
+	for _, f := range fs {
+		if f.Match == `a324kj\#ikodsfsjsdkfhksdf` {
+			saw = true
+		}
+	}
+	if !saw {
+		t.Errorf("aggressive config did not catch the low-entropy password; findings=%+v", fs)
+	}
+
+	// Inherited default rules still fire.
+	if fs, _ := aggr.Scan(context.Background(), loadDiff(t, "real_key.diff")); len(fs) == 0 {
+		t.Error("aggressive config lost the inherited default rules (real_key.diff found nothing)")
+	}
+}
+
 func TestGitleaks_SentinelIsAllowlistedByDefault(t *testing.T) {
 	// Documents the assumption baked into the milestone-4 short-circuit
 	// design: gitleaks's default config already filters known sample

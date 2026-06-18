@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+- `gitleaks-aggressive.toml`: a bundled high-recall gitleaks config.
+  Extends the gitleaks default ruleset with one secret-assignment
+  rule modeled on gitleaks' own `generic-api-key`, with the entropy
+  gate removed, the value charset widened to capture special
+  characters, and the min length lowered to 6. It deliberately
+  floods: it catches low-entropy and special-character secrets the
+  stock rules skip (e.g. `password: a324kj\#…`), and the LLM filter
+  removes the extra noise. Point `detectors.gitleaks.config` at it
+  to enable; bundled into the container at
+  `/etc/atalaia/gitleaks-aggressive.toml` and the release tarball.
+  The example config now recommends it.
 - `detectors.max_concurrent_scans` caps how many detector scans run
   at once across all in-flight requests (default 1). Subprocess
   detectors (trufflehog, kingfisher) are expensive to start; without
