@@ -18,20 +18,32 @@ your-key-here), documentation examples, and known vendor sentinels
 (AKIAIOSFODNN7EXAMPLE, ya29.dummy, sk-test-...).
 
 Judge the matched value itself, not the words around it. The match must
-BE a literal credential to be confirmed. Dismiss when the matched value
-is code that references or produces a credential rather than the
-credential itself: a variable or attribute name, a function or method
-call, an environment-variable lookup, or a format/template string. For
-example `access_token = token_data.get("access_token")`,
-`password = config.get("db_password")`, `key = os.environ["API_KEY"]`,
-and `secret = f"{prefix}-{suffix}"` all assign a credential that is
-computed at runtime and never appears in the diff, so there is nothing
-to leak. A variable named after a secret is not a secret.
+BE a literal credential to be confirmed. This is language-independent.
+Dismiss when the matched value is a reference or expression that yields
+a credential at runtime rather than the literal credential itself. Such
+matches include: a bare variable or identifier; an argument or
+parameter passed through by name; a field, property, or attribute
+access; an index or key lookup into a config, settings, or secrets
+object; an environment-variable read; a function or method call; or a
+string interpolation, format, or template. These shapes recur across
+languages, for example `token=token`, `cfg.Token`, `config["TOKEN"]`,
+`process.env.API_KEY`, `os.environ["API_KEY"]`, `System.getenv("KEY")`,
+`ENV.fetch("SECRET")`, and `"${PREFIX}-${SUFFIX}"`. In every case the
+real credential is held or computed at runtime and never appears in the
+diff, so there is nothing to leak. A variable named after a secret is
+not a secret.
 
-Confirm strings that ARE a credential of some format and appear at a
-call site that uses them: database connections, API client
-initialisation, request header construction, environment-variable
-defaults bound to production hostnames.
+This takes precedence over how the value is used later. If the matched
+value is a reference or expression rather than a literal, dismiss it
+even when the resulting variable is then passed to a credential-using
+call site. Forwarding a variable into an API call, or a config/env
+lookup into an authorization header, does not turn the reference into a
+literal secret. Judge the matched expression, not the downstream use.
+
+Confirm only when the matched value is ITSELF a literal credential of
+some format and appears at a call site that uses it: database
+connections, API client initialisation, request header construction,
+environment-variable defaults bound to production hostnames.
 
 When in doubt, prefer confirmed with lower confidence. A missed real
 secret is more expensive than a noisy alert.

@@ -1,0 +1,8 @@
+{
+  "description": "The aggressive gitleaks rule fires twice on this snippet: on `token = app.settings[\"API_TOKEN\"]` (a config lookup) and on `token=token` (a keyword-argument pass-through, captured value `token,`). Neither is a literal credential. The pass-through is the dangerous one: its captured value is a bare variable reference, and before the precedence-rule prompt hardening the model confirmed it ~10% of the time under sampling non-determinism (it acknowledged the variable but confirmed on the 'used in an API call' cue). Both must dismiss.",
+  "min_after_dedup": 2,
+  "expectations": [
+    { "match": "app.settings[", "verdict": "dismissed" },
+    { "match": "token,", "verdict": "dismissed" }
+  ]
+}

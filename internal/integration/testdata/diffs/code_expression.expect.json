@@ -1,5 +1,5 @@
 {
-  "description": "The aggressive gitleaks rule matches `access_token = token_incl_metadata.get(` because 'token' appears in the variable name and the captured value is a method call. The value is code, not a credential (the real token is fetched at runtime, never in the diff). The LLM should dismiss. Real-world false positive from an OIDC token-handling commit.",
+  "description": "The aggressive gitleaks rule matches `access_token = token_incl_metadata.get(` because 'token' appears in the variable name and the captured value is a method call. The value is code, not a credential (the real token is fetched at runtime, never in the diff). The LLM should dismiss. Modelled on a real-world OIDC token-handling false positive.",
   "min_after_dedup": 1,
   "expectations": [
     { "match": "token_incl_metadata.get(", "verdict": "dismissed" }

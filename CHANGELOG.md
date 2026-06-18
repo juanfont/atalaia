@@ -4,6 +4,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Changed
+
+- Hardened the gemma4 system prompt so the "judge the matched value, not
+  the surrounding code" rule explicitly takes precedence over downstream
+  use, and generalised it to cover any reference-or-expression match
+  (bare variable, named-argument pass-through, field/attribute access,
+  config/env/secrets lookup, call, or interpolation) across languages,
+  rather than the Python-shaped examples it carried before. The trigger
+  was a `token=token` argument pass-through: the aggressive rule
+  captures the bare variable `token`, and the model — acknowledging it
+  was "a variable being passed to a function call" — still confirmed it
+  ~10% of the time (4/40 runs at conf 0.7-0.9) because the value flows
+  into an API call. vLLM is non-deterministic even at temperature 0, so
+  that tail surfaced as a spurious alert. With the precedence rule the
+  same finding dismisses 40/40; the three confirm fixtures still confirm
+  30/30, so recall is unaffected. New `kwarg_passthrough` corpus fixture
+  guards it.
+
 ## [0.5.0], 2026-06-18
 
 ### Fixed

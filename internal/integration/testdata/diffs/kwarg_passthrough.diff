@@ -1,0 +1,14 @@
+diff --git a/services/objects/client.py b/services/objects/client.py
+index 1111111..2222222 100644
+--- a/services/objects/client.py
++++ b/services/objects/client.py
+@@ -680,6 +680,14 @@ def fetch_object_properties(app, object_id):
+     params = {"filter": build_filter(object_id)}
++    token = app.settings["API_TOKEN"]
++    base_url = app.settings["API_URLBASE"]
++    response = http_get_with_retries(
++        f"{base_url}/api/objects",
++        params=params,
++        token=token,
++    )
++    return response.json()["data"]
