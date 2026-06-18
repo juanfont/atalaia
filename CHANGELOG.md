@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.0], 2026-06-18
+
 ### Added
 
 - `gitleaks-aggressive.toml`: a bundled high-recall gitleaks config.
