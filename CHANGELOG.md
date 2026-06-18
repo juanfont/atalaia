@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.1], 2026-06-18
+
 ### Changed
 
 - Hardened the gemma4 system prompt so the "judge the matched value, not
