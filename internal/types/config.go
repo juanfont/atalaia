@@ -44,9 +44,17 @@ type ServerConfig struct {
 type DetectorsConfig struct {
 	Enabled         []string
 	ParallelTimeout time.Duration
-	Gitleaks        GitleaksConfig
-	Trufflehog      TrufflehogConfig
-	Kingfisher      KingfisherConfig
+	// MaxConcurrentScans caps how many detector scans run at once
+	// across all in-flight requests. Subprocess detectors
+	// (trufflehog, kingfisher) are expensive to start; without a
+	// cap, a burst of concurrent /check calls fan-bombs the host
+	// with processes that then blow ParallelTimeout and get killed.
+	// Default 1 (one scan at a time, matching the LLM's queue-of-one
+	// posture). <= 0 means unbounded.
+	MaxConcurrentScans int
+	Gitleaks           GitleaksConfig
+	Trufflehog         TrufflehogConfig
+	Kingfisher         KingfisherConfig
 }
 
 type GitleaksConfig struct {
@@ -196,6 +204,7 @@ func setDefaults() {
 	// detectors
 	viper.SetDefault("detectors.enabled", []string{"gitleaks", "trufflehog"})
 	viper.SetDefault("detectors.parallel_timeout", "10s")
+	viper.SetDefault("detectors.max_concurrent_scans", 1)
 	viper.SetDefault("detectors.trufflehog.binary", "trufflehog")
 	viper.SetDefault("detectors.trufflehog.verify", false)
 	viper.SetDefault("detectors.kingfisher.binary", "kingfisher")
@@ -265,8 +274,9 @@ func readServerConfig() ServerConfig {
 
 func readDetectorsConfig() DetectorsConfig {
 	return DetectorsConfig{
-		Enabled:         viper.GetStringSlice("detectors.enabled"),
-		ParallelTimeout: viper.GetDuration("detectors.parallel_timeout"),
+		Enabled:            viper.GetStringSlice("detectors.enabled"),
+		ParallelTimeout:    viper.GetDuration("detectors.parallel_timeout"),
+		MaxConcurrentScans: viper.GetInt("detectors.max_concurrent_scans"),
 		Gitleaks: GitleaksConfig{
 			Config:             viper.GetString("detectors.gitleaks.config"),
 			MaxTargetMegaBytes: viper.GetInt("detectors.gitleaks.max_target_megabytes"),

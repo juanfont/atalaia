@@ -40,7 +40,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 		scanCtx, cancel = context.WithTimeout(scanCtx, a.config.Detectors.ParallelTimeout)
 		defer cancel()
 	}
-	raw, errs := detector.Run(scanCtx, diff, a.detectors)
+	raw, errs := detector.Run(scanCtx, diff, a.detectors, a.detectSem)
 	metrics.CheckDurationSeconds.WithLabelValues("detect").Observe(time.Since(detectStart).Seconds())
 
 	for name, err := range errs {

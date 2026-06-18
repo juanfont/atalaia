@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- `detectors.max_concurrent_scans` caps how many detector scans run
+  at once across all in-flight requests (default 1). Subprocess
+  detectors (trufflehog, kingfisher) are expensive to start; without
+  a cap, a burst of concurrent `/check` calls (e.g. a webhook
+  backfill) spawned one process per detector per request all at once,
+  saturated the host, and the processes then blew
+  `detectors.parallel_timeout` and got SIGKILLed. With the cap the
+  scans queue instead and each runs on an unsaturated box. `<= 0`
+  restores the old unbounded behaviour. Scans turned away while the
+  request's context is already cancelled error out without spawning
+  a process.
+
 ## [0.3.0], 2026-06-17
 
 ### Added

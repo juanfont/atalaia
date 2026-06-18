@@ -17,6 +17,7 @@ server:
 detectors:
   enabled: [gitleaks, trufflehog]   # add "kingfisher" when installed
   parallel_timeout: 10s
+  max_concurrent_scans: 1           # detector scans run at once across all requests; raise for throughput, <=0 = unbounded
 
   gitleaks:
     # Custom gitleaks TOML (rules + allowlists). Omit to use gitleaks' built-in defaults.

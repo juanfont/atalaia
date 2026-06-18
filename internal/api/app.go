@@ -43,6 +43,7 @@ type Deps struct {
 type App struct {
 	config       *types.Config
 	detectors    []detector.Detector
+	detectSem    chan struct{} // bounds concurrent detector scans; nil = unbounded
 	adjudicator  Adjudicator
 	reachability Reachability
 	audit        audit.Writer
@@ -58,9 +59,14 @@ func NewApp(_ context.Context, d Deps) (*App, error) {
 	if auditWriter == nil {
 		auditWriter = audit.Nop()
 	}
+	var detectSem chan struct{}
+	if n := d.Config.Detectors.MaxConcurrentScans; n > 0 {
+		detectSem = make(chan struct{}, n)
+	}
 	app := &App{
 		config:       d.Config,
 		detectors:    d.Detectors,
+		detectSem:    detectSem,
 		adjudicator:  d.Adjudicator,
 		reachability: d.Reachability,
 		audit:        auditWriter,
