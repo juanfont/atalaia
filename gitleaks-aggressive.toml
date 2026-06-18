@@ -58,6 +58,12 @@ description = "Generic secret-like assignment, no entropy gate (high recall; LLM
 # across lines into the next added line.
 regex = '''(?i)(passwd|password|pwd|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)[a-z0-9_.-]{0,20}[ \t]*[:=]{1,3}[ \t'"]*([^\s'"]{6,})'''
 secretGroup = 2
+# No `entropy` field on purpose. In gitleaks an absent entropy means
+# NO entropy filtering, so every regex match passes regardless of how
+# low-entropy the value is. That is what lets this rule flag
+# `password: production` or `token: 111111`. Any non-zero threshold
+# would re-drop the lowest-entropy secrets, which is exactly the crap
+# we want to flood to the LLM. Do not add an entropy line here.
 keywords = [
   "passwd",
   "password",
