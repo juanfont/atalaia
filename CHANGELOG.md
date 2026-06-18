@@ -4,6 +4,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Changed
+
+- Hardened the gemma4 system prompt to dismiss matches that are code
+  rather than literal credentials: variable/attribute names, function
+  or method calls, env lookups, format strings. With the aggressive
+  gitleaks config flooding more, the model was confirming things like
+  `access_token = token_data.get("access_token")` (the captured value
+  is a method call, the real token is fetched at runtime and never in
+  the diff). It now dismisses those. New `code_expression` corpus
+  fixture, drawn from a real false positive, guards it; E4B holds 7/7
+  on the corpus across runs.
+
 ## [0.4.0], 2026-06-18
 
 ### Added

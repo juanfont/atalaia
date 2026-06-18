@@ -1,0 +1,15 @@
+diff --git a/auth/oidc.py b/auth/oidc.py
+index aaaaaaa..bbbbbbb 100644
+--- a/auth/oidc.py
++++ b/auth/oidc.py
+@@ -10,6 +10,12 @@ def authenticate():
+     token_incl_metadata = get_oauth2_access_token(
+         OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPES
+     )
++    if token_incl_metadata is None:
++        print("Authentication failed.")
++        sys.exit(1)
++
++    print(json.dumps(token_incl_metadata, indent=4))
++    access_token = token_incl_metadata.get("access_token")
+     return access_token
