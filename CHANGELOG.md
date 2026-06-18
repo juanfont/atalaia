@@ -10,10 +10,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   Extends the gitleaks default ruleset with one secret-assignment
   rule modeled on gitleaks' own `generic-api-key`, with the entropy
   gate removed, the value charset widened to capture special
-  characters, and the min length lowered to 6. It deliberately
-  floods: it catches low-entropy and special-character secrets the
-  stock rules skip (e.g. `password: a324kj\#…`), and the LLM filter
-  removes the extra noise. Point `detectors.gitleaks.config` at it
+  characters, the min length lowered to 6, and the keyword no longer
+  `\b`-anchored so env-var-style names hit too (`DB_PASSWORD=…`,
+  `MY_SECRET=…`). It deliberately floods: it catches low-entropy and
+  special-character secrets the stock rules skip (`password: hunter2`,
+  `password: a324kj\#…`), and the LLM filter removes the extra noise. Point `detectors.gitleaks.config` at it
   to enable; bundled into the container at
   `/etc/atalaia/gitleaks-aggressive.toml` and the release tarball.
   The example config now recommends it.

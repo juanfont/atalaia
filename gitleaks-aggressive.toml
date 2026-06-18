@@ -49,7 +49,14 @@ useDefault = true
 id = "atalaia-generic-secret-assignment"
 description = "Generic secret-like assignment, no entropy gate (high recall; LLM adjudicates)"
 # group 1: the secret-ish keyword; group 2: the assigned value.
-regex = '''(?i)\b(passwd|password|pwd|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)\b\s*[:=]\s*['"]?([^\s'"]{6,})'''
+#
+# The keyword is NOT \b-anchored, so it matches inside larger
+# identifiers: DB_PASSWORD, MY_SECRET, app.apiKey all hit. After the
+# keyword we allow a short [a-z0-9_.-] run (suffixes like _prod), then
+# a :/= delimiter, then the value. Horizontal whitespace only ([ \t]),
+# and the value excludes whitespace and quotes, so a match never bleeds
+# across lines into the next added line.
+regex = '''(?i)(passwd|password|pwd|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)[a-z0-9_.-]{0,20}[ \t]*[:=]{1,3}[ \t'"]*([^\s'"]{6,})'''
 secretGroup = 2
 keywords = [
   "passwd",

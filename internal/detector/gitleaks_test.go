@@ -95,6 +95,33 @@ new file mode 100644
 	if fs, _ := aggr.Scan(context.Background(), loadDiff(t, "real_key.diff")); len(fs) == 0 {
 		t.Error("aggressive config lost the inherited default rules (real_key.diff found nothing)")
 	}
+
+	// Low-entropy and env-var-prefixed keyword cases the stock rules
+	// skip but we want flooded to the LLM.
+	caught := func(line string) bool {
+		diff := []byte("diff --git a/x b/x\nnew file mode 100644\n--- /dev/null\n+++ b/x\n@@ -0,0 +1,1 @@\n+" + line + "\n")
+		fs, _ := aggr.Scan(context.Background(), diff)
+		return len(fs) > 0
+	}
+	for _, line := range []string{
+		`password: hunter2hunter2`,       // low entropy, no digits-heavy
+		`DB_PASSWORD=correcthorsestaple`, // underscore-prefixed keyword
+		`api_key = letmein123`,
+	} {
+		if !caught(line) {
+			t.Errorf("aggressive config should flag %q", line)
+		}
+	}
+	// Non-secret assignments must still be skipped (min length, no keyword).
+	for _, line := range []string{
+		`username: juanfont`,
+		`port: 5432`,
+		`password: short`, // below min length 6
+	} {
+		if caught(line) {
+			t.Errorf("aggressive config should NOT flag %q", line)
+		}
+	}
 }
 
 func TestGitleaks_SentinelIsAllowlistedByDefault(t *testing.T) {
