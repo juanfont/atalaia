@@ -161,6 +161,8 @@ secret-scan:
         test "$(echo "$RESP" | jq -r '.stats.confirmed')" = "0"
 ```
 
+Both snippets use `curl -f`, so a `503` (Atalaia busy or a scan it couldn't complete) exits non-zero and **fails closed** — the commit/pipeline is blocked, not waved through. That's deliberate: an un-adjudicated diff must not pass as clean. If you'd rather retry transient 503s before blocking, wrap the `curl` in a short retry loop; just don't downgrade the failure to success.
+
 ## GitLab webhook integration (worked example)
 
 A small watcher service subscribes to GitLab push events, fetches each commit's diff, hands it to Atalaia, acts on `confirmed` verdicts.
@@ -235,10 +237,32 @@ type verdict struct {
     Reason       string  `json:"reason"`
 }
 
+type detectorError struct {
+    Detector string `json:"detector"`
+    Error    string `json:"error"`
+}
+
+type stats struct {
+    DetectorErrors []detectorError `json:"detector_errors,omitempty"`
+    Truncated      bool            `json:"truncated"`
+}
+
 type checkResponse struct {
     RequestID string    `json:"request_id"`
     Verdicts  []verdict `json:"verdicts"`
+    Stats     stats     `json:"stats"`
 }
+
+// errRetryable marks a transient Atalaia response (503): queue full, or
+// a scan that could not complete. The commit was NOT adjudicated, so it
+// must be retried — never treated as clean.
+var errRetryable = fmt.Errorf("atalaia: retryable")
+
+// checkSem bounds how many commits the watcher adjudicates at once. A
+// push (or a backfill of many pushes) can carry dozens of commits;
+// without this the watcher fan-bombs Atalaia with concurrent /check
+// calls. Size it to Atalaia's capacity, not GitLab's.
+var checkSem = make(chan struct{}, 8)
 
 func main() {
     glab, err := gitlab.NewClient(os.Getenv("GITLAB_TOKEN"),
@@ -292,14 +316,44 @@ func process(glab *gitlab.Client, atalaiaURL, token string, projectID int, sha s
         return nil
     }
 
-    ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-    defer cancel()
+    // Bound concurrent adjudications so a multi-commit push can't
+    // flood Atalaia. Block until a slot is free.
+    checkSem <- struct{}{}
+    defer func() { <-checkSem }()
 
-    verdicts, err := check(ctx, atalaiaURL, token, unified)
-    if err != nil {
+    // Retry transient 503s with backoff. A 503 means "not adjudicated"
+    // (queue full or scan inconclusive); dropping it would silently
+    // skip a possibly-dirty commit.
+    var resp *checkResponse
+    backoff := time.Second
+    for attempt := 0; attempt < 4; attempt++ {
+        ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+        resp, err = check(ctx, atalaiaURL, token, unified)
+        cancel()
+        if err == nil {
+            break
+        }
+        if err == errRetryable {
+            time.Sleep(backoff)
+            backoff *= 2
+            continue
+        }
         return err
     }
-    for _, v := range verdicts {
+    if err != nil {
+        // Still failing after retries: alert rather than drop. An
+        // un-adjudicated commit is an operational incident, not a clean.
+        return fmt.Errorf("commit %s left un-adjudicated: %w", sha, err)
+    }
+
+    // A partial scan (one detector failed, another produced findings)
+    // returns 200 with verdicts plus detector_errors. Act on the
+    // verdicts, but flag the gap so coverage isn't silently incomplete.
+    if len(resp.Stats.DetectorErrors) > 0 {
+        fmt.Fprintf(os.Stderr, "commit %s: partial scan, detectors failed: %+v\n",
+            sha, resp.Stats.DetectorErrors)
+    }
+    for _, v := range resp.Verdicts {
         if v.Verdict == "confirmed" {
             notify(projectID, sha, v) // email / slack / open issue / block merge
         }
@@ -327,7 +381,7 @@ func buildUnifiedDiff(files []*gitlab.Diff) string {
     return b.String()
 }
 
-func check(ctx context.Context, endpoint, token, diff string) ([]verdict, error) {
+func check(ctx context.Context, endpoint, token, diff string) (*checkResponse, error) {
     req, err := http.NewRequestWithContext(ctx, http.MethodPost,
         endpoint+"/check", bytes.NewReader([]byte(diff)))
     if err != nil {
@@ -343,16 +397,22 @@ func check(ctx context.Context, endpoint, token, diff string) ([]verdict, error)
         return nil, err
     }
     defer resp.Body.Close()
-    if resp.StatusCode != http.StatusOK {
+
+    switch resp.StatusCode {
+    case http.StatusOK:
+        var out checkResponse
+        if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+            return nil, err
+        }
+        return &out, nil
+    case http.StatusServiceUnavailable:
+        // Queue full or scan inconclusive. Transient: retry, do not
+        // treat as clean.
+        return nil, errRetryable
+    default:
         b, _ := io.ReadAll(resp.Body)
         return nil, fmt.Errorf("atalaia: %d %s", resp.StatusCode, b)
     }
-
-    var out checkResponse
-    if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-        return nil, err
-    }
-    return out.Verdicts, nil
 }
 
 func notify(projectID int, sha string, v verdict) {
@@ -368,11 +428,14 @@ func notify(projectID int, sha string, v verdict) {
 - **Verify the hook token.** It's the only thing between your watcher and a public unauthenticated POST endpoint. Header: `X-Gitlab-Token`.
 - **Deduplicate alerts.** Watcher receives every commit. Alert per-commit and you spam on rebases. Key dedup on `(project_id, finding_id)`. Atalaia's `finding_id` is stable across re-runs (`sha256(file:line:match)[:12]`).
 - **Pick the right LLM context.** For typical commits (< 32K tokens) defaults are fine. For monorepo merges touching hundreds of files, see `llm.max_findings_per_request` and `llm.context_budget.input_tokens`. Response carries `stats.truncated: true` when the cap kicks in.
+- **Treat 503 as "retry", never "clean".** Atalaia returns `503` when it can't adjudicate: the LLM queue is full, or a scan was inconclusive (a detector crashed/timed out and produced nothing). The commit was *not* scanned. Retry with backoff; if it still fails, raise an incident — do not let an un-adjudicated commit pass as clean. A `200` with a non-empty `stats.detector_errors[]` is a *partial* scan: the verdicts are real, but coverage was incomplete, so flag it.
+- **Cap your own concurrency.** A push can carry dozens of commits and a backfill many pushes. Bound how many `/check` calls are in flight at once (the `checkSem` in the sketch). Atalaia bounds subprocess detectors and the LLM internally, but an unbounded watcher fan-out still buries it under queue depth and earns you 503s. Size the cap to Atalaia's capacity.
 - **Policy lives in the watcher, not in Atalaia.** Atalaia returns verdicts. Whether to block the MR, open an issue, page someone is your call and will change over time. Keep policy out of the secret-scanner so you can re-tune without redeploying it.
 
 ### Operational checklist
 
-- [ ] Atalaia + LLM healthchecked from your monitoring. Scrape `/metrics`, alert on `atalaia_check_requests_total{status="5xx"}` non-zero, on `atalaia_llm_queue_depth` saturating, on `atalaia_llm_missing_verdict_total` ticking up.
+- [ ] Atalaia + LLM healthchecked from your monitoring. Scrape `/metrics`, alert on `atalaia_check_requests_total{status="5xx"}` non-zero, on `atalaia_detector_errors_total` ticking up (scans failing/timing out), on `atalaia_llm_queue_depth` saturating, on `atalaia_llm_missing_verdict_total` ticking up.
+- [ ] Watcher retries Atalaia 503s with backoff and alerts on un-adjudicated commits, rather than treating them as clean. Watcher bounds its own concurrent `/check` calls.
 - [ ] `ATALAIA_SERVER_AUTH_TOKEN` rotated whenever the watcher's credential is rotated.
 - [ ] Audit log opted in *only* on a separate, restricted volume. Raw matches land there when `observability.audit.reveal_matches: true`.
 - [ ] Detector binaries (trufflehog, kingfisher) pinned via the container image or Makefile. Bump deliberately, not on every release.

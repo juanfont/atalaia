@@ -148,6 +148,13 @@ Per-request observability. Counts, not summaries.
 - `llm_invoked: false` happens when every finding short-circuited (all verified, all sentinels) or zero findings. The response is sub-200ms in that case.
 - `llm_calls > 1` means per-finding mode kicked in for a large diff (see `llm.context_budget`).
 - `truncated: true` means the request had more findings than `llm.max_findings_per_request` and the response only contains the first N verdicts.
+- `detector_errors[]` is present only when a detector failed to complete (timeout, crash, kill). Each entry is `{"detector": "trufflehog", "error": "signal: killed"}`. Its presence on a `200` means a **partial** scan: the verdicts are real, but at least one detector did not run, so a zero-finding result is *not* an authoritative "clean". Absent the field, all detectors completed. When *every* detector fails and nothing is found, `/check` returns `503` instead of a `200` (see status codes) so the caller can't mistake an un-run scan for a clean diff.
+
+```json
+"detector_errors": [
+  {"detector": "trufflehog", "error": "signal: killed (stderr: )"}
+]
+```
 
 ### A realistic worked example
 
@@ -282,13 +289,19 @@ for _, v := range resp.Verdicts {
 
 | Code | When |
 |---|---|
-| 200 | Adjudication succeeded. Body is `CheckResponse`. |
+| 200 | Adjudication succeeded. Body is `CheckResponse`. A partial scan (some detector failed but findings were still produced) is still a 200; check `stats.detector_errors`. |
 | 400 | Invalid body, missing diff, body over `server.max_body_bytes`, unsupported Content-Type. |
 | 401 | `server.auth_token` set, request missing or wrong. |
 | 502 | LLM call failed (upstream timeout, parse error, transport error). Response body has an `{"error": "..."}` shape with the underlying message. |
-| 503 | LLM queue is full (`llm.queue_max` reached). Retry later with backoff. |
+| 503 | Not adjudicated, **retry with backoff**. Either the LLM queue is full (`llm.queue_max` reached), or the scan was inconclusive — every detector failed and nothing was found, so atalaia fails closed rather than return a false "clean". |
 
 Errors all return `application/json` `{"error": "..."}`.
+
+A `503` means the diff was **not** scanned. Treat it as retryable, never
+as clean: retry with backoff, and alert if it persists. This is the
+mirror of the partial-scan case above — a `200` with `detector_errors`
+gives you real verdicts plus a coverage caveat; a `503` gives you
+nothing and must be retried.
 
 ### False-positive prevention
 
