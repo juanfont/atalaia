@@ -4,6 +4,31 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.2], 2026-06-18
+
+### Security
+
+- The LLM's free-text `reason` is now scrubbed of the raw matched value
+  before it leaves the process. The model sometimes quoted the credential
+  verbatim in its explanation ("the value 'sOqYB…Zx9y' is a literal API
+  key"), so the raw secret rode out in the `/check` response, the audit
+  reason, and any downstream alert/email even though `match_preview` was
+  correctly redacted. `redact.Scrub` replaces any verbatim occurrence of
+  the match with its redacted preview, and the prompt now instructs the
+  model not to quote values. The match preview remains the only form of
+  the value ever surfaced.
+
+### Added
+
+- `/version` now reports a `prompt` field: the loaded prompt's
+  `profile:hash` fingerprint (e.g. `gemma4:8116c54e48f5`). It changes
+  whenever the on-disk template changes, so an operator can confirm the
+  live prompt matches the release. This makes a stale prompt detectable
+  instead of silent — a deploy that updates the binary but not the
+  `prompts/` directory keeps running the old prompt, which silently
+  reverted three releases' worth of false-positive fixes before it was
+  caught.
+
 ## [0.5.1], 2026-06-18
 
 ### Changed

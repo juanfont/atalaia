@@ -34,6 +34,8 @@ type fakeAdjudicator struct {
 
 func (f *fakeAdjudicator) Probe(_ context.Context) error { return f.probeErr }
 
+func (f *fakeAdjudicator) PromptFingerprint() string { return "test:000000000000" }
+
 // fakeReachability lets a test pin the cached readiness state.
 type fakeReachability struct{ ready bool }
 

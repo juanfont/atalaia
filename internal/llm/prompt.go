@@ -2,6 +2,8 @@ package llm
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"text/template"
@@ -14,8 +16,9 @@ import (
 // The schema is the contract; the prompt body is profile-specific and
 // expected to drift as models change.
 type PromptTemplate struct {
-	system *template.Template
-	user   *template.Template
+	system      *template.Template
+	user        *template.Template
+	fingerprint string
 }
 
 // LoadPromptTemplate loads the template files for cfg.Profile from
@@ -29,27 +32,47 @@ func LoadPromptTemplate(cfg types.LLMConfig) (*PromptTemplate, error) {
 		return nil, fmt.Errorf("llm.profiles.%s: system_template and user_template are required", cfg.Profile)
 	}
 
-	system, err := parseFile("system", profile.SystemTemplate)
+	system, sysBody, err := parseFile("system", profile.SystemTemplate)
 	if err != nil {
 		return nil, err
 	}
-	user, err := parseFile("user", profile.UserTemplate)
+	user, userBody, err := parseFile("user", profile.UserTemplate)
 	if err != nil {
 		return nil, err
 	}
-	return &PromptTemplate{system: system, user: user}, nil
+	return &PromptTemplate{
+		system:      system,
+		user:        user,
+		fingerprint: fingerprint(cfg.Profile, sysBody, userBody),
+	}, nil
 }
 
-func parseFile(role, path string) (*template.Template, error) {
+// fingerprint is a stable "profile:hash" identifier for the loaded
+// prompt bodies. /version surfaces it so an operator can tell at a
+// glance which prompt is actually live — a stale on-disk template
+// (e.g. a deploy that updated the binary but not prompts/) changes the
+// hash, making the drift detectable instead of silent.
+func fingerprint(profile string, system, user []byte) string {
+	h := sha256.New()
+	h.Write(system)
+	h.Write([]byte{0})
+	h.Write(user)
+	return profile + ":" + hex.EncodeToString(h.Sum(nil))[:12]
+}
+
+// Fingerprint returns the loaded prompt's "profile:hash" identifier.
+func (p *PromptTemplate) Fingerprint() string { return p.fingerprint }
+
+func parseFile(role, path string) (*template.Template, []byte, error) {
 	body, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read %s template %q: %w", role, path, err)
+		return nil, nil, fmt.Errorf("read %s template %q: %w", role, path, err)
 	}
 	t, err := template.New(role).Parse(string(body))
 	if err != nil {
-		return nil, fmt.Errorf("parse %s template %q: %w", role, path, err)
+		return nil, nil, fmt.Errorf("parse %s template %q: %w", role, path, err)
 	}
-	return t, nil
+	return t, body, nil
 }
 
 // PromptData is what the user template iterates over.

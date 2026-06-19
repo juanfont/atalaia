@@ -47,6 +47,11 @@ func NewAdjudicator(cfg types.LLMConfig, client ChatCompleter) (*Adjudicator, er
 func (a *Adjudicator) QueueDepth() int64 { return a.sem.QueueDepth() }
 func (a *Adjudicator) Inflight() int     { return a.sem.Inflight() }
 
+// PromptFingerprint returns the loaded prompt's "profile:hash"
+// identifier, so /version can reveal exactly which prompt is live and a
+// stale on-disk template is detectable instead of silent.
+func (a *Adjudicator) PromptFingerprint() string { return a.prompt.Fingerprint() }
+
 // Probe is a thin pass-through to the underlying client. Used by
 // /healthz and `atalaia probe`.
 func (a *Adjudicator) Probe(ctx context.Context) error { return a.client.Probe(ctx) }

@@ -47,3 +47,23 @@ func TestPreview_Empty(t *testing.T) {
 		t.Errorf("Preview(\"\") = %q, want \"\"", got)
 	}
 }
+
+func TestScrub(t *testing.T) {
+	secret := "sOqYBsNTwA79IjosZx9y"
+	in := "The matched value '" + secret + "' appears to be a literal API key."
+	out := Scrub(in, secret)
+	if strings.Contains(out, secret) {
+		t.Fatalf("Scrub left the raw secret in: %q", out)
+	}
+	if !strings.Contains(out, Preview(secret)) {
+		t.Errorf("Scrub should leave the redacted preview: %q", out)
+	}
+	// no occurrence -> unchanged
+	if got := Scrub("nothing sensitive here", secret); got != "nothing sensitive here" {
+		t.Errorf("Scrub mutated text with no secret: %q", got)
+	}
+	// blank secret -> unchanged
+	if got := Scrub("keep me", ""); got != "keep me" {
+		t.Errorf("Scrub mutated text on blank secret: %q", got)
+	}
+}

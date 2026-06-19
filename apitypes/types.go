@@ -77,8 +77,13 @@ type HealthzResponse struct {
 
 // VersionResponse is the body for GET /version.
 type VersionResponse struct {
-	Atalaia    string `json:"atalaia"`
-	LLMModel   string `json:"llm_model"`
+	Atalaia  string `json:"atalaia"`
+	LLMModel string `json:"llm_model"`
+	// Prompt is the loaded prompt's "profile:hash" fingerprint. It
+	// changes whenever the on-disk template changes, so an operator can
+	// confirm the live prompt matches the release (a deploy that
+	// updates the binary but not prompts/ shows a stale hash here).
+	Prompt     string `json:"prompt"`
 	Gitleaks   string `json:"gitleaks"`
 	Trufflehog string `json:"trufflehog"`
 	Kingfisher string `json:"kingfisher"`

@@ -11,7 +11,9 @@ verdict:    "confirmed" if the match looks like a usable credential,
             "dismissed" if it is a test fixture, example, placeholder,
             or pattern collision.
 confidence: float between 0 and 1.
-reason:     one short sentence, at most 280 characters.
+reason:     one short sentence, at most 280 characters. Never quote the
+            matched value or any credential verbatim; refer to it
+            generically ("a high-entropy token", "this value").
 
 Dismiss test fixtures, example values, placeholders ($VAR, <TOKEN>,
 your-key-here), documentation examples, and known vendor sentinels

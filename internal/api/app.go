@@ -17,6 +17,7 @@ import (
 type Adjudicator interface {
 	Adjudicate(ctx context.Context, diff []byte, deduped []detector.DedupedFinding) (llm.AdjudicateResult, error)
 	Probe(ctx context.Context) error
+	PromptFingerprint() string
 }
 
 // Reachability is the seam for /readyz. *llm.ReachabilityWatcher

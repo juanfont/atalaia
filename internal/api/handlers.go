@@ -166,6 +166,7 @@ func (a *App) Version(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, apitypes.VersionResponse{
 		Atalaia:    a.version,
 		LLMModel:   a.config.LLM.Model,
+		Prompt:     a.adjudicator.PromptFingerprint(),
 		Gitleaks:   "unknown",
 		Trufflehog: "unknown",
 		Kingfisher: "unknown",
@@ -254,8 +255,11 @@ func mergeVerdicts(deduped []detector.DedupedFinding, decisions []llm.Verdict) [
 			MatchPreview: redact.Preview(d.Match),
 			Verdict:      v.Verdict,
 			Confidence:   v.Confidence,
-			Reason:       v.Reason,
-			Detections:   convertDetections(d.Detections),
+			// The model's reason occasionally quotes the matched value
+			// verbatim; scrub it so the raw secret never leaves in the
+			// explanation (the preview is the only value we surface).
+			Reason:     redact.Scrub(v.Reason, d.Match),
+			Detections: convertDetections(d.Detections),
 		})
 	}
 	return out

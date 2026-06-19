@@ -118,8 +118,8 @@ func TestHealthzAndVersionTags(t *testing.T) {
 	if string(h) != `{"status":"ok","llm_reachable":true}` {
 		t.Errorf("healthz tags drift: %s", h)
 	}
-	v, _ := json.Marshal(VersionResponse{Atalaia: "x", LLMModel: "m", Gitleaks: "?", Trufflehog: "?", Kingfisher: "?"})
-	if string(v) != `{"atalaia":"x","llm_model":"m","gitleaks":"?","trufflehog":"?","kingfisher":"?"}` {
+	v, _ := json.Marshal(VersionResponse{Atalaia: "x", LLMModel: "m", Prompt: "gemma4:abc", Gitleaks: "?", Trufflehog: "?", Kingfisher: "?"})
+	if string(v) != `{"atalaia":"x","llm_model":"m","prompt":"gemma4:abc","gitleaks":"?","trufflehog":"?","kingfisher":"?"}` {
 		t.Errorf("version tags drift: %s", v)
 	}
 }

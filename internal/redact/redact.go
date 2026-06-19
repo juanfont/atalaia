@@ -40,6 +40,24 @@ func previewURL(match string) string {
 	return u.Scheme + "://" + mask + ":" + mask + "@" + tail
 }
 
+// Scrub replaces any verbatim occurrence of secret in text with the
+// redacted Preview(secret). The LLM's free-text reason sometimes quotes
+// the matched value in full ("the value 'sOqY...Zx9y' is a literal API
+// key"); this keeps the raw secret out of the reason the same way
+// Preview keeps it out of match previews. A blank secret, or a text
+// that doesn't contain it, is returned unchanged.
+//
+// This catches verbatim quoting, which is the observed leak vector. It
+// does not catch a secret the model reformatted (re-cased, partially
+// quoted); the prompt also instructs the model not to quote values, and
+// the match preview remains the only value ever surfaced deliberately.
+func Scrub(text, secret string) string {
+	if secret == "" || !strings.Contains(text, secret) {
+		return text
+	}
+	return strings.ReplaceAll(text, secret, Preview(secret))
+}
+
 func previewGeneric(match string) string {
 	const head, tail = 4, 4
 	if len(match) <= head+tail {

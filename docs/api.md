@@ -117,7 +117,7 @@ Field by field:
 - `match_preview` (string) — redacted view of the matched value. URL credentials become `scheme://****:****@host/path`; opaque tokens become `<head4>****<tail4>`. Short matches collapse to `****`. **The raw match is never in the API response**, only in the opt-in audit log with `reveal_matches: true`.
 - `verdict` (string) — `"confirmed"` or `"dismissed"`.
 - `confidence` (float, 0-1) — model's stated confidence in the verdict. Sentinel and verified short-circuits use `1.0`. Gap-filled fallbacks (model didn't decide) use `0.0`.
-- `reason` (string, ≤ 280 chars) — one-sentence rationale from the model, or a fixed string for short-circuits and gap-fills.
+- `reason` (string, ≤ 280 chars) — one-sentence rationale from the model, or a fixed string for short-circuits and gap-fills. Any verbatim occurrence of the raw match is scrubbed to its redacted preview before the reason leaves the process, so the raw secret never rides out in the explanation.
 - `detections[]` — every scanner that fired on this `(file, line, match)`. A finding caught by gitleaks **and** trufflehog with `verified: true` shows both entries; that pair is the strongest pre-LLM signal and short-circuits to `confirmed: 1.0`. Detection fields:
   - `detector_type` — `gitleaks`, `trufflehog`, or `kingfisher`.
   - `detector_name` — the detector's own name for what fired (e.g. `aws`, `postgres`, `github-pat`).
@@ -429,12 +429,15 @@ Readiness. Returns 200/503 based on a cached LLM-reachability state that a backg
 ```json
 {
   "atalaia": "0.1.0",
-  "llm_model": "google/gemma-4-E2B-it",
+  "llm_model": "google/gemma-4-E4B-it",
+  "prompt": "gemma4:8116c54e48f5",
   "gitleaks": "unknown",
   "trufflehog": "unknown",
   "kingfisher": "unknown"
 }
 ```
+
+`prompt` is the loaded prompt's `profile:hash` fingerprint. It changes whenever the on-disk template (`prompts/<profile>_{system,user}.tmpl`) changes, so you can confirm the live prompt matches the release — a deploy that updates the binary but not the `prompts/` directory shows a stale hash here while silently running the old prompt.
 
 Detector versions are currently reported as `unknown`; follow-up item.
 
