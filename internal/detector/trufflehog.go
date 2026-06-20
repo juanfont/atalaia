@@ -16,7 +16,7 @@ import (
 // Trufflehog is the subprocess adapter for trufflesecurity/trufflehog.
 //
 // Trufflehog is AGPL-3.0 and is therefore invoked as a subprocess so
-// Atalaia can stay Apache 2.0. Never import it as a Go module.
+// Atalaia can stay BSD-3-Clause. Never import it as a Go module.
 type Trufflehog struct {
 	cfg types.TrufflehogConfig
 }

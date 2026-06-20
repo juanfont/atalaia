@@ -137,7 +137,7 @@ Per-request observability. Counts, not summaries.
   "dismissed": 2,
   "llm_invoked": true,
   "llm_calls": 1,
-  "llm_model": "google/gemma-4-E2B-it",
+  "llm_model": "google/gemma-4-E4B-it",
   "llm_latency_ms": 4321,
   "total_latency_ms": 4892,
   "truncated": false
@@ -243,7 +243,7 @@ Response:
     "dismissed": 1,
     "llm_invoked": true,
     "llm_calls": 1,
-    "llm_model": "google/gemma-4-E2B-it",
+    "llm_model": "google/gemma-4-E4B-it",
     "llm_latency_ms": 7421,
     "total_latency_ms": 7438,
     "truncated": false

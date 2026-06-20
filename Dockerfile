@@ -9,7 +9,7 @@
 # License note: trufflehog is AGPL-3.0. It is bundled here purely as
 # a subprocess executable — atalaia never links against it. This is
 # mere aggregation under GPL/AGPL terminology, so the image as a
-# whole remains distributable under Apache 2.0 (atalaia) + AGPL-3.0
+# whole remains distributable under BSD-3-Clause (atalaia) + AGPL-3.0
 # (trufflehog). See upstream sources for trufflehog at
 # https://github.com/trufflesecurity/trufflehog.
 

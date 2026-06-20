@@ -47,7 +47,7 @@ func TestCheckResponseRoundtrip(t *testing.T) {
     "dismissed": 1,
     "llm_invoked": true,
     "llm_calls": 1,
-    "llm_model": "google/gemma-4-E2B-it",
+    "llm_model": "google/gemma-4-E4B-it",
     "llm_latency_ms": 1804,
     "total_latency_ms": 1805,
     "truncated": false

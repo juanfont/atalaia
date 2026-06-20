@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/juanfont/atalaia/actions/workflows/ci.yml"><img src="https://github.com/juanfont/atalaia/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
-  <a href="https://github.com/juanfont/atalaia/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="license"></a>
+  <a href="https://github.com/juanfont/atalaia/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-BSD--3--Clause-blue.svg" alt="license"></a>
 </p>
 
 Secret detection for git commits, with a local LLM cutting the false positives.
@@ -122,7 +122,7 @@ Defaults work out of the box. Point at an LLM and go:
 ```sh
 docker run --rm -p 8080:8080 \
   -e ATALAIA_LLM_ENDPOINT=http://vllm:8000/v1 \
-  -e ATALAIA_LLM_MODEL=google/gemma-4-E2B-it \
+  -e ATALAIA_LLM_MODEL=google/gemma-4-E4B-it \
   ghcr.io/juanfont/atalaia:latest
 ```
 
@@ -176,12 +176,12 @@ Atalaia returns verdicts. The caller decides whether to block, notify, or log. I
 
 - **In-memory only.** Atalaia never persists the diff, findings, or verdicts. Logs carry redacted previews, never raw matches.
 - **No outbound calls in the default config.** Trufflehog runs with `--no-verification`. The only egress is Atalaia to its configured LLM endpoint.
-- **License fence.** Trufflehog is AGPL-3.0. Atalaia invokes it as a subprocess and never imports it as a Go module. Atalaia ships under Apache 2.0.
+- **License fence.** Trufflehog is AGPL-3.0. Atalaia invokes it as a subprocess and never imports it as a Go module. Atalaia ships under BSD-3-Clause.
 - **The LLM endpoint must be trusted.** Prompts contain raw matches because the model needs to see the value to judge it. Run vLLM on the same network as Atalaia, or point at a third-party provider only when policy allows.
 
 ## License
 
-Apache 2.0. See [LICENSE](LICENSE).
+BSD-3-Clause. See [LICENSE](LICENSE).
 
 ## Disclosure
 

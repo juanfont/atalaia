@@ -43,7 +43,7 @@ dockers:
       - --label=org.opencontainers.image.description=Secret-scan filter with a local LLM
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=Apache-2.0
+      - --label=org.opencontainers.image.licenses=BSD-3-Clause
     extra_files:
       - prompts
       - LICENSE
@@ -64,7 +64,7 @@ dockers:
       - --label=org.opencontainers.image.description=Secret-scan filter with a local LLM
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=Apache-2.0
+      - --label=org.opencontainers.image.licenses=BSD-3-Clause
     extra_files:
       - prompts
       - LICENSE

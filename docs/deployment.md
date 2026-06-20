@@ -60,7 +60,7 @@ LLM on the host:
 ```sh
 docker run --rm --name atalaia -p 8080:8080 \
   -e ATALAIA_LLM_ENDPOINT=http://host.docker.internal:8000/v1 \
-  -e ATALAIA_LLM_MODEL=google/gemma-4-E2B-it \
+  -e ATALAIA_LLM_MODEL=google/gemma-4-E4B-it \
   -e ATALAIA_SERVER_AUTH_TOKEN="$ATALAIA_TOKEN" \
   ghcr.io/juanfont/atalaia:latest
 ```

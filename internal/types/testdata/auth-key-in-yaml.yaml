@@ -6,7 +6,7 @@ detectors:
 
 llm:
   endpoint: "http://127.0.0.1:8000/v1"
-  model: "google/gemma-4-E2B-it"
+  model: "google/gemma-4-E4B-it"
 
 tailscale:
   enabled: true

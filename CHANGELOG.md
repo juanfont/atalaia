@@ -4,6 +4,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- Documentation consistency: the license is BSD-3-Clause (matching the
+  `LICENSE` file) everywhere. The README badge, license fence note, and
+  license section previously claimed Apache 2.0, which disagreed with
+  the actual `LICENSE` — corrected across the README, container OCI
+  labels, Dockerfile, and code comments. The trufflehog AGPL subprocess
+  fence is unchanged; BSD-3-Clause is permissive and keeps Atalaia
+  distributable exactly as before.
+- Standardised the example LLM model string on `google/gemma-4-E4B-it`
+  everywhere (README, deployment and API docs, test fixtures). A few
+  spots still referenced the older `E2B` variant.
+
+### Added
+
+- Grafana dashboard under [`docs/grafana/`](docs/grafana/): an
+  effectiveness-first view (false positives prevented, real secrets
+  confirmed, noise filtered, model answer rate) with operational health
+  collapsed below, plus recommended Prometheus alert rules.
+
 ## [0.5.2], 2026-06-18
 
 ### Security
@@ -274,5 +294,5 @@ tool calling, observability, container, CI.
   with `--no-verification`. The only network egress is to the
   configured LLM endpoint.
 - License fence: trufflehog (AGPL-3.0) is always a subprocess.
-  Atalaia ships under Apache 2.0.
+  Atalaia ships under BSD-3-Clause.
 - No raw matches in API responses or non-audit logs.

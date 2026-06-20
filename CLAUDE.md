@@ -77,7 +77,7 @@ type Detector interface {
 - **trufflehog**: **subprocess only** (`trufflehog stdin --json
   --no-verification --no-update`). It is AGPL-3.0. The process boundary
   is the license fence. **Never import trufflehog as a Go module.**
-  That would relicense Atalaia to AGPL. Apache 2.0 is deliberate.
+  That would relicense Atalaia to AGPL. BSD-3-Clause is deliberate.
 - **kingfisher**: subprocess, optional, disabled by default.
 
 Detector binaries are pinned in the Makefile and bundled into the
@@ -189,7 +189,7 @@ Loaded via Viper, wired through Cobra.
 ## Conventions and constraints worth remembering
 
 - **License fence**: trufflehog (AGPL-3.0) is always a subprocess.
-  Atalaia ships under Apache 2.0. The boundary is non-negotiable.
+  Atalaia ships under BSD-3-Clause. The boundary is non-negotiable.
 - **No outbound calls in default config**: trufflehog runs with
   `--no-verification`. The only network egress is Atalaia to its
   configured LLM endpoint. Don't add features that quietly reach
