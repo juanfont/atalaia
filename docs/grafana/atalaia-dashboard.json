@@ -1,0 +1,265 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "What Atalaia's LLM filter actually does: scanner noise dismissed, real secrets confirmed, how decisively, and how reliably. Operational health is collapsed at the bottom.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "liveNow": false,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["atalaia", "security", "secret-scanning", "llm"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data source",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(atalaia_check_requests_total, job)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Job",
+        "multi": true,
+        "name": "job",
+        "query": { "query": "label_values(atalaia_check_requests_total, job)", "refId": "job" },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(atalaia_check_requests_total{job=~\"$job\"}, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "query": { "query": "label_values(atalaia_check_requests_total{job=~\"$job\"}, instance)", "refId": "instance" },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Atalaia — Filter Effectiveness",
+  "uid": "atalaia-llm",
+  "version": 1,
+  "panels": [
+    { "type": "row", "id": 1, "title": "What the filter did this window", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+
+    {
+      "id": 10, "type": "stat", "title": "False positives prevented",
+      "description": "Scanner findings the LLM dismissed over the selected time range. This is the work your developers did NOT have to triage.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"dismissed\"}[$__range]))", "instant": true, "legendFormat": "dismissed", "refId": "A" } ]
+    },
+    {
+      "id": 11, "type": "stat", "title": "Real secrets confirmed",
+      "description": "Findings the LLM judged to be genuine credentials over the selected time range. These are what a human acts on.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"confirmed\"}[$__range]))", "instant": true, "legendFormat": "confirmed", "refId": "A" } ]
+    },
+    {
+      "id": 12, "type": "gauge", "title": "Noise filtered",
+      "description": "Share of all adjudicated findings the LLM dismissed as false positives. The filter's whole reason to exist: recall comes from the regex detectors, precision comes from here.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.4 }, { "color": "green", "value": 0.6 } ] } }, "overrides": [] },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"dismissed\"}[$__range])) / clamp_min(sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__range])), 1)", "instant": true, "legendFormat": "dismissed share", "refId": "A" } ]
+    },
+    {
+      "id": 13, "type": "stat", "title": "Model answer rate",
+      "description": "Share of findings the model returned a real verdict for, rather than being gap-filled with the conservative fallback. A reliability/quality signal — drops mean prompt or model trouble.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "1 - ( sum(increase(atalaia_llm_missing_verdict_total{job=~\"$job\", instance=~\"$instance\"}[$__range])) / clamp_min(sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__range])), 1) )", "instant": true, "legendFormat": "answered", "refId": "A" } ]
+    },
+
+    { "type": "row", "id": 2, "title": "Adjudication", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 } },
+
+    {
+      "id": 20, "type": "timeseries", "title": "Verdicts: confirmed vs dismissed",
+      "description": "The decision stream. dismissed (green) is noise removed; confirmed (red) is real secrets surfaced.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 30, "stacking": { "mode": "normal", "group": "A" }, "lineWidth": 1, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byName", "options": "confirmed" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }, { "matcher": { "id": "byName", "options": "dismissed" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] } ] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum", "mean", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum by (verdict) (rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "{{verdict}}", "range": true, "refId": "A" } ]
+    },
+    {
+      "id": 21, "type": "timeseries", "title": "Noise filtered over time",
+      "description": "dismissed / (confirmed + dismissed). A sudden drop means the filter is confirming more — often a sign the prompt regressed (e.g. a deploy updated the binary but not prompts/; cross-check GET /version's prompt fingerprint).",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never", "gradientMode": "scheme" }, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 0.4 }, { "color": "green", "value": 0.6 } ] } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "min", "lastNotNull"] }, "tooltip": { "mode": "single" } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"dismissed\"}[$__rate_interval])) / clamp_min(sum(rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval])), 0.0001)", "legendFormat": "noise filtered", "range": true, "refId": "A" } ]
+    },
+    {
+      "id": 22, "type": "timeseries", "title": "Regex surfaced vs LLM kept",
+      "description": "Top line: raw findings the detectors surfaced (recall). Bottom line: what the LLM confirmed (precision). The gap between them is the false-positive load the filter absorbed.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byName", "options": "surfaced by detectors" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } } ] }, { "matcher": { "id": "byName", "options": "confirmed by LLM" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }, { "id": "custom.fillOpacity", "value": 30 } ] } ] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_detector_findings_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "surfaced by detectors", "range": true, "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"confirmed\"}[$__rate_interval]))", "legendFormat": "confirmed by LLM", "range": true, "refId": "B" }
+      ]
+    },
+    {
+      "id": 23, "type": "bargauge", "title": "This window, by outcome",
+      "description": "Totals over the selected range: false positives prevented vs real secrets confirmed.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "palette-classic" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] } }, "overrides": [ { "matcher": { "id": "byName", "options": "false positives prevented" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] }, { "matcher": { "id": "byName", "options": "secrets confirmed" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] } ] },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"dismissed\"}[$__range]))", "instant": true, "legendFormat": "false positives prevented", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(increase(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\", verdict=\"confirmed\"}[$__range]))", "instant": true, "legendFormat": "secrets confirmed", "refId": "B" }
+      ]
+    },
+
+    { "type": "row", "id": 3, "title": "What the scanners feed it", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 } },
+
+    {
+      "id": 30, "type": "timeseries", "title": "Findings surfaced by detector",
+      "description": "Where the raw candidates come from before the LLM adjudicates them. gitleaks (aggressive config) deliberately over-surfaces; the LLM is what makes that safe.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 25, "stacking": { "mode": "normal", "group": "A" }, "lineWidth": 1, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum by (detector) (rate(atalaia_detector_findings_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "{{detector}}", "range": true, "refId": "A" } ]
+    },
+    {
+      "id": 31, "type": "timeseries", "title": "Findings per request",
+      "description": "Average candidates the LLM has to weigh per /check. High values mean big or noisy diffs (and more model work per request).",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] }, "tooltip": { "mode": "single" } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval])) / clamp_min(sum(rate(atalaia_check_requests_total{job=~\"$job\", instance=~\"$instance\", status=\"200\"}[$__rate_interval])), 0.0001)", "legendFormat": "verdicts / successful request", "range": true, "refId": "A" } ]
+    },
+
+    { "type": "row", "id": 4, "title": "Model reliability & speed", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 } },
+
+    {
+      "id": 40, "type": "timeseries", "title": "Gap-fills (model returned no verdict)",
+      "description": "Findings the model failed to adjudicate, filled with the conservative fallback (confirmed, confidence 0). Rising = prompt/model drift or malformed output. This is your earliest quality-regression signal.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 35 },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 30, "lineWidth": 2, "showPoints": "auto", "gradientMode": "opacity" }, "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum", "lastNotNull"] }, "tooltip": { "mode": "single" } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_llm_missing_verdict_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "gap-fills/s", "range": true, "refId": "A" } ]
+    },
+    {
+      "id": 41, "type": "timeseries", "title": "Decision latency",
+      "description": "How long the model adjudication stage takes (excludes the regex detectors).",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 35 },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "histogram_quantile(0.50, sum by (le) (rate(atalaia_check_duration_seconds_bucket{job=~\"$job\", instance=~\"$instance\", stage=\"llm\"}[$__rate_interval])))", "legendFormat": "p50", "range": true, "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(atalaia_check_duration_seconds_bucket{job=~\"$job\", instance=~\"$instance\", stage=\"llm\"}[$__rate_interval])))", "legendFormat": "p95", "range": true, "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "histogram_quantile(0.99, sum by (le) (rate(atalaia_check_duration_seconds_bucket{job=~\"$job\", instance=~\"$instance\", stage=\"llm\"}[$__rate_interval])))", "legendFormat": "p99", "range": true, "refId": "C" }
+      ]
+    },
+    {
+      "id": 42, "type": "timeseries", "title": "Throughput & concurrency",
+      "description": "Verdicts decided per second, and how many model calls run concurrently (bounded by llm.max_inflight).",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 35 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byName", "options": "verdicts/s" }, "properties": [ { "id": "unit", "value": "ops" } ] }, { "matcher": { "id": "byName", "options": "inflight" }, "properties": [ { "id": "unit", "value": "short" }, { "id": "custom.axisPlacement", "value": "right" } ] } ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum(rate(atalaia_verdicts_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "verdicts/s", "range": true, "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "max(atalaia_llm_inflight{job=~\"$job\", instance=~\"$instance\"})", "legendFormat": "inflight", "range": true, "refId": "B" }
+      ]
+    },
+
+    { "type": "row", "id": 5, "title": "Operations (health)", "collapsed": true, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "panels": [
+        {
+          "id": 50, "type": "timeseries", "title": "/check by status",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 44 },
+          "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 25, "stacking": { "mode": "normal", "group": "A" }, "lineWidth": 1, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byRegexp", "options": "/5.*/" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] } ] },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum by (status) (rate(atalaia_check_requests_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "{{status}}", "range": true, "refId": "A" } ]
+        },
+        {
+          "id": 51, "type": "timeseries", "title": "Detector errors (timeout/kill)",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 44 },
+          "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 30, "lineWidth": 2, "showPoints": "auto" }, "color": { "mode": "palette-classic" } }, "overrides": [] },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum", "lastNotNull"] }, "tooltip": { "mode": "multi" } },
+          "targets": [ { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "sum by (detector) (rate(atalaia_detector_errors_total{job=~\"$job\", instance=~\"$instance\"}[$__rate_interval]))", "legendFormat": "{{detector}}", "range": true, "refId": "A" } ]
+        },
+        {
+          "id": 52, "type": "timeseries", "title": "LLM queue depth & total latency p95",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 44 },
+          "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byName", "options": "queue depth" }, "properties": [ { "id": "unit", "value": "short" } ] }, { "matcher": { "id": "byName", "options": "p95 total" }, "properties": [ { "id": "unit", "value": "s" }, { "id": "custom.axisPlacement", "value": "right" } ] } ] },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["max", "lastNotNull"] }, "tooltip": { "mode": "multi" } },
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "max(atalaia_llm_queue_depth{job=~\"$job\", instance=~\"$instance\"})", "legendFormat": "queue depth", "range": true, "refId": "A" },
+            { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(atalaia_check_duration_seconds_bucket{job=~\"$job\", instance=~\"$instance\", stage=\"total\"}[$__rate_interval])))", "legendFormat": "p95 total", "range": true, "refId": "B" }
+          ]
+        },
+        {
+          "id": 53, "type": "timeseries", "title": "Process (memory / goroutines)",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 52 },
+          "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never" }, "color": { "mode": "palette-classic" } }, "overrides": [ { "matcher": { "id": "byRegexp", "options": "/mem.*/" }, "properties": [ { "id": "unit", "value": "bytes" } ] }, { "matcher": { "id": "byRegexp", "options": "/goroutines.*/" }, "properties": [ { "id": "unit", "value": "short" }, { "id": "custom.axisPlacement", "value": "right" } ] } ] },
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi" } },
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "process_resident_memory_bytes{job=~\"$job\", instance=~\"$instance\"}", "legendFormat": "mem {{instance}}", "range": true, "refId": "A" },
+            { "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "go_goroutines{job=~\"$job\", instance=~\"$instance\"}", "legendFormat": "goroutines {{instance}}", "range": true, "refId": "B" }
+          ]
+        }
+      ]
+    }
+  ]
+}
