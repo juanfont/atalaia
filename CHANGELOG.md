@@ -4,10 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.3], 2026-06-21
+
 ### Added
 
 - `pass` added to the aggressive gitleaks rule's keyword set (regex +
-  prefilter). Identifiers like `$DB_PASS` / `$DB_PASS` use the token
+  prefilter). Identifiers like `$DB_PASS` use the token
   `pass`, not `password`/`pwd`, so an assignment such as
   `$DB_PASS = 'Hunter2'` was not matched on its own line. A real commit
   was only flagged because of an incidental `echo "...".$DB_PASS` debug
