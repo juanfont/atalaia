@@ -4,6 +4,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- `pass` added to the aggressive gitleaks rule's keyword set (regex +
+  prefilter). Identifiers like `$DB_PASS` / `$DB_PASS` use the token
+  `pass`, not `password`/`pwd`, so an assignment such as
+  `$DB_PASS = 'Hunter2'` was not matched on its own line. A real commit
+  was only flagged because of an incidental `echo "...".$DB_PASS` debug
+  line, which captured the *variable reference* (`.$DB_PASS.`) rather
+  than the literal — the alert pointed at the wrong line and the model
+  confirmed it on context, not on the matched value. With `pass` the
+  literal is caught directly on its assignment line (confirmed for the
+  right reason) and the incidental variable-reference match now dismisses
+  cleanly. New `hardcoded_db_password` corpus fixture guards it; the
+  corpus holds 10/10.
+
 ### Fixed
 
 - Documentation consistency: the license is BSD-3-Clause (matching the

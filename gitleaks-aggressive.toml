@@ -51,12 +51,14 @@ description = "Generic secret-like assignment, no entropy gate (high recall; LLM
 # group 1: the secret-ish keyword; group 2: the assigned value.
 #
 # The keyword is NOT \b-anchored, so it matches inside larger
-# identifiers: DB_PASSWORD, MY_SECRET, app.apiKey all hit. After the
+# identifiers: DB_PASSWORD, MY_SECRET, app.apiKey all hit. The bare
+# `pass` keyword also catches the common `$DB_PASS` shape (identifiers
+# that use "pass", not "password"/"pwd"). After the
 # keyword we allow a short [a-z0-9_.-] run (suffixes like _prod), then
 # a :/= delimiter, then the value. Horizontal whitespace only ([ \t]),
 # and the value excludes whitespace and quotes, so a match never bleeds
 # across lines into the next added line.
-regex = '''(?i)(passwd|password|pwd|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)[a-z0-9_.-]{0,20}[ \t]*[:=]{1,3}[ \t'"]*([^\s'"]{6,})'''
+regex = '''(?i)(passwd|password|pwd|pass|secret|token|api[_-]?key|access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|auth[_-]?token|credential)[a-z0-9_.-]{0,20}[ \t]*[:=]{1,3}[ \t'"]*([^\s'"]{6,})'''
 secretGroup = 2
 # No `entropy` field on purpose. In gitleaks an absent entropy means
 # NO entropy filtering, so every regex match passes regardless of how
@@ -68,6 +70,7 @@ keywords = [
   "passwd",
   "password",
   "pwd",
+  "pass",
   "secret",
   "token",
   "apikey",
