@@ -4,6 +4,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.4], 2026-06-21
+
+### Changed
+
+- Reframed the gemma4 system prompt around its actual mission: it is the
+  precision stage that throws out the high-recall scanners' mistakes,
+  not a neutral adjudicator. The old prompt ended with "when in doubt,
+  prefer confirmed" — a tie-break toward false positives — and framed
+  the task as weighing both sides. Under vLLM's temperature-0
+  non-determinism that produced a steady ~4% confirm rate on plainly
+  bogus matches (e.g. `curl -u "${TOKEN}:"`), and a watcher that
+  re-scans each commit many times turned that tail into recurring alert
+  emails. The new prompt: leads with the mission and a default-dismiss
+  posture; makes "a `$VAR`/`${VAR}`/lookup is a reference, not a literal,
+  so dismissing it can never miss a leak" an absolute, zero-risk rule;
+  removes the confirm-bias tie-break; and keys the decision on
+  literal-vs-reference rather than entropy, so low-entropy hardcoded
+  passwords still confirm while documentation/test examples dismiss.
+  Measured at high N (20-150 runs/case): the `${VAR}` false-positive
+  class drops 4% -> 0% confirm, while real keys, low-entropy passwords,
+  test fixtures, and doc examples all hold at 100%. Prompt fingerprint
+  (visible at `/version`) becomes `gemma4:0edf91cb86ae`.
+
 ## [0.5.3], 2026-06-21
 
 ### Added
