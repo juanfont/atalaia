@@ -1,0 +1,12 @@
+diff --git a/.gitlab-ci.yml b/.gitlab-ci.yml
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.gitlab-ci.yml
+@@ -0,0 +1,6 @@
++export-report:
++  stage: report
++  script:
++    - apt-get install -y curl
++    - curl -u "${API_TOKEN}:" "https://reports.example.com/api/export?project=${CI_PROJECT_ID}" -o report.json
++  allow_failure: true

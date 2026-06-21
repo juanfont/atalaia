@@ -40,6 +40,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -103,6 +104,8 @@ func TestIntegrationCorpus(t *testing.T) {
 	}
 	base = strings.TrimRight(base, "/")
 	token := os.Getenv("ATALAIA_INTEGRATION_TOKEN")
+	repeat := integrationRepeat(t)
+	floor := minAgreement(t)
 
 	entries, err := filepath.Glob("testdata/diffs/*.diff")
 	if err != nil {
@@ -112,7 +115,7 @@ func TestIntegrationCorpus(t *testing.T) {
 		t.Fatalf("no fixtures under testdata/diffs/")
 	}
 
-	var hits, misses, gapFills, total int
+	var hits, total int
 	for _, diffPath := range entries {
 		diffPath := diffPath
 		name := strings.TrimSuffix(filepath.Base(diffPath), ".diff")
@@ -132,71 +135,107 @@ func TestIntegrationCorpus(t *testing.T) {
 			}
 			t.Logf("fixture: %s", fx.Description)
 
-			resp, err := postCheck(base, token, diff)
-			if err != nil {
-				t.Fatalf("POST /check: %v", err)
-			}
-
-			if resp.Stats.AfterDedup < fx.MinAfterDedup {
-				t.Fatalf("stats.after_dedup=%d, want >= %d (detectors saw fewer findings than the fixture promises)",
-					resp.Stats.AfterDedup, fx.MinAfterDedup)
-			}
-
-			// Match expectations to verdicts by the deterministic ID.
-			// We have to walk the response to find the (file, line) the
-			// detector chose for each match; tests assert on the verdict
-			// at that ID.
-			byMatchPreview := map[string]verdict{}
-			byID := map[string]verdict{}
-			for _, v := range resp.Verdicts {
-				byID[v.ID] = v
-				byMatchPreview[previewKey(v.MatchPreview)] = v
+			// Each fixture is scanned `repeat` times. A single sample
+			// hides the model's residual non-determinism — the kind that
+			// turned a ~4% confirm flake into recurring production false
+			// positives — so with repeat > 1 we assert a per-fixture
+			// agreement rate rather than trusting one verdict.
+			var fHits, fTotal int
+			dist := map[string]map[string]int{} // match -> verdict label -> count
+			for i := 0; i < repeat; i++ {
+				resp, err := postCheck(base, token, diff)
+				if err != nil {
+					t.Fatalf("run %d: POST /check: %v", i+1, err)
+				}
+				if resp.Stats.AfterDedup < fx.MinAfterDedup {
+					t.Fatalf("run %d: stats.after_dedup=%d, want >= %d (detectors saw fewer findings than the fixture promises)",
+						i+1, resp.Stats.AfterDedup, fx.MinAfterDedup)
+				}
+				for _, ex := range fx.Expectations {
+					v, ok := findVerdict(resp.Verdicts, ex.Match)
+					if !ok {
+						// Hard fail: the detector did not flag what the
+						// fixture expects. The corpus starts from a
+						// finding that the LLM then sorts.
+						t.Errorf("run %d: expected match %q not present in response", i+1, ex.Match)
+						continue
+					}
+					label := v.Verdict
+					if isGapFill(v) {
+						// Gap-fills (model returned no verdict) count
+						// against agreement: no useful answer.
+						label = "gap-fill"
+					}
+					if dist[ex.Match] == nil {
+						dist[ex.Match] = map[string]int{}
+					}
+					dist[ex.Match][label]++
+					fTotal++
+					if !isGapFill(v) && v.Verdict == ex.Verdict {
+						fHits++
+					}
+				}
 			}
 
 			for _, ex := range fx.Expectations {
-				v, ok := findVerdict(resp.Verdicts, ex.Match)
-				if !ok {
-					// Hard fail: the detector did not flag what the
-					// fixture expects. The corpus is meant to start
-					// with a finding that the LLM then sorts.
-					t.Errorf("expected match %q not present in response", ex.Match)
-					continue
+				labels := make([]string, 0, len(dist[ex.Match]))
+				for k := range dist[ex.Match] {
+					labels = append(labels, k)
 				}
-				total++
-				switch {
-				case isGapFill(v):
-					gapFills++
-					t.Logf("gap-fill: %q -> %s (model returned no verdict, atalaia filled %q)",
-						ex.Match, v.Verdict, v.Reason)
-				case v.Verdict == ex.Verdict:
-					hits++
-					t.Logf("agree:    %q -> %s (conf=%.2f, %q)", ex.Match, v.Verdict, v.Confidence, v.Reason)
-				default:
-					misses++
-					// Soft fail: log, but don't t.Errorf. Small models
-					// disagree sometimes; the aggregate-agreement gate
-					// at the end of the suite is the real signal.
-					t.Logf("disagree: %q -> got %s, want %s (conf=%.2f, %q)",
-						ex.Match, v.Verdict, ex.Verdict, v.Confidence, v.Reason)
+				sort.Strings(labels)
+				parts := make([]string, len(labels))
+				for i, k := range labels {
+					parts[i] = fmt.Sprintf("%s=%d", k, dist[ex.Match][k])
 				}
+				t.Logf("  %q want=%s  [%s]", ex.Match, ex.Verdict, strings.Join(parts, " "))
+			}
+
+			hits += fHits
+			total += fTotal
+			if fTotal == 0 {
+				return
+			}
+			agree := float64(fHits) / float64(fTotal)
+			t.Logf("%s: agreement %.0f%% (%d/%d) over %d run(s), floor %.0f%%",
+				name, agree*100, fHits, fTotal, repeat, floor*100)
+			// The per-fixture hard gate only engages under repeated
+			// sampling. A single run stays soft (the aggregate gate
+			// below catches broad regressions) so fast CI is unchanged.
+			if repeat > 1 && agree < floor {
+				t.Errorf("fixture %s agreement %.2f below floor %.2f over %d runs", name, agree, floor, repeat)
 			}
 		})
 	}
 
-	// Overall agreement gate. Catches regressions where the prompt
-	// gets noticeably worse without any single fixture failing hard.
-	// Gap-fills count against agreement (the model produced no
-	// useful answer).
+	// Aggregate gate. Catches regressions where the prompt gets broadly
+	// worse without any single fixture tripping its own threshold.
 	if total == 0 {
 		return
 	}
 	agreement := float64(hits) / float64(total)
-	floor := minAgreement(t)
-	t.Logf("corpus: %d hits, %d misses, %d gap-fills out of %d (agreement %.0f%%, floor %.0f%%)",
-		hits, misses, gapFills, total, agreement*100, floor*100)
+	t.Logf("corpus: %d/%d agree (%.0f%%) across %d fixtures x %d run(s), floor %.0f%%",
+		hits, total, agreement*100, len(entries), repeat, floor*100)
 	if agreement < floor {
 		t.Errorf("corpus agreement %.2f below floor %.2f", agreement, floor)
 	}
+}
+
+// integrationRepeat is how many times each fixture is scanned. Default
+// 1 (fast CI, single sample). Set INTEGRATION_REPEAT higher (e.g. 20)
+// for a nightly or pre-release run that measures per-fixture agreement
+// and so catches the model's residual non-determinism instead of
+// sampling it once.
+func integrationRepeat(t *testing.T) int {
+	t.Helper()
+	raw := os.Getenv("INTEGRATION_REPEAT")
+	if raw == "" {
+		return 1
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 {
+		t.Fatalf("INTEGRATION_REPEAT must be a positive integer: %q", raw)
+	}
+	return n
 }
 
 // isGapFill recognises the conservative fallback the adjudicator

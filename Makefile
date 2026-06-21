@@ -8,7 +8,7 @@ KINGFISHER_VERSION ?= 1.27.0
 
 PREFIX ?= /usr/local
 
-.PHONY: build test test-integration smoke smoke-corpus vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
+.PHONY: build test test-integration smoke smoke-corpus smoke-corpus-deep vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
 
 build:
 	go build -ldflags '$(GO_LDFLAGS)' -o atalaia ./cmd/atalaia
@@ -37,6 +37,13 @@ smoke:
 # to tune the pass threshold (default 0.75).
 smoke-corpus:
 	CONFIG=$(CONFIG) ./scripts/smoke-corpus.sh
+
+# Deep corpus: scan every fixture INTEGRATION_REPEAT times and gate on
+# per-fixture agreement, surfacing the model's residual non-determinism
+# (the kind that leaks the odd false positive) instead of sampling once.
+# Slower; for nightly / pre-release, not every commit.
+smoke-corpus-deep:
+	INTEGRATION_REPEAT=$(or $(INTEGRATION_REPEAT),20) CONFIG=$(CONFIG) ./scripts/smoke-corpus.sh
 
 vet:
 	go vet ./...

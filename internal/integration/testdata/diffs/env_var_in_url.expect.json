@@ -1,0 +1,7 @@
+{
+  "description": "A clone URL embeds ${CI_JOB_TOKEN} as basic-auth in https://gitlab-ci-token:${CI_JOB_TOKEN}@host. The captured value is a variable interpolation plus a hostname, not a literal secret — the token is injected at runtime and never appears in the diff. Must dismiss. Guards the env/CI-variable-in-URL false-positive class.",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "${CI_JOB_TOKEN}@git.example.com/${REPO_PATH}.git", "verdict": "dismissed" }
+  ]
+}

@@ -1,0 +1,10 @@
+diff --git a/scripts/clone.sh b/scripts/clone.sh
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/scripts/clone.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++REPO_PATH="$1"
++git clone --depth 1 "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.example.com/${REPO_PATH}.git"

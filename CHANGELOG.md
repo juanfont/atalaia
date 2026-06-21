@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- Corpus coverage for the variable-interpolation false-positive class
+  that has been the main source of bogus alerts: `ci_var_curl_auth`
+  (`curl -u "${TOKEN}:"`) and `env_var_in_url` (a `${TOKEN}` clone URL),
+  both generic. The class now trips CI on a prompt regression instead of
+  a developer's inbox.
+- Repeated-sampling corpus mode. `INTEGRATION_REPEAT` (default 1) scans
+  each fixture N times and asserts a **per-fixture** agreement threshold,
+  surfacing the model's residual non-determinism that a single sample
+  hides — the exact gap that let a ~4% confirm flake reach production.
+  `make smoke-corpus-deep` runs it at 20×. The per-fixture log now shows
+  the verdict distribution (e.g. `dismissed=20`).
+
 ## [0.5.4], 2026-06-21
 
 ### Changed

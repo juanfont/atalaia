@@ -1,0 +1,7 @@
+{
+  "description": "A CI job runs `curl -u \"${API_TOKEN}:\"`. The captured value is a shell/CI variable expansion, not a literal credential — the real token is injected from CI settings at runtime and is not in the diff, so there is nothing to leak. Must dismiss. Guards the production false-positive class (variable interpolation in a curl -u argument).",
+  "min_after_dedup": 1,
+  "expectations": [
+    { "match": "\"${API_TOKEN}:\"", "verdict": "dismissed" }
+  ]
+}
