@@ -1,0 +1,5 @@
+{
+  "description": "Go: var apiToken = os.Getenv(\"API_TOKEN\"). The matched value is an env-var lookup call, not a literal credential. Must dismiss. Language-diversity coverage for the reference-dismissal rule.",
+  "min_after_dedup": 1,
+  "expectations": [{ "match": "os.Getenv(", "verdict": "dismissed" }]
+}

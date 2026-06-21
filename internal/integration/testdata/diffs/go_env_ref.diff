@@ -1,0 +1,12 @@
+diff --git a/config/token.go b/config/token.go
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/config/token.go
+@@ -0,0 +1,6 @@
++package config
++
++import "os"
++
++// loadToken reads the API token from the environment.
++var apiToken = os.Getenv("API_TOKEN")

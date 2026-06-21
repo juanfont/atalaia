@@ -106,6 +106,7 @@ func TestIntegrationCorpus(t *testing.T) {
 	token := os.Getenv("ATALAIA_INTEGRATION_TOKEN")
 	repeat := integrationRepeat(t)
 	floor := minAgreement(t)
+	fixtureFloor := minFixtureAgreement(t)
 
 	entries, err := filepath.Glob("testdata/diffs/*.diff")
 	if err != nil {
@@ -196,13 +197,16 @@ func TestIntegrationCorpus(t *testing.T) {
 				return
 			}
 			agree := float64(fHits) / float64(fTotal)
-			t.Logf("%s: agreement %.0f%% (%d/%d) over %d run(s), floor %.0f%%",
-				name, agree*100, fHits, fTotal, repeat, floor*100)
+			t.Logf("%s: agreement %.0f%% (%d/%d) over %d run(s), per-fixture floor %.0f%%",
+				name, agree*100, fHits, fTotal, repeat, fixtureFloor*100)
 			// The per-fixture hard gate only engages under repeated
-			// sampling. A single run stays soft (the aggregate gate
-			// below catches broad regressions) so fast CI is unchanged.
-			if repeat > 1 && agree < floor {
-				t.Errorf("fixture %s agreement %.2f below floor %.2f over %d runs", name, agree, floor, repeat)
+			// sampling, and it is strict (default 99%): a fixture that
+			// flips even occasionally is a real flake to investigate. A
+			// single run stays soft (the lenient aggregate gate below
+			// catches broad regressions) so fast per-commit CI is
+			// unchanged.
+			if repeat > 1 && agree < fixtureFloor {
+				t.Errorf("fixture %s agreement %.2f below per-fixture floor %.2f over %d runs", name, agree, fixtureFloor, repeat)
 			}
 		})
 	}
@@ -236,6 +240,25 @@ func integrationRepeat(t *testing.T) int {
 		t.Fatalf("INTEGRATION_REPEAT must be a positive integer: %q", raw)
 	}
 	return n
+}
+
+// minFixtureAgreement is the strict per-fixture pass rate enforced under
+// repeated sampling (INTEGRATION_REPEAT > 1). Default 0.99: a fixture
+// that disagrees with its expected verdict even occasionally is a flake
+// worth chasing, not noise to average away. Distinct from
+// minAgreement, which is the lenient aggregate floor for single-sample
+// per-commit runs. Override with INTEGRATION_MIN_FIXTURE_AGREEMENT.
+func minFixtureAgreement(t *testing.T) float64 {
+	t.Helper()
+	raw := os.Getenv("INTEGRATION_MIN_FIXTURE_AGREEMENT")
+	if raw == "" {
+		return 0.99
+	}
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		t.Fatalf("INTEGRATION_MIN_FIXTURE_AGREEMENT must be a float: %v", err)
+	}
+	return v
 }
 
 // isGapFill recognises the conservative fallback the adjudicator

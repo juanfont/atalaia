@@ -11,12 +11,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   (`curl -u "${TOKEN}:"`) and `env_var_in_url` (a `${TOKEN}` clone URL),
   both generic. The class now trips CI on a prompt regression instead of
   a developer's inbox.
+- Cross-language and secret-type corpus coverage: `js_env_ref`
+  (`process.env.*`) and `go_env_ref` (`os.Getenv`) exercise the
+  reference-dismissal rule outside Python/PHP, and `jwt_literal` adds a
+  hardcoded-JWT confirm case distinct from the AWS/GitHub/opaque-token
+  fixtures.
 - Repeated-sampling corpus mode. `INTEGRATION_REPEAT` (default 1) scans
   each fixture N times and asserts a **per-fixture** agreement threshold,
   surfacing the model's residual non-determinism that a single sample
   hides — the exact gap that let a ~4% confirm flake reach production.
-  `make smoke-corpus-deep` runs it at 20×. The per-fixture log now shows
-  the verdict distribution (e.g. `dismissed=20`).
+  The per-fixture gate is strict (`INTEGRATION_MIN_FIXTURE_AGREEMENT`,
+  default **0.99**) and distinct from the lenient aggregate floor
+  (`INTEGRATION_MIN_AGREEMENT`, 0.80) used for single-sample per-commit
+  runs. `make smoke-corpus-deep` runs at 20×; the per-fixture log shows
+  the verdict distribution (e.g. `dismissed=20`). All 14 fixtures hold
+  100% at 20× (300/300).
 
 ## [0.5.4], 2026-06-21
 

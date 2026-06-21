@@ -1,0 +1,5 @@
+{
+  "description": "A JWT hardcoded as auth_token in source — a real, usable literal credential present in the diff (not a reference). Must confirm. Secret-type-diversity coverage (JWT, distinct from the AWS/GitHub/opaque-token confirm fixtures).",
+  "min_after_dedup": 1,
+  "expectations": [{ "match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdmMtcmVwb3J0ZXIiLCJpYXQiOjE2MTYxNjE2MTZ9.3xq2Fz7Kk9mPq2RvT8nLb4mYwJgWeFd0HuMc6oP5iA1", "verdict": "confirmed" }]
+}
