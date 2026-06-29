@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.6], 2026-06-29
+
 ### Changed
 
 - Gap-filled findings are now the distinct `unreviewed` verdict, not a
