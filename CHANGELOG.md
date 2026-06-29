@@ -4,6 +4,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- Oversized diffs no longer 502 on the model's context limit. The
+  token-budget estimate was `chars/4`, but diffs and source tokenize
+  denser (~2.5-3 chars/token), so it under-counted: a too-big diff
+  passed the budget check, was sent whole, and vLLM rejected it with a
+  400 (`maximum context length 131072 ... prompt contains 123073
+  tokens`). The estimate is now a conservative `chars/3`, so big diffs
+  correctly route to per-finding context-window mode. Additionally, a
+  single finding can no longer overflow a call on its own: its match is
+  bounded (`maxMatchChars`) and its context window is clamped to the
+  per-call budget, so a finding inside a minified/generated line is
+  adjudicated with degraded context instead of failing the whole
+  request. Unit tests cover the estimate, the clamp helpers, and that
+  no batch exceeds budget even with a 200 KB match; a `minified_line`
+  corpus fixture (64 KB single line) guards the end-to-end path.
+
 ## [0.5.5], 2026-06-29
 
 ### Fixed

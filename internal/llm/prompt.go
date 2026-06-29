@@ -114,7 +114,7 @@ func findingsFromDeduped(in []detector.DedupedFinding) []PromptFinding {
 			ID:         d.ID,
 			File:       d.File,
 			Line:       d.Line,
-			Match:      d.Match,
+			Match:      clampStr(d.Match, maxMatchChars),
 			Detections: d.Detections,
 		}
 	}

@@ -1,0 +1,5 @@
+{
+  "description": "A single ~64KB minified/generated line with an embedded apiKey= assignment. The point is robustness, not the verdict: such a line would, unclamped, render a prompt past the model's context window and 502. Atalaia must route it out of single-call mode, clamp the match and context to the per-call budget, and still return a verdict (HTTP 200, finding adjudicated). No verdict is asserted because a truncated minified blob is genuinely ambiguous; min_after_dedup>=1 plus a 200 response is the guard.",
+  "min_after_dedup": 1,
+  "expectations": []
+}

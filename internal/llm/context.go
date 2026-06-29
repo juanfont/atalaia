@@ -11,12 +11,60 @@ import (
 	"github.com/juanfont/atalaia/internal/detector"
 )
 
-// estimateTokens is the cheap chars/4 heuristic. English code averages
-// near 4 chars/token; Atalaia uses this for the fast-path budget check
-// before any LLM call. A tokenizer pass is a future-work item if drift
-// becomes visible (see plan, milestone 5).
+// tokenChars is the conservative chars-per-token divisor for the budget
+// estimate. Prose averages ~4 chars/token, but diffs and source code
+// tokenize denser (~2.5-3: punctuation, short identifiers, indentation),
+// so a chars/4 estimate UNDER-counts code and let an oversized prompt
+// slip past the budget straight into the model's context-length limit
+// (a 400). Dividing by 3 over-counts prose slightly and stays at or
+// above real code token counts for the budget decision — the safe
+// direction (err toward splitting, never toward a too-big prompt).
+const tokenChars = 3
+
+// estimateTokens is the cheap budget heuristic used before every LLM
+// call to decide single-call vs per-finding batching. Conservative by
+// design (see tokenChars).
 func estimateTokens(text string) int {
-	return (len(text) + 3) / 4
+	return (len(text) + tokenChars - 1) / tokenChars
+}
+
+const truncMark = "…[truncated]"
+
+// maxMatchChars bounds the raw matched value sent to the model. A real
+// credential is short; a multi-kilobyte "match" is a regex hitting a
+// minified or generated line — noise that can blow the prompt budget.
+const maxMatchChars = 2048
+
+// clampStr truncates s to at most maxBytes, appending a marker. Used to
+// bound a single oversized field (e.g. a match on a minified line).
+func clampStr(s string, maxBytes int) string {
+	if maxBytes <= 0 {
+		return ""
+	}
+	if len(s) <= maxBytes {
+		return s
+	}
+	if maxBytes <= len(truncMark) {
+		return s[:maxBytes]
+	}
+	return s[:maxBytes-len(truncMark)] + truncMark
+}
+
+// clampMiddle keeps the head and tail of s and drops the middle, so a
+// finding's surrounding context still shows both edges of its window
+// even when a single line in the middle is pathologically long.
+func clampMiddle(s string, maxBytes int) string {
+	if maxBytes <= 0 {
+		return ""
+	}
+	if len(s) <= maxBytes {
+		return s
+	}
+	if maxBytes <= len(truncMark)+2 {
+		return s[:maxBytes]
+	}
+	half := (maxBytes - len(truncMark)) / 2
+	return s[:half] + truncMark + s[len(s)-half:]
 }
 
 // fileIndex is the post-image of a unified diff, organized by file
@@ -177,6 +225,11 @@ func packBatches(findings []detector.DedupedFinding, idx fileIndex, contextLines
 			Detections: f.Detections,
 			Context:    ctx,
 		}
+		// Guarantee no single finding can, on its own, exceed a call's
+		// budget — clamp its match and context to fit. Without this an
+		// isolated finding inside a minified/generated line produces a
+		// prompt over the model's context limit (a 400), not a verdict.
+		pf = clampFindingToBudget(pf, effective)
 		ft := estimateTokens(promptFindingApproxBody(pf))
 		// If this single finding alone exceeds the per-call effective
 		// budget, send it in its own batch — better degraded than
@@ -193,6 +246,28 @@ func packBatches(findings []detector.DedupedFinding, idx fileIndex, contextLines
 		batches = append(batches, current)
 	}
 	return batches
+}
+
+// clampFindingToBudget shrinks a finding so its rendered body fits
+// maxTokens: the match is bounded first (a giant match is noise), then
+// the surrounding context is clamped to whatever budget remains. A
+// single finding can thus never, on its own, exceed a call's budget —
+// degraded context beats a 400 from the model.
+func clampFindingToBudget(pf PromptFinding, maxTokens int) PromptFinding {
+	if maxTokens <= 0 {
+		return pf
+	}
+	pf.Match = clampStr(pf.Match, maxMatchChars)
+	if estimateTokens(promptFindingApproxBody(pf)) <= maxTokens {
+		return pf
+	}
+	// Keep everything but the context, then give the context whatever
+	// char budget remains.
+	bare := pf
+	bare.Context = ""
+	remaining := maxTokens*tokenChars - len(promptFindingApproxBody(bare))
+	pf.Context = clampMiddle(pf.Context, remaining)
+	return pf
 }
 
 // promptFindingApproxBody is the rough text we'll render for one

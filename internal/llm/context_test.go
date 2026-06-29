@@ -11,10 +11,10 @@ func TestEstimateTokens(t *testing.T) {
 	if got := estimateTokens(""); got != 0 {
 		t.Errorf("empty -> %d, want 0", got)
 	}
-	// 80 chars / 4 = 20 tokens (rough)
+	// conservative chars/3: (80+2)/3 = 27
 	in := strings.Repeat("x", 80)
-	if got := estimateTokens(in); got != 20 {
-		t.Errorf("80 chars -> %d, want 20", got)
+	if got := estimateTokens(in); got != 27 {
+		t.Errorf("80 chars -> %d, want 27", got)
 	}
 }
 
@@ -110,22 +110,57 @@ func TestPackBatches_RespectsBudget(t *testing.T) {
 	}
 }
 
-func TestPackBatches_OversizedFindingGetsOwnBatch(t *testing.T) {
+// A finding with a pathologically large match (e.g. a regex hit on a
+// minified line) must be clamped so it can never push a prompt past the
+// model's context limit. Every batch must stay within the per-call
+// budget, and the giant match must come back bounded.
+func TestPackBatches_OversizedFindingClampedToFit(t *testing.T) {
+	const inputBudget, outputBudget = 1024, 128
+	effective := ((inputBudget - outputBudget) * 9) / 10
 	findings := []detector.DedupedFinding{
 		{ID: "small", File: "a.py", Line: 1, Match: "x"},
-		{ID: "huge", File: "b.py", Line: 1, Match: strings.Repeat("z", 50000)},
+		{ID: "huge", File: "b.py", Line: 1, Match: strings.Repeat("z", 200000)},
 		{ID: "tail", File: "c.py", Line: 1, Match: "y"},
 	}
-	idx := fileIndex{}
-	batches := packBatches(findings, idx, 30, 1024, 128)
-	if len(batches) < 2 {
-		t.Errorf("expected >=2 batches when one finding is oversize, got %d", len(batches))
-	}
-	// the oversized finding shouldn't be merged with a neighbour
+	batches := packBatches(findings, fileIndex{}, 30, inputBudget, outputBudget)
+
+	total := 0
+	var hugeBody string
 	for _, b := range batches {
-		if len(b) == 1 && b[0].ID == "huge" {
-			return
+		total += len(b)
+		// Guarantee: no batch exceeds the per-call budget.
+		sum := 0
+		for _, pf := range b {
+			sum += estimateTokens(promptFindingApproxBody(pf))
+			if pf.ID == "huge" {
+				hugeBody = pf.Match
+			}
+		}
+		if sum > effective {
+			t.Errorf("batch over budget: %d tokens > effective %d", sum, effective)
 		}
 	}
-	t.Errorf("expected the huge finding to land in its own batch: %+v", batches)
+	if total != 3 {
+		t.Errorf("packed %d findings, want 3", total)
+	}
+	if len(hugeBody) > maxMatchChars {
+		t.Errorf("huge match not clamped: %d chars > %d", len(hugeBody), maxMatchChars)
+	}
+}
+
+func TestClampHelpers(t *testing.T) {
+	if got := clampStr("short", 100); got != "short" {
+		t.Errorf("under-limit clamped: %q", got)
+	}
+	big := strings.Repeat("a", 5000)
+	if got := clampStr(big, maxMatchChars); len(got) > maxMatchChars || !strings.HasSuffix(got, truncMark) {
+		t.Errorf("clampStr did not bound+mark: len=%d", len(got))
+	}
+	mid := clampMiddle(strings.Repeat("x", 1000)+"TAIL", 100)
+	if len(mid) > 100 || !strings.Contains(mid, truncMark) {
+		t.Errorf("clampMiddle did not bound+mark: len=%d", len(mid))
+	}
+	if !strings.HasSuffix(mid, "TAIL") {
+		t.Errorf("clampMiddle should keep the tail: %q", mid[len(mid)-10:])
+	}
 }
