@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.5], 2026-06-29
+
 ### Fixed
 
 - Large commits no longer flood false "confirmed" alerts. Atalaia
