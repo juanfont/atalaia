@@ -154,8 +154,8 @@ func TestAdjudicate_GapFilledForMissingVerdict(t *testing.T) {
 	for _, v := range res.Verdicts {
 		got[v.FindingID] = v
 	}
-	if got["b"].Verdict != VerdictConfirmed || got["b"].Confidence != 0 {
-		t.Errorf("gap-fill produced wrong verdict for b: %+v", got["b"])
+	if got["b"].Verdict != VerdictUnreviewed || got["b"].Confidence != 0 {
+		t.Errorf("gap-fill should be unreviewed@0, not confirmed: %+v", got["b"])
 	}
 	if got["b"].Reason == "" {
 		t.Errorf("gap-fill missing reason")

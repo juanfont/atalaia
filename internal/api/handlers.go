@@ -79,9 +79,10 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	}
 
 	verdicts := mergeVerdicts(deduped, result.Verdicts)
-	confirmed, dismissed := countVerdicts(verdicts)
+	confirmed, dismissed, unreviewed := countVerdicts(verdicts)
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictConfirmed).Add(float64(confirmed))
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictDismissed).Add(float64(dismissed))
+	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictUnreviewed).Add(float64(unreviewed))
 
 	total := time.Since(start)
 	resp := apitypes.CheckResponse{
@@ -93,6 +94,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			AfterDedup:     len(deduped),
 			Confirmed:      confirmed,
 			Dismissed:      dismissed,
+			Unreviewed:     unreviewed,
 			LLMInvoked:     result.LLMInvoked,
 			LLMCalls:       result.LLMCalls,
 			LLMModel:       a.config.LLM.Model,
@@ -265,13 +267,15 @@ func mergeVerdicts(deduped []detector.DedupedFinding, decisions []llm.Verdict) [
 	return out
 }
 
-func countVerdicts(vs []apitypes.Verdict) (confirmed, dismissed int) {
+func countVerdicts(vs []apitypes.Verdict) (confirmed, dismissed, unreviewed int) {
 	for _, v := range vs {
 		switch v.Verdict {
 		case apitypes.VerdictConfirmed:
 			confirmed++
 		case apitypes.VerdictDismissed:
 			dismissed++
+		case apitypes.VerdictUnreviewed:
+			unreviewed++
 		}
 	}
 	return

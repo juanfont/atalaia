@@ -354,8 +354,16 @@ func process(glab *gitlab.Client, atalaiaURL, token string, projectID int, sha s
             sha, resp.Stats.DetectorErrors)
     }
     for _, v := range resp.Verdicts {
-        if v.Verdict == "confirmed" {
+        switch v.Verdict {
+        case "confirmed":
             notify(projectID, sha, v) // email / slack / open issue / block merge
+        case "unreviewed":
+            // The LLM returned no verdict for this finding (rare). It is
+            // NOT a confirmed credential — don't page on it — but also
+            // NOT clean. Safest is to re-enqueue the commit for another
+            // pass (the model is non-deterministic; a retry almost always
+            // yields a real verdict). Do not silently drop it.
+            requeue(projectID, sha)
         }
     }
     return nil

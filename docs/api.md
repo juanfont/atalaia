@@ -115,8 +115,8 @@ Field by field:
 - `id` (string) — `sha256(file + ":" + line + ":" + raw_match)[:12]`. Stable across re-runs. Use it to dedup alerts over time.
 - `file`, `line` (string, int) — post-image location in the new file.
 - `match_preview` (string) — redacted view of the matched value. URL credentials become `scheme://****:****@host/path`; opaque tokens become `<head4>****<tail4>`. Short matches collapse to `****`. **The raw match is never in the API response**, only in the opt-in audit log with `reveal_matches: true`.
-- `verdict` (string) — `"confirmed"` or `"dismissed"`.
-- `confidence` (float, 0-1) — model's stated confidence in the verdict. Sentinel and verified short-circuits use `1.0`. Gap-filled fallbacks (model didn't decide) use `0.0`.
+- `verdict` (string) — `"confirmed"`, `"dismissed"`, or `"unreviewed"`. **`unreviewed`** is a finding the LLM returned no usable verdict for (it omitted it, or returned an unparseable/unknown verdict); confidence is always `0`. It is **neither confirmed nor dismissed** — do **not** alert on it as a credential, and do **not** treat it as clean. Retry the scan (the model is non-deterministic; a re-run usually returns a real verdict) or route it to a human. Rare in practice; `atalaia_llm_missing_verdict_total` counts these.
+- `confidence` (float, 0-1) — model's stated confidence in the verdict. Sentinel and verified short-circuits use `1.0`; `unreviewed` gap-fills use `0.0`.
 - `reason` (string, ≤ 280 chars) — one-sentence rationale from the model, or a fixed string for short-circuits and gap-fills. Any verbatim occurrence of the raw match is scrubbed to its redacted preview before the reason leaves the process, so the raw secret never rides out in the explanation.
 - `detections[]` — every scanner that fired on this `(file, line, match)`. A finding caught by gitleaks **and** trufflehog with `verified: true` shows both entries; that pair is the strongest pre-LLM signal and short-circuits to `confirmed: 1.0`. Detection fields:
   - `detector_type` — `gitleaks`, `trufflehog`, or `kingfisher`.
@@ -135,6 +135,7 @@ Per-request observability. Counts, not summaries.
   "after_dedup": 3,
   "confirmed": 1,
   "dismissed": 2,
+  "unreviewed": 0,
   "llm_invoked": true,
   "llm_calls": 1,
   "llm_model": "google/gemma-4-E4B-it",
@@ -146,7 +147,8 @@ Per-request observability. Counts, not summaries.
 
 - `raw_findings` is pre-dedup, `after_dedup` is what the LLM saw. The difference is multiple scanners catching the same `(file, line, match)`.
 - `llm_invoked: false` happens when every finding short-circuited (all verified, all sentinels) or zero findings. The response is sub-200ms in that case.
-- `llm_calls > 1` means per-finding mode kicked in for a large diff (see `llm.context_budget`).
+- `llm_calls > 1` means the findings were split across calls — per-finding mode for a large diff (see `llm.context_budget`) and/or batching by `llm.max_findings_per_call`. All findings are still adjudicated and returned.
+- `unreviewed > 0` means some findings came back without a usable verdict (gap-filled to the `unreviewed` verdict). Retry or review them; do not read as clean. Should be near-zero in healthy operation.
 - `truncated: true` means the request had more findings than `llm.max_findings_per_request` and the response only contains the first N verdicts.
 - `detector_errors[]` is present only when a detector failed to complete (timeout, crash, kill). Each entry is `{"detector": "trufflehog", "error": "signal: killed"}`. Its presence on a `200` means a **partial** scan: the verdicts are real, but at least one detector did not run, so a zero-finding result is *not* an authoritative "clean". Absent the field, all detectors completed. When *every* detector fails and nothing is found, `/check` returns `503` instead of a `200` (see status codes) so the caller can't mistake an un-run scan for a clean diff.
 

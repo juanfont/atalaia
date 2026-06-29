@@ -309,11 +309,12 @@ func capFindingsPerBatch(batches []PromptData, max int) []PromptData {
 }
 
 // mergeAndFill correlates LLM-returned verdicts to llmBound findings by
-// finding_id. Any missing IDs get the design's conservative fallback —
-// confirmed at confidence 0 so a missed real secret stays loud, with a
-// reason string that surfaces the issue in the audit log. Each gap-fill
-// bumps atalaia_llm_missing_verdict_total so prompt/model drift is
-// visible operationally.
+// finding_id. Any missing IDs get a gap-fill: the distinct "unreviewed"
+// verdict at confidence 0 (NOT "confirmed" — a model hiccup must not
+// read as a real credential, and must not be silently dropped either),
+// with a reason string that surfaces the issue. Each gap-fill bumps
+// atalaia_llm_missing_verdict_total so prompt/model drift is visible
+// operationally.
 func mergeAndFill(llmBound []detector.DedupedFinding, llmOut []Verdict) []Verdict {
 	byID := make(map[string]Verdict, len(llmOut))
 	for _, v := range llmOut {
@@ -334,7 +335,7 @@ func mergeAndFill(llmBound []detector.DedupedFinding, llmOut []Verdict) []Verdic
 		metrics.LLMMissingVerdictTotal.Inc()
 		out = append(out, Verdict{
 			FindingID:  d.ID,
-			Verdict:    VerdictConfirmed,
+			Verdict:    VerdictUnreviewed,
 			Confidence: 0,
 			Reason:     "model returned no verdict for this finding",
 		})

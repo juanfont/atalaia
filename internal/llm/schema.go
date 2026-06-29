@@ -82,4 +82,8 @@ func VerdictTool() Tool {
 const (
 	VerdictConfirmed = "confirmed"
 	VerdictDismissed = "dismissed"
+	// VerdictUnreviewed marks a finding the model returned no usable
+	// verdict for; the gap-fill in mergeAndFill uses it instead of a
+	// false "confirmed" so a model hiccup doesn't read as a credential.
+	VerdictUnreviewed = "unreviewed"
 )

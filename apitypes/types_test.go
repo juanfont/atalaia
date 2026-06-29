@@ -45,6 +45,7 @@ func TestCheckResponseRoundtrip(t *testing.T) {
     "after_dedup": 1,
     "confirmed": 0,
     "dismissed": 1,
+    "unreviewed": 0,
     "llm_invoked": true,
     "llm_calls": 1,
     "llm_model": "google/gemma-4-E4B-it",

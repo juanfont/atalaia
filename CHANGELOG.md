@@ -4,6 +4,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Changed
+
+- Gap-filled findings are now the distinct `unreviewed` verdict, not a
+  false `confirmed`. When the model returns no usable verdict for a
+  finding, atalaia used to fall back to `confirmed @ 0` — which the
+  watcher then emailed as a credential, so a model hiccup became a false
+  alert. The fallback is now `unreviewed @ 0` (new `apitypes`/`llm`
+  verdict constant): neither confirmed (don't page) nor dismissed (don't
+  drop) — retry the scan or send it to a human. New `stats.unreviewed`
+  count and `atalaia_verdicts_total{verdict="unreviewed"}`. **API note:**
+  `Verdict.verdict` can now be `"unreviewed"`; consumers must handle it
+  (the deployment.md watcher example does — it re-enqueues). With fixes
+  #1 and #2 already making gap-fills rare, this stops the residual ones
+  from ever reading as "confirmed".
+
 ### Fixed
 
 - Oversized diffs no longer 502 on the model's context limit. The

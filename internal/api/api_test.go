@@ -568,3 +568,23 @@ func TestCheck_PartialFailureSurfacesInStats(t *testing.T) {
 		t.Errorf("partial failure should still report the finding gitleaks produced")
 	}
 }
+
+func TestCountVerdicts_CountsUnreviewedSeparately(t *testing.T) {
+	vs := []apitypes.Verdict{
+		{Verdict: apitypes.VerdictConfirmed},
+		{Verdict: apitypes.VerdictDismissed},
+		{Verdict: apitypes.VerdictDismissed},
+		{Verdict: apitypes.VerdictUnreviewed},
+		{Verdict: apitypes.VerdictUnreviewed},
+	}
+	c, d, u := countVerdicts(vs)
+	if c != 1 || d != 2 || u != 2 {
+		t.Errorf("countVerdicts = (%d,%d,%d), want (1,2,2)", c, d, u)
+	}
+	// An unreviewed gap-fill must NOT inflate the confirmed count — that
+	// was the bug that turned model hiccups into 'confirmed credential'
+	// alerts.
+	if c != 1 {
+		t.Errorf("unreviewed leaked into confirmed: confirmed=%d", c)
+	}
+}

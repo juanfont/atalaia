@@ -25,17 +25,21 @@ type Detection struct {
 // Counts and timings are caller-facing observability; raw matches
 // never appear here.
 type Stats struct {
-	DetectorsRun   []string `json:"detectors_run"`
-	RawFindings    int      `json:"raw_findings"`
-	AfterDedup     int      `json:"after_dedup"`
-	Confirmed      int      `json:"confirmed"`
-	Dismissed      int      `json:"dismissed"`
-	LLMInvoked     bool     `json:"llm_invoked"`
-	LLMCalls       int      `json:"llm_calls"`
-	LLMModel       string   `json:"llm_model"`
-	LLMLatencyMs   int64    `json:"llm_latency_ms"`
-	TotalLatencyMs int64    `json:"total_latency_ms"`
-	Truncated      bool     `json:"truncated"`
+	DetectorsRun []string `json:"detectors_run"`
+	RawFindings  int      `json:"raw_findings"`
+	AfterDedup   int      `json:"after_dedup"`
+	Confirmed    int      `json:"confirmed"`
+	Dismissed    int      `json:"dismissed"`
+	// Unreviewed counts findings the LLM returned no usable verdict for
+	// (gap-filled). Non-zero means some findings were neither confirmed
+	// nor dismissed — retry or review them; do not read as clean.
+	Unreviewed     int    `json:"unreviewed"`
+	LLMInvoked     bool   `json:"llm_invoked"`
+	LLMCalls       int    `json:"llm_calls"`
+	LLMModel       string `json:"llm_model"`
+	LLMLatencyMs   int64  `json:"llm_latency_ms"`
+	TotalLatencyMs int64  `json:"total_latency_ms"`
+	Truncated      bool   `json:"truncated"`
 	// DetectorErrors lists detectors that failed to complete this
 	// scan (timeout, crash, kill). Present only when non-empty. A
 	// caller that sees entries here must NOT treat a zero-finding
@@ -99,4 +103,11 @@ type ErrorResponse struct {
 const (
 	VerdictConfirmed = "confirmed"
 	VerdictDismissed = "dismissed"
+	// VerdictUnreviewed is a finding the LLM did not return a usable
+	// verdict for (model omitted it, or returned an unparseable/unknown
+	// verdict). It is NEITHER confirmed nor dismissed: confidence is 0
+	// and the reason explains the gap. Consumers must not treat it as a
+	// confirmed credential (don't page on it) NOR as clean (don't drop
+	// it) — retry the scan or route it to a human.
+	VerdictUnreviewed = "unreviewed"
 )
