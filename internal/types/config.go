@@ -114,8 +114,18 @@ type LLMConfig struct {
 	HealthcheckInterval   time.Duration
 	Profile               string
 	MaxFindingsPerRequest int
-	ContextBudget         ContextBudgetConfig
-	Profiles              map[string]LLMProfile
+	// MaxFindingsPerCall caps how many findings go into a single LLM
+	// request. It is internal batching, NOT a client-visible limit:
+	// every finding is still adjudicated and returned, just split across
+	// ceil(N/MaxFindingsPerCall) calls whose verdicts are merged. Small
+	// models reliably return a verdict per finding only up to ~10-15;
+	// beyond that the tail comes back with no/mismatched ids and gets
+	// gap-filled (conservatively "confirmed"), producing false alerts on
+	// large commits. <= 0 disables batching by count (old behaviour).
+	// Distinct from MaxFindingsPerRequest, which truncates.
+	MaxFindingsPerCall int
+	ContextBudget      ContextBudgetConfig
+	Profiles           map[string]LLMProfile
 	// UseTools routes adjudication through the OpenAI tool-calling
 	// path: atalaia sends the verdict shape as a function-calling
 	// tool and parses tool_calls instead of message content. Default
@@ -226,6 +236,7 @@ func setDefaults() {
 	viper.SetDefault("llm.healthcheck_interval", "30s")
 	viper.SetDefault("llm.profile", "gemma4")
 	viper.SetDefault("llm.max_findings_per_request", 200)
+	viper.SetDefault("llm.max_findings_per_call", 10)
 	viper.SetDefault("llm.context_budget.input_tokens", 80000)
 	viper.SetDefault("llm.context_budget.output_tokens", 8000)
 	viper.SetDefault("llm.context_budget.finding_context_lines", 30)
@@ -320,6 +331,7 @@ func readLLMConfig() LLMConfig {
 		HealthcheckInterval:   viper.GetDuration("llm.healthcheck_interval"),
 		Profile:               viper.GetString("llm.profile"),
 		MaxFindingsPerRequest: viper.GetInt("llm.max_findings_per_request"),
+		MaxFindingsPerCall:    viper.GetInt("llm.max_findings_per_call"),
 		ContextBudget: ContextBudgetConfig{
 			InputTokens:         viper.GetInt("llm.context_budget.input_tokens"),
 			OutputTokens:        viper.GetInt("llm.context_budget.output_tokens"),

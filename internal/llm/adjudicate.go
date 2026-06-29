@@ -106,8 +106,16 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 	defer a.sem.Release()
 
 	cb := a.cfg.ContextBudget
+	maxPerCall := a.cfg.MaxFindingsPerCall
+	// Single whole-diff call only when the diff fits the input budget AND
+	// the finding count is within what the model can answer in one shot.
+	// Too many findings in one call and the model drops the tail (no /
+	// mismatched ids), which gap-fills to a false "confirmed". Beyond the
+	// count, fall through to the per-finding context-window path, which is
+	// both token-cheaper and naturally splittable.
 	var batches []PromptData
-	if fitsSingleCall(diff, llmBound, cb.InputTokens, cb.OutputTokens) {
+	if fitsSingleCall(diff, llmBound, cb.InputTokens, cb.OutputTokens) &&
+		(maxPerCall <= 0 || len(llmBound) <= maxPerCall) {
 		batches = []PromptData{{
 			Diff:     string(diff),
 			Findings: findingsFromDeduped(llmBound),
@@ -120,6 +128,9 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 			batches[i] = PromptData{Findings: b}
 		}
 	}
+	// Belt-and-suspenders: cap by finding count regardless of how the
+	// batches were formed (packBatches groups by tokens, not count).
+	batches = capFindingsPerBatch(batches, maxPerCall)
 
 	var (
 		llmVerdicts  []Verdict
@@ -269,6 +280,32 @@ func parseVerdictResponse(raw string) ([]Verdict, error) {
 		}
 	}
 	return out, nil
+}
+
+// capFindingsPerBatch splits any batch holding more than max findings
+// into sequential sub-batches of at most max, preserving the batch's
+// Diff. This is internal batching only: every finding still gets a
+// verdict, just across more LLM calls whose results merge back into one
+// response. max <= 0 disables the cap.
+func capFindingsPerBatch(batches []PromptData, max int) []PromptData {
+	if max <= 0 {
+		return batches
+	}
+	out := make([]PromptData, 0, len(batches))
+	for _, b := range batches {
+		if len(b.Findings) <= max {
+			out = append(out, b)
+			continue
+		}
+		for s := 0; s < len(b.Findings); s += max {
+			e := s + max
+			if e > len(b.Findings) {
+				e = len(b.Findings)
+			}
+			out = append(out, PromptData{Diff: b.Diff, Findings: b.Findings[s:e]})
+		}
+	}
+	return out
 }
 
 // mergeAndFill correlates LLM-returned verdicts to llmBound findings by

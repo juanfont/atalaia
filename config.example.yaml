@@ -54,7 +54,8 @@ llm:
   request_timeout: 90s
   healthcheck_interval: 30s         # background ping cadence; /readyz reads the cached result
   profile: gemma4
-  max_findings_per_request: 200     # hard cap; truncated:true beyond this
+  max_findings_per_request: 200     # hard cap on findings adjudicated; truncated:true beyond this (client-visible)
+  max_findings_per_call: 10         # internal batch size: findings/LLM call. All findings still adjudicated+returned, just across more calls. Small models drop the tail of large sets -> false "confirmed" gap-fills. <=0 disables batching by count
   use_tools: true                   # default true; set false only for backends without a tool-call parser (compatibility fallback)
   context_budget:
     input_tokens: 80000

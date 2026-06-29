@@ -56,6 +56,11 @@ type fixture struct {
 	Description   string        `json:"description"`
 	MinAfterDedup int           `json:"min_after_dedup"`
 	Expectations  []expectation `json:"expectations"`
+	// MaxConfirmed, when set, asserts stats.confirmed <= this on every
+	// run. Used by large-finding-count fixtures to guard the batching
+	// fix: without per-call batching the model drops the tail of a big
+	// finding set, which gap-fills to "confirmed" and inflates this.
+	MaxConfirmed *int `json:"max_confirmed,omitempty"`
 }
 
 type verdict struct {
@@ -151,6 +156,10 @@ func TestIntegrationCorpus(t *testing.T) {
 				if resp.Stats.AfterDedup < fx.MinAfterDedup {
 					t.Fatalf("run %d: stats.after_dedup=%d, want >= %d (detectors saw fewer findings than the fixture promises)",
 						i+1, resp.Stats.AfterDedup, fx.MinAfterDedup)
+				}
+				if fx.MaxConfirmed != nil && resp.Stats.Confirmed > *fx.MaxConfirmed {
+					t.Errorf("run %d: stats.confirmed=%d exceeds max_confirmed=%d (likely gap-fills from too large an LLM batch)",
+						i+1, resp.Stats.Confirmed, *fx.MaxConfirmed)
 				}
 				for _, ex := range fx.Expectations {
 					v, ok := findVerdict(resp.Verdicts, ex.Match)

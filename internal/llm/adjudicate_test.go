@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -345,4 +346,137 @@ func TestParseVerdictResponse_RejectsGarbage(t *testing.T) {
 	if _, err := parseVerdictResponse("not json at all"); err == nil {
 		t.Error("expected error for non-JSON body")
 	}
+}
+
+// newAdjudicatorCap builds an adjudicator with a finding-count cap and a
+// generous input budget (so packBatches keeps findings together and the
+// count cap is what splits them).
+func newAdjudicatorCap(t *testing.T, client ChatCompleter, cap int) *Adjudicator {
+	t.Helper()
+	dir := t.TempDir()
+	sys := filepath.Join(dir, "sys.tmpl")
+	usr := filepath.Join(dir, "usr.tmpl")
+	if err := os.WriteFile(sys, []byte("be brief"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(usr, []byte("findings:{{range .Findings}}{{.ID}};{{end}}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := types.LLMConfig{
+		Endpoint: "http://test", Model: "test-model", MaxInflight: 1, QueueMax: 4,
+		Profile:            "test",
+		MaxFindingsPerCall: cap,
+		ContextBudget:      types.ContextBudgetConfig{InputTokens: 1_000_000, OutputTokens: 4096, FindingContextLines: 3},
+		Profiles:           map[string]types.LLMProfile{"test": {SystemTemplate: sys, UserTemplate: usr}},
+	}
+	a, err := NewAdjudicator(cfg, client)
+	if err != nil {
+		t.Fatalf("NewAdjudicator: %v", err)
+	}
+	return a
+}
+
+func TestCapFindingsPerBatch(t *testing.T) {
+	mk := func(n int) []PromptFinding {
+		fs := make([]PromptFinding, n)
+		for i := range fs {
+			fs[i] = PromptFinding{ID: fmt.Sprintf("f%d", i)}
+		}
+		return fs
+	}
+	// over-cap batch splits into ceil(n/max), Diff preserved, none lost
+	out := capFindingsPerBatch([]PromptData{{Diff: "D", Findings: mk(25)}}, 10)
+	if len(out) != 3 {
+		t.Fatalf("batches=%d, want 3", len(out))
+	}
+	total := 0
+	for _, b := range out {
+		if len(b.Findings) > 10 {
+			t.Errorf("sub-batch has %d findings, exceeds cap 10", len(b.Findings))
+		}
+		if b.Diff != "D" {
+			t.Errorf("Diff not preserved on split sub-batch")
+		}
+		total += len(b.Findings)
+	}
+	if total != 25 {
+		t.Errorf("findings lost in split: got %d, want 25", total)
+	}
+	// exactly cap -> single batch; cap <= 0 -> disabled
+	if got := capFindingsPerBatch([]PromptData{{Findings: mk(10)}}, 10); len(got) != 1 {
+		t.Errorf("==cap should stay 1 batch, got %d", len(got))
+	}
+	if got := capFindingsPerBatch([]PromptData{{Findings: mk(100)}}, 0); len(got) != 1 {
+		t.Errorf("cap<=0 should not split, got %d batches", len(got))
+	}
+}
+
+// TestAdjudicate_BatchesByFindingCount is the regression guard for the
+// large-commit gap-fill bug: 25 findings with cap 10 must fan out into
+// multiple LLM calls of <= 10 each, and every finding must get a real
+// verdict (no gap-fills) merged into one result.
+func TestAdjudicate_BatchesByFindingCount(t *testing.T) {
+	const cap = 10
+	fc := &fakeClient{respond: func(req ChatRequest) (ChatResponse, error) {
+		ids := idsFromUserMsg(req)
+		if len(ids) == 0 {
+			return ChatResponse{}, errors.New("no finding ids in user prompt")
+		}
+		if len(ids) > cap {
+			return ChatResponse{}, fmt.Errorf("batch of %d exceeds cap %d", len(ids), cap)
+		}
+		parts := make([]string, len(ids))
+		for i, id := range ids {
+			parts[i] = fmt.Sprintf(`{"finding_id":%q,"verdict":"dismissed","confidence":0.9,"reason":"reference"}`, id)
+		}
+		body := `{"verdicts":[` + strings.Join(parts, ",") + `]}`
+		return ChatResponse{Choices: []struct {
+			Message Message `json:"message"`
+		}{{Message: Message{Role: "assistant", Content: body}}}}, nil
+	}}
+	a := newAdjudicatorCap(t, fc, cap)
+
+	in := make([]detector.DedupedFinding, 25)
+	for i := range in {
+		in[i] = detector.DedupedFinding{ID: fmt.Sprintf("f%d", i), File: "x", Line: i + 1, Match: fmt.Sprintf("ref_%d", i)}
+	}
+	res, err := a.Adjudicate(context.Background(), []byte("diff"), in)
+	if err != nil {
+		t.Fatalf("Adjudicate: %v", err)
+	}
+	if res.LLMCalls != 3 {
+		t.Errorf("LLMCalls=%d, want 3 (ceil(25/10))", res.LLMCalls)
+	}
+	if len(res.Verdicts) != 25 {
+		t.Fatalf("verdicts=%d, want 25", len(res.Verdicts))
+	}
+	for _, v := range res.Verdicts {
+		if v.Confidence == 0 && strings.HasPrefix(v.Reason, "model returned no verdict") {
+			t.Errorf("gap-fill for %s — batching should have given every finding a real verdict", v.FindingID)
+		}
+		if v.Verdict != VerdictDismissed {
+			t.Errorf("verdict %s = %q, want dismissed", v.FindingID, v.Verdict)
+		}
+	}
+}
+
+func idsFromUserMsg(req ChatRequest) []string {
+	var content string
+	for _, m := range req.Messages {
+		if m.Role == "user" {
+			content = m.Content
+		}
+	}
+	const p = "findings:"
+	i := strings.Index(content, p)
+	if i < 0 {
+		return nil
+	}
+	var ids []string
+	for _, s := range strings.Split(content[i+len(p):], ";") {
+		if s = strings.TrimSpace(s); s != "" {
+			ids = append(ids, s)
+		}
+	}
+	return ids
 }

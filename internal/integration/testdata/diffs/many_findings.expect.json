@@ -1,0 +1,6 @@
+{
+  "description": "A 40-finding commit: many secret-keyword assignments whose values are method-call references (e.g. self.api_token_NN = svc.fetch()). All are references, so all must dismiss. This guards the per-call batching fix: without max_findings_per_call, the model is handed all 40 at once, drops the tail, and the unanswered findings gap-fill to a false 'confirmed' (~20 of them on the real commit this is modelled on). With batching, every finding gets a real verdict. No per-match expectations are listed; the assertion is max_confirmed=0 over the whole set.",
+  "min_after_dedup": 40,
+  "max_confirmed": 0,
+  "expectations": []
+}

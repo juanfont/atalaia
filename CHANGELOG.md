@@ -4,6 +4,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- Large commits no longer flood false "confirmed" alerts. Atalaia
+  batched findings into LLM calls by input-token size only, never by
+  count, so a commit with many findings (observed: 42 in one 258 KB
+  diff) was sent to the model in a single call. Small models reliably
+  return a verdict per finding only up to ~10-15; the tail came back
+  with no/mismatched ids and gap-filled to the conservative
+  `confirmed @ 0` fallback (~20 of 42), which the watcher then emailed.
+  New `llm.max_findings_per_call` (default **10**) caps findings per LLM
+  request; everything beyond is split into more calls whose verdicts
+  merge into the same response. **Purely internal — the `/check`
+  contract is unchanged** (every finding still adjudicated and returned;
+  only `stats.llm_calls` and latency rise for big diffs). Distinct from
+  `max_findings_per_request`, which truncates. On the real 42-finding
+  commit this cut gap-fills from ~20 to ~0. Guarded by a unit test
+  (batching + merge, no gap-fills) and a 40-finding `many_findings`
+  corpus fixture asserting `max_confirmed: 0`.
+
 ### Added
 
 - Corpus coverage for the variable-interpolation false-positive class
