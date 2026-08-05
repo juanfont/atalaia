@@ -12,7 +12,18 @@ mentions the second. The caller reads an all-dismissed response with
 clean stats as "no secrets in this diff". A false clean is a worse
 failure than the false positive the pipeline exists to remove.
 
-This is structural, not a bug in any one function:
+That silent miss is the first of two symptoms. The second is worse
+because it is not silent, it is wrong. In whole-diff mode the model has
+the real credential in its context window, but the only thing it is
+allowed to speak about is the flagged string. Its sole channel for
+"there is a secret in this diff" is the verdict on the wrong value. So
+it confirms the decoy, with a `reason` that is describing the other
+credential entirely. The caller gets a `confirmed` pointing at a false
+positive, a reason that does not match its own `match_preview`, and the
+real secret still unnamed. A developer sent to that line finds nothing
+there, which is how a channel loses trust.
+
+Both symptoms are structural, not a bug in any one function:
 
 - In whole-diff mode the model does receive the full diff
   (`adjudicate.go`, `PromptData.Diff`), so the unflagged secret is in
@@ -22,7 +33,10 @@ This is structural, not a bug in any one function:
   finding set, so a verdict for an unknown id is silently discarded.
 - The adjudication prompt actively steers away from noticing: "Lean
   toward dismissing" and "Judge the matched value itself, not the code
-  around it".
+  around it". That sentence is currently holding both failures apart on
+  its own: strictness suppresses the contaminated verdict at the cost of
+  the silent miss. Giving the model a channel of its own is what lets it
+  stay strict without the miss being the price.
 - In per-finding mode (diff over `context_budget.input_tokens`) the
   model never sees the diff at all, only `finding_context_lines` around
   each match. The exposure is inverted: the largest commits, where an
@@ -295,8 +309,10 @@ existing diff + `.expect.json` pairs with `expect_discoveries` and a
 - **quirk fixture** — a decoy that fires a detector and is a genuine
   false positive, plus a real credential no detector sees. Passes only
   when the decoy is still `dismissed` in `verdicts[]` *and* the real
-  secret appears in `discoveries[]`. The reported bug, encoded as a
-  gate.
+  secret appears in `discoveries[]`. This gates both symptoms at once:
+  the silent miss fails it via the empty `discoveries[]`, and the
+  contaminated verdict fails it via a `confirmed` on the decoy. The
+  reported bug, encoded as a gate.
 - **quiet fixture** — a substantial, entirely clean diff, asserting
   `discoveries` is empty. This decides whether the channel is worth
   reading: a deep scan that cries wolf on ordinary code is worse than
