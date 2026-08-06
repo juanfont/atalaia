@@ -64,6 +64,10 @@ Content-Type: application/json
 
 Also accepted: `text/plain`, `application/x-patch`, missing/blank Content-Type (treated as raw diff).
 
+**`deep` (bool, default false)** opts into a second LLM pass that reads the diff cold and reports credentials no detector flagged. JSON callers set `"deep": true` in the body; raw-diff callers use `?deep=1` on the URL.
+
+This is for **non-gating callers** — a webhook watcher, not a pre-commit hook. It costs an LLM call even when detectors found nothing, and takes up to `llm.deep_scan.max_windows` sequential calls, so size your client timeout accordingly (see [deployment.md](deployment.md)). Requires `llm.deep_scan.enabled` on the server; when the operator has it off, the request still succeeds and reports `stats.deep_scan.ran: false`.
+
 **Body size cap**: `server.max_body_bytes` (default 10 MiB). Larger bodies return 400.
 
 **Diff format**: standard unified diff with `diff --git` / `--- a/path` / `+++ b/path` / `@@` headers. Atalaia walks added lines (`+`) and treats unprefixed blank lines inside a hunk as context (real-world diffs from web APIs and editors that strip trailing whitespace).
@@ -74,11 +78,14 @@ Also accepted: `text/plain`, `application/x-patch`, missing/blank Content-Type (
 
 ```json
 {
-  "request_id": "01KRN34HMPNN6823H2676YF37A",
-  "verdicts": [ ... ],
-  "stats":    { ... }
+  "request_id":  "01KRN34HMPNN6823H2676YF37A",
+  "verdicts":    [ ... ],
+  "discoveries": [ ... ],
+  "stats":       { ... }
 }
 ```
+
+`discoveries[]` is present only on deep requests. It is omitted entirely otherwise, so a non-deep response is byte-identical to what previous versions returned.
 
 #### `request_id`
 
@@ -124,6 +131,33 @@ Field by field:
   - `rule` — the rule ID. Often the same as `detector_name` for gitleaks; trufflehog usually echoes its detector name.
   - `verified` (bool) — true only when trufflehog confirmed the credential against the provider API (requires `detectors.trufflehog.verify: true`, off by default).
 
+#### `discoveries[]`
+
+Credentials the LLM found in the diff that **no detector flagged**. Present only on deep requests.
+
+```json
+{
+  "id": "9c1f4a77b2e0",
+  "file": "scripts/reindex.sh",
+  "line": 4,
+  "match_preview": "Tr0u****2026",
+  "kind": "credential",
+  "confidence": 0.9,
+  "reason": "basic-auth password embedded in a URL"
+}
+```
+
+**This is a lower-trust channel than `verdicts[]`.** Nothing corroborates a discovery but the model's judgement, checked against exactly one requirement: the value must appear verbatim in the diff you submitted. Atalaia searches the added lines for it and derives `file` and `line` itself; a candidate it cannot locate is discarded and counted in `stats.deep_scan.ungrounded`. So a fabricated secret and a fabricated line number are both impossible — but a real string the model *misjudged* as a credential is not. **Do not gate a merge on a discovery without review.**
+
+Field notes:
+
+- `id` uses the same `sha256(file + ":" + line + ":" + raw_match)[:12]` scheme as a verdict, so alert dedup over time works identically.
+- `kind` is `"credential"` or `"private_key"`. Private key material is located by its `-----BEGIN …-----` header line, since no small model reproduces a key body verbatim.
+- No `verdict` field: membership in the array is the claim. No `detections[]`: nothing detected it.
+- `match_preview` is redacted exactly as a verdict's is, and `reason` is scrubbed of the raw value.
+
+`discoveries[]` and `verdicts[]` are **disjoint**. A secret both a detector and the model find is reported once, in `verdicts[]`. The overlap check is containment on `(file, line)`, not id equality, so a detector matching the bare key and a model returning the whole assignment still collapse to one report.
+
 #### `stats`
 
 Per-request observability. Counts, not summaries.
@@ -141,7 +175,17 @@ Per-request observability. Counts, not summaries.
   "llm_model": "google/gemma-4-E4B-it",
   "llm_latency_ms": 4321,
   "total_latency_ms": 4892,
-  "truncated": false
+  "truncated": false,
+  "deep_scan": {
+    "ran": true,
+    "calls": 2,
+    "windows": 2,
+    "candidates": 3,
+    "discovered": 1,
+    "ungrounded": 2,
+    "truncated": false,
+    "latency_ms": 8213
+  }
 }
 ```
 
@@ -157,6 +201,13 @@ Per-request observability. Counts, not summaries.
   {"detector": "trufflehog", "error": "signal: killed (stderr: )"}
 ]
 ```
+
+`deep_scan` is present only on deep requests:
+
+- `ran: false` means the deep read did not happen — the operator has `llm.deep_scan.enabled: false`, or `require_findings` is on and the diff had no detector findings. An empty `discoveries[]` here says nothing about the diff.
+- `error` non-empty means the deep read **failed** (timeout, backend error, unparseable output). The request still succeeded and `verdicts[]` is valid, but discovery coverage is incomplete: do **not** read an empty `discoveries[]` alongside an error as clean. Same contract as `detector_errors[]`.
+- `truncated: true` means coverage stopped at `llm.deep_scan.max_windows` with added lines left unscanned. Raise the cap or split the diff.
+- `candidates` is what the model claimed; `discovered` is what survived grounding; `ungrounded` is what was discarded as not present in the diff. **`ungrounded ÷ candidates` is the model's hallucination rate for this request** — the number worth alerting on across requests (`atalaia_deep_ungrounded_total` / `atalaia_deep_candidates_total`).
 
 ### A realistic worked example
 
@@ -433,6 +484,7 @@ Readiness. Returns 200/503 based on a cached LLM-reachability state that a backg
   "atalaia": "0.1.0",
   "llm_model": "google/gemma-4-E4B-it",
   "prompt": "gemma4:8116c54e48f5",
+  "prompt_deep": "gemma4_deep:2f91ac4de017",
   "gitleaks": "unknown",
   "trufflehog": "unknown",
   "kingfisher": "unknown"
@@ -440,6 +492,8 @@ Readiness. Returns 200/503 based on a cached LLM-reachability state that a backg
 ```
 
 `prompt` is the loaded prompt's `profile:hash` fingerprint. It changes whenever the on-disk template (`prompts/<profile>_{system,user}.tmpl`) changes, so you can confirm the live prompt matches the release — a deploy that updates the binary but not the `prompts/` directory shows a stale hash here while silently running the old prompt.
+
+`prompt_deep` is the same fingerprint for the deep-scan templates (`prompts/<deep_profile>_{system,user}.tmpl`). It is omitted when deep scan is disabled. Without it, a deploy that updated the binary but not the deep templates would be invisible.
 
 Detector versions are currently reported as `unknown`; follow-up item.
 

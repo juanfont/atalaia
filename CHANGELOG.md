@@ -4,6 +4,57 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+- **Deep scan**: an opt-in second LLM pass that reads a diff cold and
+  reports credentials no detector flagged. Off by default
+  (`llm.deep_scan.enabled`), requested per-request with `"deep": true`
+  in the JSON body or `?deep=1` on the raw-diff content types.
+
+  It closes a gap with two symptoms. The silent one: a diff whose only
+  detector finding is a genuine false positive, with a real credential
+  elsewhere that no rule matches, returns all-dismissed with clean
+  stats and reads as "no secrets". The loud one: in whole-diff mode the
+  model can *see* that credential but has no way to report it, so its
+  only channel is the verdict on the flagged string — a `confirmed`
+  pointing at the false positive with a `reason` describing a different
+  value entirely.
+
+  The deep read packs the diff's added lines into budget-sized windows
+  and asks the model for values only: no file, no line, no id. Every
+  returned value is then located in the diff with `LocateInDiff`;
+  anything not found is discarded. A hallucinated secret and a
+  hallucinated line number are both inexpressible by construction.
+
+  Results land in a new `discoveries[]` response field, **disjoint from
+  `verdicts[]`** and lower trust: model judgement grounded against the
+  diff, with nothing else corroborating it. It must not gate a merge
+  unreviewed. New `stats.deep_scan` block reports whether it ran, its
+  coverage, and `ungrounded ÷ candidates` — the model's hallucination
+  rate, measured directly. New metrics `atalaia_deep_scan_total`,
+  `atalaia_deep_candidates_total`, `atalaia_deep_ungrounded_total`,
+  `atalaia_deep_discoveries_total`, `atalaia_deep_windows`,
+  `atalaia_deep_latency_seconds`. New `prompt_deep` fingerprint on
+  `/version`. Discoveries are written to the audit log under the same
+  redaction rules as verdicts.
+
+  **Operational notes.** A deep request costs an LLM call even with
+  zero detector findings, and takes up to `deep_scan.max_windows`
+  sequential calls: size client timeouts from
+  `max_windows x llm.request_timeout`, not from normal `/check`
+  latency. It also occupies two `queue_max` waiters (adjudication plus
+  the deep read), halving effective queue capacity for deep callers.
+  For non-gating callers — a webhook watcher, not a pre-commit hook.
+  A deep failure never fails the request; it reports in
+  `stats.deep_scan.error` and `verdicts[]` stands alone.
+
+  Six corpus fixtures behind `make smoke-corpus-discovery`, every
+  premise verified against gitleaks rather than assumed: `deep_quirk`
+  (the reported bug, gating both symptoms), `deep_quiet` and
+  `deep_references` (the false-alarm gate), `deep_sentinel_cold`,
+  `deep_private_key` (the collision case), and `deep_multiwindow`.
+  Design doc: `docs/superpowers/specs/2026-08-05-deep-scan-design.md`.
+
 ## [0.5.6], 2026-06-29
 
 ### Changed

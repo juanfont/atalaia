@@ -110,6 +110,16 @@ container image. Enabling/disabling is a config flag, not a reinstall.
   `atalaia_llm_missing_verdict_total`. Don't fail the whole request.
 - Hard cap `max_findings_per_request` (default 200). Beyond this,
   truncate and set `stats.truncated: true`.
+- **Deep read** (`internal/llm/deep.go`, `ground.go`, `deepwindow.go`):
+  the opt-in second pass. Separate prompt profile with the opposite
+  posture (recall, not default-dismiss), separate schema
+  (`submit_candidates`, values only, no locations), separate semaphore
+  acquisition sharing the Adjudicator's gate. The model returns values
+  verbatim; `Ground` locates each with `detector.LocateInDiff` and
+  discards what it cannot find, so hallucinated secrets and line
+  numbers are both inexpressible. A deep failure never fails the
+  request: it reports in `stats.deep_scan.error` and `verdicts[]`
+  stands alone.
 
 Verdict correlation is by `finding_id`, never by array position.
 Required for tolerating out-of-order model output.
@@ -201,7 +211,13 @@ Loaded via Viper, wired through Cobra.
   explicitly opts in.
 - **Detectors detect, the LLM decides.** Don't push detection
   responsibility to the model. Recall comes from regex, precision
-  comes from the filter.
+  comes from the filter. **One exception, opt-in and fenced**: deep
+  scan (`llm.deep_scan`, off by default) lets the LLM read a diff cold
+  and report credentials no detector flagged. Those land in
+  `discoveries[]`, never in `verdicts[]`, and every one is grounded
+  against the diff before it is reported. The load-bearing channel is
+  still detector-driven. See
+  [the design doc](docs/superpowers/specs/2026-08-05-deep-scan-design.md).
 - **Statelessness is a design goal**, not an accident. Don't introduce
   on-disk state for findings, verdicts, or diffs.
 - **Verdict correlation is by `finding_id`**, never by array position.
