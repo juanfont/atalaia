@@ -220,9 +220,16 @@ Per candidate, in order:
    `internal/llm/shortcircuit.go`. `AKIAIOSFODNN7EXAMPLE` discovered
    cold is dropped by the same table that dismisses it in the other
    channel.
-5. Drop on id collision with any `verdicts[]` entry; dedupe discoveries
-   against each other by id, so the same secret found in two windows
-   collapses to one.
+5. Drop on collision with any `verdicts[]` entry, then dedupe
+   discoveries against each other, so the same secret found in two
+   windows collapses to one. Collision is **not** id equality alone.
+   The id embeds the match, so a detector that matched the bare key
+   body and a model that returned the whole assignment
+   (`key = "AKIA…"`) produce different ids for the same secret, and it
+   would surface in both channels at once — dismissed in one,
+   discovered in the other. So: same `(file, line)` plus either raw
+   match containing the other counts as a collision, and `verdicts[]`
+   wins.
 6. `MatchPreview = redact.Preview(value)`,
    `Reason = redact.Scrub(reason, value)`.
 
@@ -251,6 +258,23 @@ never read a missing result as a clean one.
 Adjudication failure still fails the whole request, as today. The
 asymmetry is deliberate: one channel is load-bearing, the other is
 additive.
+
+## Audit and version
+
+Discoveries go through the existing `internal/audit` JSONL writer, in a
+`discoveries` array alongside `verdicts` in the same `Entry`, under the
+same rules: redacted previews by default, raw values only when the
+operator sets `observability.audit.reveal_matches`. The lower-trust
+channel is the one an operator most needs to review when tuning, so
+leaving it out of the audit trail would be backwards.
+
+`/version` currently reports a single `prompt: "profile:hash"`
+fingerprint for the adjudication templates. Deep scan adds a second
+template pair, so the field must cover it too — otherwise a deploy that
+updates the binary but not `gemma4_deep_*.tmpl` is invisible, which is
+the exact staleness the fingerprint exists to catch. Add
+`prompt_deep`, populated from the deep `PromptTemplate.Fingerprint()`
+and omitted when deep scan is disabled.
 
 ## Configuration
 
@@ -302,28 +326,79 @@ Unit, windowing and wiring:
   `stats.deep_scan.error`
 - `deep=false` makes no deep LLM call and emits no `discoveries` field
 
-Corpus (integration, `internal/integration/testdata`), extending the
-existing diff + `.expect.json` pairs with `expect_discoveries` and a
-`max_discoveries` ceiling:
+### Step zero: validate the prompt before writing Go
 
-- **quirk fixture** — a decoy that fires a detector and is a genuine
-  false positive, plus a real credential no detector sees. Passes only
-  when the decoy is still `dismissed` in `verdicts[]` *and* the real
-  secret appears in `discoveries[]`. This gates both symptoms at once:
-  the silent miss fails it via the empty `discoveries[]`, and the
-  contaminated verdict fails it via a `confirmed` on the decoy. The
-  reported bug, encoded as a gate.
-- **quiet fixture** — a substantial, entirely clean diff, asserting
-  `discoveries` is empty. This decides whether the channel is worth
-  reading: a deep scan that cries wolf on ordinary code is worse than
-  no deep scan, and it is the expected failure mode of a 4B model asked
-  for recall.
+Everything downstream assumes Gemma 4 E4B can do cold recall over a diff
+with tolerable precision, and the spec itself names noise as the
+expected failure mode of a 4B model asked for recall. That assumption is
+cheap to test before `deep.go` exists: draft
+`prompts/gemma4_deep_system.tmpl`, drive it by hand against vLLM over
+the existing corpus diffs plus `issue.diff` and a few clean ones, and
+count two rates — how often a returned value is not in the diff
+(hallucination), and how often a clean diff yields any candidate at all
+(false alarm).
+
+If those rates are bad, the design does not change, its default does:
+scope the deep read to diffs that already carry detector findings. That
+is the original reported case, with a much smaller haystack and a much
+smaller noise surface. Better to learn that from an afternoon of curl
+than from a finished implementation.
+
+### Corpus
+
+Integration, `internal/integration/testdata`, extending the existing
+diff + `.expect.json` pairs with `expect_discoveries`, `max_discoveries`,
+and `deep: true`. Run by a new `make smoke-corpus-discovery` — not
+`smoke-corpus-deep`, which already exists and means "repeat every
+fixture 20× to surface non-determinism".
+
+Two fixtures carry the design's core claims:
+
+- **quirk** — a decoy that fires a detector and is a genuine false
+  positive, plus a real credential no detector sees. Passes only when
+  the decoy is still `dismissed` in `verdicts[]` *and* the real secret
+  appears in `discoveries[]`. Gates both symptoms at once: the silent
+  miss fails it via an empty `discoveries[]`, the contaminated verdict
+  fails it via a `confirmed` on the decoy. The reported bug, encoded.
+- **quiet** — a substantial, entirely clean diff, asserting
+  `discoveries` is empty. This one decides whether the channel is worth
+  reading at all: a deep scan that cries wolf on ordinary code is worse
+  than no deep scan.
+
+Five more cover the grounding rules end to end, against a real model
+rather than a fake:
+
+- **private key** — a PEM block added with no surrounding assignment,
+  exercising the header-line carve-out.
+- **references** — a diff dense with `$VAR` / `${VAR}` / config lookups
+  and no literals. Expects zero discoveries; catches a deep prompt that
+  inherited none of the adjudication prompt's discipline about
+  references.
+- **sentinel cold** — `AKIAIOSFODNN7EXAMPLE` in a position no detector
+  flags. Expects zero discoveries, proving the short-circuit table
+  applies to the new channel too.
+- **collision** — one secret that both a detector and the model find,
+  where the detector matched a substring of what the model returns.
+  Expects it exactly once, in `verdicts[]`, never in both.
+- **multi-window** — an added-line set large enough to force more than
+  one window, with a secret placed in the last one. Proves coverage
+  does not quietly stop after window one, and exercises the
+  `truncated` flag at a lowered `max_windows`.
+
+Existing fixtures are re-run unchanged with `deep: false` to prove the
+default path is untouched.
 
 ## Documentation
 
 - `docs/api.md` — the `deep` flag, `discoveries[]`, the `deep_scan`
   stats block, and an explicit statement that discoveries are a
   lower-trust channel that must not gate a merge unreviewed.
+- `docs/deployment.md` — client timeouts. A deep request is worst-case
+  `max_windows` sequential LLM calls at `max_num_seqs 1`, so callers
+  must size timeouts from `max_windows × llm.request_timeout`, not from
+  the ~650 ms single-call latency observed today. The watcher sketch's
+  HTTP client needs its own timeout raised before it sets `deep=true`,
+  or it will abandon requests the server is still working on.
 - `README.md` — architecture diagram gains the second path.
 - `AGENTS.md` — "Detectors detect, the LLM decides" needs an explicit
   exception clause, or the next reader will file this feature as a bug.
