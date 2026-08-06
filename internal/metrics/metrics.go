@@ -66,6 +66,50 @@ var (
 		Name: "atalaia_llm_missing_verdict_total",
 		Help: "Findings the LLM did not return a verdict for; filled with fallback.",
 	})
+
+	// DeepScanTotal counts deep reads by outcome: ok, error, disabled.
+	DeepScanTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "atalaia_deep_scan_total",
+		Help: "Deep scans attempted, by result.",
+	}, []string{"result"})
+
+	// DeepCandidatesTotal counts raw candidates the model returned,
+	// before grounding.
+	DeepCandidatesTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "atalaia_deep_candidates_total",
+		Help: "Candidate secrets returned by the deep read, pre-grounding.",
+	})
+
+	// DeepUngroundedTotal counts candidates discarded because the value
+	// was not found in the diff. Divided by DeepCandidatesTotal this is
+	// the model's hallucination rate: the number to alert on. A climb
+	// means the deep prompt or the model has drifted.
+	DeepUngroundedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "atalaia_deep_ungrounded_total",
+		Help: "Deep-read candidates discarded as not present in the diff.",
+	})
+
+	// DeepDiscoveriesTotal counts grounded discoveries actually returned.
+	DeepDiscoveriesTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "atalaia_deep_discoveries_total",
+		Help: "Grounded discoveries returned to callers.",
+	})
+
+	// DeepWindows is the per-request distribution of scanned windows.
+	DeepWindows = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "atalaia_deep_windows",
+		Help:    "Windows scanned per deep read.",
+		Buckets: []float64{1, 2, 3, 4, 6, 8, 12, 16},
+	})
+
+	// DeepLatencySeconds is end-to-end deep-read latency. Bucketed far
+	// wider than the adjudication histogram: a deep read is up to
+	// max_windows sequential calls.
+	DeepLatencySeconds = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "atalaia_deep_latency_seconds",
+		Help:    "Deep-read latency end to end.",
+		Buckets: []float64{0.5, 1, 2, 5, 10, 30, 60, 120, 300},
+	})
 )
 
 // MetricsMiddleware is the request-counting middleware applied to the
