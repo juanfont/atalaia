@@ -111,3 +111,83 @@ func TestConfig_UnknownDetectorFails(t *testing.T) {
 		t.Errorf("error %q does not mention unknown detector", err)
 	}
 }
+
+func TestReadLLMConfig_DeepScanDefaults(t *testing.T) {
+	resetViper()
+	setDefaults()
+
+	c := readLLMConfig()
+
+	if c.DeepScan.Enabled {
+		t.Errorf("deep scan must default off, got enabled")
+	}
+	if c.DeepScan.MaxWindows != 8 {
+		t.Errorf("max_windows default = %d, want 8", c.DeepScan.MaxWindows)
+	}
+	if c.DeepScan.MaxCandidates != 50 {
+		t.Errorf("max_candidates default = %d, want 50", c.DeepScan.MaxCandidates)
+	}
+	if c.DeepScan.Profile != "gemma4_deep" {
+		t.Errorf("profile default = %q, want gemma4_deep", c.DeepScan.Profile)
+	}
+	if c.DeepScan.RequireFindings {
+		t.Errorf("require_findings must default off")
+	}
+}
+
+// deepScanTestConfig is a config that passes validateConfig, so a test
+// can flip one deep-scan field and see only that field's error.
+func deepScanTestConfig() *Config {
+	return &Config{
+		Server: ServerConfig{Listen: "127.0.0.1:8080"},
+		LLM: LLMConfig{
+			Endpoint:    "http://127.0.0.1:8000/v1",
+			Model:       "test-model",
+			MaxInflight: 1,
+			QueueMax:    16,
+			Profile:     "gemma4",
+			Profiles: map[string]LLMProfile{
+				"gemma4": {SystemTemplate: "s.tmpl", UserTemplate: "u.tmpl"},
+			},
+		},
+	}
+}
+
+func TestValidateConfig_DeepScanProfileMustExist(t *testing.T) {
+	cfg := deepScanTestConfig()
+	cfg.LLM.DeepScan.Enabled = true
+	cfg.LLM.DeepScan.Profile = "nope"
+
+	err := validateConfig(cfg)
+	if err == nil {
+		t.Fatal("want error for deep scan profile that is not configured")
+	}
+	if !strings.Contains(err.Error(), "nope") {
+		t.Errorf("error should name the missing profile, got %v", err)
+	}
+}
+
+func TestValidateConfig_DeepScanProfileNeedsTemplates(t *testing.T) {
+	cfg := deepScanTestConfig()
+	cfg.LLM.Profiles["gemma4_deep"] = LLMProfile{}
+	cfg.LLM.DeepScan.Enabled = true
+	cfg.LLM.DeepScan.Profile = "gemma4_deep"
+
+	err := validateConfig(cfg)
+	if err == nil {
+		t.Fatal("want error for deep profile with no templates")
+	}
+	if !strings.Contains(err.Error(), "system_template") {
+		t.Errorf("error should name the missing templates, got %v", err)
+	}
+}
+
+func TestValidateConfig_DeepScanDisabledSkipsProfileCheck(t *testing.T) {
+	cfg := deepScanTestConfig()
+	cfg.LLM.DeepScan.Enabled = false
+	cfg.LLM.DeepScan.Profile = "nope"
+
+	if err := validateConfig(cfg); err != nil {
+		t.Errorf("disabled deep scan must not validate its profile, got %v", err)
+	}
+}

@@ -134,6 +134,29 @@ type LLMConfig struct {
 	// llama.cpp builds, vLLM without `--tool-call-parser`); the
 	// content-parsing fallback then takes over.
 	UseTools bool
+	DeepScan DeepScanConfig
+}
+
+// DeepScanConfig controls the opt-in second LLM pass that reads the
+// diff cold and reports credentials no detector flagged. Off by
+// default: it costs an LLM call on every request that asks for it,
+// including requests with zero detector findings.
+type DeepScanConfig struct {
+	Enabled bool
+	// MaxWindows caps how many budget-sized windows of added lines get
+	// scanned. Past the cap, coverage stops and stats report truncated.
+	MaxWindows int
+	// MaxCandidates caps candidates accepted from one LLM call. Extras
+	// are discarded before grounding, guarding a runaway model.
+	MaxCandidates int
+	// Profile names the entry in llm.profiles holding the deep
+	// templates. Distinct from llm.profile: the two prompts have
+	// opposite postures and are tuned separately.
+	Profile string
+	// RequireFindings limits the deep read to diffs that already carry
+	// at least one detector finding. Set true when cold recall over
+	// clean diffs proves too noisy for the deployment.
+	RequireFindings bool
 }
 
 type ContextBudgetConfig struct {
@@ -241,6 +264,11 @@ func setDefaults() {
 	viper.SetDefault("llm.context_budget.output_tokens", 8000)
 	viper.SetDefault("llm.context_budget.finding_context_lines", 30)
 	viper.SetDefault("llm.use_tools", true)
+	viper.SetDefault("llm.deep_scan.enabled", false)
+	viper.SetDefault("llm.deep_scan.max_windows", 8)
+	viper.SetDefault("llm.deep_scan.max_candidates", 50)
+	viper.SetDefault("llm.deep_scan.profile", "gemma4_deep")
+	viper.SetDefault("llm.deep_scan.require_findings", false)
 
 	// observability
 	viper.SetDefault("observability.log_level", "info")
@@ -339,6 +367,13 @@ func readLLMConfig() LLMConfig {
 		},
 		Profiles: map[string]LLMProfile{},
 		UseTools: viper.GetBool("llm.use_tools"),
+		DeepScan: DeepScanConfig{
+			Enabled:         viper.GetBool("llm.deep_scan.enabled"),
+			MaxWindows:      viper.GetInt("llm.deep_scan.max_windows"),
+			MaxCandidates:   viper.GetInt("llm.deep_scan.max_candidates"),
+			Profile:         viper.GetString("llm.deep_scan.profile"),
+			RequireFindings: viper.GetBool("llm.deep_scan.require_findings"),
+		},
 	}
 
 	raw := viper.GetStringMap("llm.profiles")
@@ -423,6 +458,15 @@ func validateConfig(cfg *Config) error {
 	}
 	if cfg.LLM.QueueMax < 0 {
 		errs = append(errs, "llm.queue_max must be >= 0")
+	}
+	if cfg.LLM.DeepScan.Enabled {
+		p, ok := cfg.LLM.Profiles[cfg.LLM.DeepScan.Profile]
+		switch {
+		case !ok:
+			errs = append(errs, fmt.Sprintf("llm.deep_scan.profile: %q is not configured under llm.profiles", cfg.LLM.DeepScan.Profile))
+		case p.SystemTemplate == "" || p.UserTemplate == "":
+			errs = append(errs, fmt.Sprintf("llm.profiles.%s: system_template and user_template are required for deep scan", cfg.LLM.DeepScan.Profile))
+		}
 	}
 
 	for _, name := range cfg.Detectors.Enabled {
