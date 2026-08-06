@@ -21,15 +21,29 @@ type PromptTemplate struct {
 	fingerprint string
 }
 
-// LoadPromptTemplate loads the template files for cfg.Profile from
-// cfg.Profiles[profile].{System,User}Template. Both paths are required.
+// LoadPromptTemplate loads the adjudication template files for
+// cfg.Profile from cfg.Profiles[profile].{System,User}Template. Both
+// paths are required.
 func LoadPromptTemplate(cfg types.LLMConfig) (*PromptTemplate, error) {
-	profile, ok := cfg.Profiles[cfg.Profile]
+	return loadProfileTemplate(cfg, cfg.Profile)
+}
+
+// LoadDeepPromptTemplate loads the deep-read templates for
+// cfg.DeepScan.Profile. Separate from the adjudication prompt because
+// the two have opposite postures: one is a default-dismiss precision
+// filter handed a candidate, the other is recall over a haystack with
+// nothing handed to it. They are tuned independently.
+func LoadDeepPromptTemplate(cfg types.LLMConfig) (*PromptTemplate, error) {
+	return loadProfileTemplate(cfg, cfg.DeepScan.Profile)
+}
+
+func loadProfileTemplate(cfg types.LLMConfig, name string) (*PromptTemplate, error) {
+	profile, ok := cfg.Profiles[name]
 	if !ok {
-		return nil, fmt.Errorf("llm.profiles.%s: profile not configured", cfg.Profile)
+		return nil, fmt.Errorf("llm.profiles.%s: profile not configured", name)
 	}
 	if profile.SystemTemplate == "" || profile.UserTemplate == "" {
-		return nil, fmt.Errorf("llm.profiles.%s: system_template and user_template are required", cfg.Profile)
+		return nil, fmt.Errorf("llm.profiles.%s: system_template and user_template are required", name)
 	}
 
 	system, sysBody, err := parseFile("system", profile.SystemTemplate)
@@ -43,7 +57,7 @@ func LoadPromptTemplate(cfg types.LLMConfig) (*PromptTemplate, error) {
 	return &PromptTemplate{
 		system:      system,
 		user:        user,
-		fingerprint: fingerprint(cfg.Profile, sysBody, userBody),
+		fingerprint: fingerprint(name, sysBody, userBody),
 	}, nil
 }
 
@@ -101,6 +115,25 @@ func (p *PromptTemplate) Render(data PromptData) (system, user string, err error
 	}
 	if err := p.user.Execute(&ub, data); err != nil {
 		return "", "", fmt.Errorf("execute user template: %w", err)
+	}
+	return sb.String(), ub.String(), nil
+}
+
+// DeepPromptData is what the deep user template iterates over. One
+// window of added lines per call, and nothing else: the deep read sees
+// no detector findings, which is the point.
+type DeepPromptData struct {
+	Window string
+}
+
+// RenderDeep returns the system and user messages for one deep call.
+func (p *PromptTemplate) RenderDeep(data DeepPromptData) (system, user string, err error) {
+	var sb, ub bytes.Buffer
+	if err := p.system.Execute(&sb, data); err != nil {
+		return "", "", fmt.Errorf("execute deep system template: %w", err)
+	}
+	if err := p.user.Execute(&ub, data); err != nil {
+		return "", "", fmt.Errorf("execute deep user template: %w", err)
 	}
 	return sb.String(), ub.String(), nil
 }

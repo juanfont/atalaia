@@ -243,14 +243,7 @@ func parseToolCallVerdicts(calls []ToolCall) ([]Verdict, error) {
 //   - a bare top-level array [...] (some models skip the envelope when
 //     guided decoding is off)
 func parseVerdictResponse(raw string) ([]Verdict, error) {
-	body := strings.TrimSpace(raw)
-	if strings.HasPrefix(body, "```") {
-		if i := strings.IndexByte(body, '\n'); i >= 0 {
-			body = body[i+1:]
-		}
-		body = strings.TrimSuffix(strings.TrimSpace(body), "```")
-		body = strings.TrimSpace(body)
-	}
+	body := stripCodeFence(raw)
 
 	var verdicts []rawVerdict
 	switch {

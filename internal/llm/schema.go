@@ -87,3 +87,71 @@ const (
 	// false "confirmed" so a model hiccup doesn't read as a credential.
 	VerdictUnreviewed = "unreviewed"
 )
+
+// DeepSchema is the response shape for the deep read. The model
+// supplies values only: no file, no line, no id. Location is derived
+// from the diff by Ground, so a hallucinated position is not
+// expressible.
+var DeepSchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"candidates": map[string]any{
+			"type": "array",
+			"items": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"value": map[string]any{"type": "string"},
+					"kind": map[string]any{
+						"type": "string",
+						"enum": []string{"credential", "private_key"},
+					},
+					"confidence": map[string]any{
+						"type":    "number",
+						"minimum": 0,
+						"maximum": 1,
+					},
+					"reason": map[string]any{
+						"type":      "string",
+						"maxLength": 280,
+					},
+				},
+				"required":             []string{"value", "kind", "confidence", "reason"},
+				"additionalProperties": false,
+			},
+		},
+	},
+	"required":             []string{"candidates"},
+	"additionalProperties": false,
+}
+
+// DeepResponseFormat mirrors ResponseFormat for the deep schema.
+func DeepResponseFormat() map[string]any {
+	return map[string]any{
+		"type": "json_schema",
+		"json_schema": map[string]any{
+			"name":   "atalaia_deep_candidates",
+			"schema": DeepSchema,
+		},
+	}
+}
+
+// DeepToolName is the function the model calls to submit candidates.
+const DeepToolName = "submit_candidates"
+
+// DeepTool is the tool definition for the deep read.
+func DeepTool() Tool {
+	return Tool{
+		Type: "function",
+		Function: ToolFunction{
+			Name:        DeepToolName,
+			Description: "Submit credentials and private key material found in the added lines. Copy each value verbatim from the line it appears on. Return an empty list when there is nothing.",
+			Parameters:  DeepSchema,
+		},
+	}
+}
+
+// Discovery kinds, matching the DeepSchema enum.
+const (
+	KindCredential = "credential"
+	KindPrivateKey = "private_key"
+)
