@@ -20,12 +20,20 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// deepOutcome carries the deep read back from its goroutine. The error
+// is handled, never returned to the caller as a failure: verdicts[] is
+// the primary product and stands on its own.
+type deepOutcome struct {
+	result llm.DeepResult
+	err    error
+}
+
 func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	reqID := requestID(r)
 	w.Header().Set("X-Request-ID", reqID)
 
-	diff, err := readDiff(r, a.config.Server.MaxBodyBytes)
+	diff, deep, err := readCheckRequest(r, a.config.Server.MaxBodyBytes)
 	if err != nil {
 		metrics.CheckRequestsTotal.WithLabelValues("400").Inc()
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -62,6 +70,20 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 
 	deduped := detector.Dedup(raw)
 
+	// ---- deep stage (opt-in, concurrent with adjudication) ----
+	// Started before Adjudicate so the two overlap when the backend has
+	// capacity. Both contend for the same LLM semaphore, so at
+	// max_inflight 1 this degrades to taking turns, which is correct. A
+	// deep request therefore occupies up to two queue waiters.
+	var deepCh chan deepOutcome
+	if deep && a.deepScanner != nil {
+		deepCh = make(chan deepOutcome, 1)
+		go func() {
+			res, err := a.deepScanner.Scan(r.Context(), diff, len(deduped))
+			deepCh <- deepOutcome{result: res, err: err}
+		}()
+	}
+
 	// ---- LLM stage ----
 	result, err := a.adjudicator.Adjudicate(r.Context(), diff, deduped)
 	if err != nil {
@@ -84,10 +106,46 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictDismissed).Add(float64(dismissed))
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictUnreviewed).Add(float64(unreviewed))
 
+	// ---- collect the deep read ----
+	// A deep failure never fails the request. It surfaces in stats so a
+	// caller cannot read missing discoveries as a clean diff, the same
+	// contract DetectorErrors carries.
+	var (
+		discoveries []apitypes.Discovery
+		deepStats   *apitypes.DeepScanStats
+		deepRaw     []llm.Discovery
+	)
+	if deep {
+		deepStats = &apitypes.DeepScanStats{}
+		if deepCh == nil {
+			// Operator disabled deep scan. Report it rather than
+			// silently answering as though it ran.
+			metrics.DeepScanTotal.WithLabelValues("disabled").Inc()
+		} else if outcome := <-deepCh; outcome.err != nil {
+			deepStats.Error = outcome.err.Error()
+			a.logger.Warn().Str("request_id", reqID).Err(outcome.err).Msg("deep scan failed")
+			metrics.DeepScanTotal.WithLabelValues("error").Inc()
+		} else {
+			metrics.DeepScanTotal.WithLabelValues("ok").Inc()
+			grounded, gstats := llm.Ground(diff, outcome.result.Candidates, deduped)
+			deepRaw = grounded
+			discoveries = convertDiscoveries(grounded)
+			deepStats.Ran = true
+			deepStats.Calls = outcome.result.Calls
+			deepStats.Windows = outcome.result.Windows
+			deepStats.Truncated = outcome.result.Truncated
+			deepStats.LatencyMs = outcome.result.Latency.Milliseconds()
+			deepStats.Candidates = gstats.Candidates
+			deepStats.Discovered = gstats.Discovered
+			deepStats.Ungrounded = gstats.Ungrounded
+		}
+	}
+
 	total := time.Since(start)
 	resp := apitypes.CheckResponse{
-		RequestID: reqID,
-		Verdicts:  verdicts,
+		RequestID:   reqID,
+		Verdicts:    verdicts,
+		Discoveries: discoveries,
 		Stats: apitypes.Stats{
 			DetectorsRun:   detectorNames(a.detectors),
 			RawFindings:    len(raw),
@@ -102,6 +160,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			TotalLatencyMs: total.Milliseconds(),
 			Truncated:      result.Truncated,
 			DetectorErrors: detectorErrorList(errs),
+			DeepScan:       deepStats,
 		},
 	}
 	metrics.CheckDurationSeconds.WithLabelValues("total").Observe(total.Seconds())
@@ -121,9 +180,11 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 		Int64("llm_latency_ms", result.LLMLatency.Milliseconds()).
 		Int64("total_ms", total.Milliseconds()).
 		Bool("truncated", result.Truncated).
+		Bool("deep", deep).
+		Int("discoveries", len(discoveries)).
 		Msg("check")
 
-	a.writeAudit(reqID, r, diff, raw, deduped, &resp)
+	a.writeAudit(reqID, r, diff, raw, deduped, deepRaw, &resp)
 }
 
 // Healthz is the liveness probe: it returns 200 as long as the process
@@ -165,10 +226,15 @@ func readyzStatus(reachable bool) string {
 }
 
 func (a *App) Version(w http.ResponseWriter, r *http.Request) {
+	promptDeep := ""
+	if a.deepScanner != nil {
+		promptDeep = a.deepScanner.PromptFingerprint()
+	}
 	writeJSON(w, http.StatusOK, apitypes.VersionResponse{
 		Atalaia:    a.version,
 		LLMModel:   a.config.LLM.Model,
 		Prompt:     a.adjudicator.PromptFingerprint(),
+		PromptDeep: promptDeep,
 		Gitleaks:   "unknown",
 		Trufflehog: "unknown",
 		Kingfisher: "unknown",
@@ -178,7 +244,7 @@ func (a *App) Version(w http.ResponseWriter, r *http.Request) {
 // writeAudit fans the just-finished response out to the audit sink.
 // Raw matches are populated only when observability.audit.reveal_matches
 // is true — otherwise entries carry preview only.
-func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detector.Finding, deduped []detector.DedupedFinding, resp *apitypes.CheckResponse) {
+func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detector.Finding, deduped []detector.DedupedFinding, discoveries []llm.Discovery, resp *apitypes.CheckResponse) {
 	if a.audit == nil {
 		return
 	}
@@ -206,6 +272,23 @@ func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detec
 		verdicts[i] = av
 	}
 
+	auditDiscoveries := make([]audit.Discovery, len(discoveries))
+	for i, d := range discoveries {
+		ad := audit.Discovery{
+			ID:           d.ID,
+			File:         d.File,
+			Line:         d.Line,
+			MatchPreview: d.MatchPreview,
+			Kind:         d.Kind,
+			Confidence:   d.Confidence,
+			Reason:       d.Reason,
+		}
+		if reveal {
+			ad.Match = d.Match
+		}
+		auditDiscoveries[i] = ad
+	}
+
 	entry := audit.Entry{
 		RequestID:    reqID,
 		RemoteAddr:   r.RemoteAddr,
@@ -222,6 +305,7 @@ func (a *App) writeAudit(reqID string, r *http.Request, diff []byte, raw []detec
 		TotalMs:      resp.Stats.TotalLatencyMs,
 		Truncated:    resp.Stats.Truncated,
 		Verdicts:     verdicts,
+		Discoveries:  auditDiscoveries,
 	}
 	if err := a.audit.Write(entry); err != nil {
 		a.logger.Error().Str("request_id", reqID).Err(err).Msg("audit write failed")
@@ -281,11 +365,15 @@ func countVerdicts(vs []apitypes.Verdict) (confirmed, dismissed, unreviewed int)
 	return
 }
 
-// readDiff handles both `text/x-diff` (raw unified diff) and
-// `application/json` with `{"diff": "..."}`. Body size is capped by
-// server.max_body_bytes; anything larger errors before we read the
-// tail of the request.
-func readDiff(r *http.Request, max int64) ([]byte, error) {
+// readCheckRequest handles both `text/x-diff` (raw unified diff) and
+// `application/json` with `{"diff": "...", "deep": bool}`. Body size is
+// capped by server.max_body_bytes; anything larger errors before we
+// read the tail of the request.
+//
+// deep opts into the second LLM pass. The raw content types have no
+// place to carry it in the body, so they use ?deep=1. JSON callers may
+// use either.
+func readCheckRequest(r *http.Request, max int64) (diff []byte, deep bool, err error) {
 	body := r.Body
 	if max > 0 {
 		body = http.MaxBytesReader(nil, r.Body, max)
@@ -296,27 +384,30 @@ func readDiff(r *http.Request, max int64) ([]byte, error) {
 	}
 	ct = strings.TrimSpace(strings.ToLower(ct))
 
+	q := r.URL.Query().Get("deep")
+	queryDeep := q == "1" || q == "true"
+
 	switch ct {
 	case "application/json":
 		var req apitypes.CheckRequest
 		if err := json.NewDecoder(body).Decode(&req); err != nil {
-			return nil, &httpError{"invalid JSON body: " + err.Error()}
+			return nil, false, &httpError{"invalid JSON body: " + err.Error()}
 		}
 		if req.Diff == "" {
-			return nil, &httpError{"missing diff field"}
+			return nil, false, &httpError{"missing diff field"}
 		}
-		return []byte(req.Diff), nil
+		return []byte(req.Diff), req.Deep || queryDeep, nil
 	case "", "text/x-diff", "text/plain", "application/x-patch":
 		b, err := io.ReadAll(body)
 		if err != nil {
-			return nil, &httpError{"reading body: " + err.Error()}
+			return nil, false, &httpError{"reading body: " + err.Error()}
 		}
 		if len(b) == 0 {
-			return nil, &httpError{"empty body"}
+			return nil, false, &httpError{"empty body"}
 		}
-		return b, nil
+		return b, queryDeep, nil
 	default:
-		return nil, &httpError{"unsupported content-type: " + ct}
+		return nil, false, &httpError{"unsupported content-type: " + ct}
 	}
 }
 
@@ -342,6 +433,27 @@ func convertDetections(in []detector.Detection) []apitypes.Detection {
 			DetectorName: d.DetectorName,
 			Rule:         d.Rule,
 			Verified:     d.Verified,
+		}
+	}
+	return out
+}
+
+// convertDiscoveries maps grounded discoveries to the wire shape. The
+// raw Match never crosses this boundary: only the preview does.
+func convertDiscoveries(in []llm.Discovery) []apitypes.Discovery {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]apitypes.Discovery, len(in))
+	for i, d := range in {
+		out[i] = apitypes.Discovery{
+			ID:           d.ID,
+			File:         d.File,
+			Line:         d.Line,
+			MatchPreview: d.MatchPreview,
+			Kind:         d.Kind,
+			Confidence:   d.Confidence,
+			Reason:       d.Reason,
 		}
 	}
 	return out

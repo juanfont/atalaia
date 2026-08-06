@@ -20,6 +20,15 @@ type Adjudicator interface {
 	PromptFingerprint() string
 }
 
+// DeepScanner is the seam for the opt-in deep read. *llm.DeepReader
+// implements it; tests substitute a fake. It is nil when the operator
+// disabled deep scan, in which case a deep request still succeeds and
+// reports ran: false rather than failing.
+type DeepScanner interface {
+	Scan(ctx context.Context, diff []byte, findings int) (llm.DeepResult, error)
+	PromptFingerprint() string
+}
+
 // Reachability is the seam for /readyz. *llm.ReachabilityWatcher
 // implements it by polling the LLM in the background; tests fake it.
 // Returns true when the last cached probe was both successful and
@@ -35,6 +44,7 @@ type Deps struct {
 	Config       *types.Config
 	Detectors    []detector.Detector
 	Adjudicator  Adjudicator
+	DeepScanner  DeepScanner
 	Reachability Reachability
 	Audit        audit.Writer
 	Version      string
@@ -46,6 +56,7 @@ type App struct {
 	detectors    []detector.Detector
 	detectSem    chan struct{} // bounds concurrent detector scans; nil = unbounded
 	adjudicator  Adjudicator
+	deepScanner  DeepScanner
 	reachability Reachability
 	audit        audit.Writer
 	version      string
@@ -69,6 +80,7 @@ func NewApp(_ context.Context, d Deps) (*App, error) {
 		detectors:    d.Detectors,
 		detectSem:    detectSem,
 		adjudicator:  d.Adjudicator,
+		deepScanner:  d.DeepScanner,
 		reachability: d.Reachability,
 		audit:        auditWriter,
 		version:      d.Version,

@@ -32,6 +32,21 @@ type Verdict struct {
 	Reason       string  `json:"reason"`
 }
 
+// Discovery is the per-discovery shape inside an Entry. Match is empty
+// unless RevealMatches is true. Discoveries are the lower-trust
+// channel, which is exactly why an operator tuning the deep read needs
+// them in the audit trail.
+type Discovery struct {
+	ID           string  `json:"id"`
+	File         string  `json:"file"`
+	Line         int     `json:"line"`
+	MatchPreview string  `json:"match_preview"`
+	Match        string  `json:"match,omitempty"`
+	Kind         string  `json:"kind"`
+	Confidence   float64 `json:"confidence"`
+	Reason       string  `json:"reason"`
+}
+
 // Entry is one JSONL record per /check call.
 type Entry struct {
 	Timestamp    string    `json:"timestamp"`
@@ -50,6 +65,8 @@ type Entry struct {
 	TotalMs      int64     `json:"total_latency_ms"`
 	Truncated    bool      `json:"truncated"`
 	Verdicts     []Verdict `json:"verdicts"`
+	// Discoveries is omitted for non-deep requests.
+	Discoveries []Discovery `json:"discoveries,omitempty"`
 }
 
 // Writer is the audit-log sink. Real deployments use *FileWriter;

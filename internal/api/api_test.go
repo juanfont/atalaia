@@ -588,3 +588,285 @@ func TestCountVerdicts_CountsUnreviewedSeparately(t *testing.T) {
 		t.Errorf("unreviewed leaked into confirmed: confirmed=%d", c)
 	}
 }
+
+// fakeDeepScanner stands in for *llm.DeepReader. It returns candidates
+// verbatim; the handler is responsible for grounding them, which is
+// what these tests exercise.
+type fakeDeepScanner struct {
+	result llm.DeepResult
+	err    error
+	calls  int
+}
+
+func (f *fakeDeepScanner) Scan(_ context.Context, _ []byte, _ int) (llm.DeepResult, error) {
+	f.calls++
+	return f.result, f.err
+}
+
+func (f *fakeDeepScanner) PromptFingerprint() string { return "gemma4_deep:abc123" }
+
+// apiDeepDiff is the reported quirk in miniature, with both premises
+// verified against gitleaks: DATABASE_PASSWORD fires generic-api-key,
+// and the password inside the curl URL fires nothing at all. So the
+// detector channel sees one finding and the real leak is invisible to
+// it.
+const apiDeepDiff = `diff --git a/config/settings.py b/config/settings.py
+--- a/config/settings.py
++++ b/config/settings.py
+@@ -10,1 +10,2 @@
+ DEBUG = False
++DATABASE_PASSWORD = "Xk7pQm2vRt9wZs4yBn6hLd3fJc8gVa5e"
+diff --git a/scripts/reindex.sh b/scripts/reindex.sh
+--- a/scripts/reindex.sh
++++ b/scripts/reindex.sh
+@@ -1,1 +1,2 @@
+ #!/bin/sh
++RESULT=$(curl -sS https://svc:Tr0ubad0ur-Winter-2026@search.example.internal/_reindex)
+`
+
+// deepURLPassword is the credential in apiDeepDiff that no detector
+// flags: the whole point of the deep channel.
+const deepURLPassword = "Tr0ubad0ur-Winter-2026"
+
+func newDeepTestServer(t *testing.T, deep DeepScanner) *httptest.Server {
+	t.Helper()
+	cfg := &types.Config{
+		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
+		Detectors: types.DetectorsConfig{Enabled: []string{"gitleaks"}},
+		LLM:       types.LLMConfig{Model: "test-model"},
+	}
+	g, err := detector.NewGitleaks(cfg.Detectors.Gitleaks)
+	if err != nil {
+		t.Fatalf("gitleaks: %v", err)
+	}
+
+	router := mux.NewRouter()
+	if _, err := NewApp(context.Background(), Deps{
+		Config:       cfg,
+		Detectors:    []detector.Detector{g},
+		Adjudicator:  &fakeAdjudicator{},
+		DeepScanner:  deep,
+		Reachability: fakeReachability{ready: true},
+		Version:      "test",
+		Router:       router,
+	}); err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	return httptest.NewServer(router)
+}
+
+func postDeepCheck(t *testing.T, srv *httptest.Server, diff string, deep bool) (*http.Response, apitypes.CheckResponse) {
+	t.Helper()
+	url := srv.URL + "/check"
+	if deep {
+		url += "?deep=1"
+	}
+	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(diff))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "text/x-diff")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out apitypes.CheckResponse
+	if res.StatusCode == http.StatusOK {
+		if err := json.Unmarshal(body, &out); err != nil {
+			t.Fatalf("decode: %v; body=%s", err, body)
+		}
+	}
+	return res, out
+}
+
+func TestCheck_NoDeepFlagMakesNoDeepCall(t *testing.T) {
+	deep := &fakeDeepScanner{}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, false)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if deep.calls != 0 {
+		t.Errorf("default path must not deep scan, made %d calls", deep.calls)
+	}
+	if resp.Discoveries != nil {
+		t.Errorf("discoveries must be absent without deep: %+v", resp.Discoveries)
+	}
+	if resp.Stats.DeepScan != nil {
+		t.Errorf("deep_scan stats must be absent without deep: %+v", resp.Stats.DeepScan)
+	}
+}
+
+func TestCheck_DeepFlagReturnsDiscoveries(t *testing.T) {
+	deep := &fakeDeepScanner{result: llm.DeepResult{
+		Candidates: []llm.DeepCandidate{{
+			Value:      deepURLPassword,
+			Kind:       "credential",
+			Confidence: 0.9,
+			Reason:     "basic-auth password embedded in a URL",
+		}},
+		Calls:   1,
+		Windows: 1,
+	}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if deep.calls != 1 {
+		t.Fatalf("deep scan should have run once, ran %d", deep.calls)
+	}
+	if len(resp.Discoveries) != 1 {
+		t.Fatalf("want 1 discovery, got %d (%+v)", len(resp.Discoveries), resp.Discoveries)
+	}
+	d := resp.Discoveries[0]
+	if d.File != "scripts/reindex.sh" || d.Line != 2 {
+		t.Errorf("discovery mislocated: %+v", d)
+	}
+	if strings.Contains(d.MatchPreview, deepURLPassword) {
+		t.Errorf("raw value in response: %q", d.MatchPreview)
+	}
+	// The detector finding and the discovery are different secrets in
+	// different files. Both must be reported, in their own channels.
+	if len(resp.Verdicts) != 1 {
+		t.Errorf("want the detector finding still in verdicts[], got %d", len(resp.Verdicts))
+	}
+	if resp.Stats.DeepScan == nil || !resp.Stats.DeepScan.Ran {
+		t.Fatalf("deep_scan stats must report ran: %+v", resp.Stats.DeepScan)
+	}
+	if resp.Stats.DeepScan.Discovered != 1 {
+		t.Errorf("Discovered = %d, want 1", resp.Stats.DeepScan.Discovered)
+	}
+}
+
+// The anti-hallucination gate, end to end through the handler.
+func TestCheck_DeepHallucinationIsDropped(t *testing.T) {
+	deep := &fakeDeepScanner{result: llm.DeepResult{
+		Candidates: []llm.DeepCandidate{{
+			Value:      "sk-live-THIS-IS-NOT-IN-THE-DIFF",
+			Kind:       "credential",
+			Confidence: 0.99,
+			Reason:     "very confident and completely made up",
+		}},
+		Calls:   1,
+		Windows: 1,
+	}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if len(resp.Discoveries) != 0 {
+		t.Errorf("invented value must not reach the caller: %+v", resp.Discoveries)
+	}
+	if resp.Stats.DeepScan.Ungrounded != 1 {
+		t.Errorf("Ungrounded = %d, want 1", resp.Stats.DeepScan.Ungrounded)
+	}
+}
+
+func TestCheck_DeepFailureDoesNotFailRequest(t *testing.T) {
+	deep := &fakeDeepScanner{err: errors.New("backend exploded")}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("deep failure must not fail the request, got %d", res.StatusCode)
+	}
+	if len(resp.Verdicts) == 0 {
+		t.Error("verdicts must survive a deep failure")
+	}
+	if resp.Stats.DeepScan == nil || resp.Stats.DeepScan.Error == "" {
+		t.Error("deep failure must be reported in stats, never silently absent")
+	}
+	if resp.Stats.DeepScan.Ran {
+		t.Error("a failed deep scan must not report ran")
+	}
+}
+
+// Deep scan disabled by the operator: the request succeeds and says so,
+// rather than answering as though the scan happened.
+func TestCheck_DeepDisabledReportsNotRan(t *testing.T) {
+	srv := newDeepTestServer(t, nil)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if resp.Stats.DeepScan == nil {
+		t.Fatal("a deep request must always carry deep_scan stats")
+	}
+	if resp.Stats.DeepScan.Ran {
+		t.Error("disabled deep scan must report ran: false")
+	}
+}
+
+func TestCheck_DeepFlagViaJSONBody(t *testing.T) {
+	deep := &fakeDeepScanner{}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	body, err := json.Marshal(apitypes.CheckRequest{Diff: apiDeepDiff, Deep: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := http.Post(srv.URL+"/check", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if deep.calls != 1 {
+		t.Errorf("deep flag in the JSON body must trigger the scan, calls=%d", deep.calls)
+	}
+}
+
+func TestVersion_ReportsDeepPromptFingerprint(t *testing.T) {
+	srv := newDeepTestServer(t, &fakeDeepScanner{})
+	defer srv.Close()
+
+	res, err := http.Get(srv.URL + "/version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	var v apitypes.VersionResponse
+	if err := json.NewDecoder(res.Body).Decode(&v); err != nil {
+		t.Fatal(err)
+	}
+	if v.PromptDeep != "gemma4_deep:abc123" {
+		t.Errorf("PromptDeep = %q, want the deep fingerprint", v.PromptDeep)
+	}
+}
+
+func TestVersion_OmitsDeepFingerprintWhenDisabled(t *testing.T) {
+	srv := newDeepTestServer(t, nil)
+	defer srv.Close()
+
+	res, err := http.Get(srv.URL + "/version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	var v apitypes.VersionResponse
+	if err := json.NewDecoder(res.Body).Decode(&v); err != nil {
+		t.Fatal(err)
+	}
+	if v.PromptDeep != "" {
+		t.Errorf("PromptDeep = %q, want empty when deep scan is off", v.PromptDeep)
+	}
+}
