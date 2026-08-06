@@ -1,0 +1,12 @@
+diff --git a/deploy/keys/deploy_ed25519 b/deploy/keys/deploy_ed25519
+new file mode 100644
+--- /dev/null
++++ b/deploy/keys/deploy_ed25519
+@@ -0,0 +1,7 @@
++-----BEGIN OPENSSH PRIVATE KEY-----
++b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gt
++ZWQyNTUxOQAAACBHc1p6TmpXbVFyVGhFd0Zad1hLdll6UGxLZ0RoTmJVeAAAAJhQZ0pt
++UGdDYlkAAAALc3NoLWVkMjU1MTkAAAAgR3NaelJqV21RclRoRXdGWndYS3ZZelBsS2dE
++aE5iVXgAAAAEDlZ2Rk5oSGFsbGVyVGhhbldvcmRzQmFzZTY0RW5jb2RlZFBhZGRpbmdI
++ZXJlRm9yRml4dHVyZVVzZU9ubHlOb3RSZWFsAAAAFmp1YW5AZml4dHVyZS5leGFtcGxl
++-----END OPENSSH PRIVATE KEY-----

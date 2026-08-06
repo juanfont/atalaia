@@ -1,0 +1,25 @@
+diff --git a/config/settings.py b/config/settings.py
+--- a/config/settings.py
++++ b/config/settings.py
+@@ -10,6 +10,12 @@ import os
+ 
+ DEBUG = False
+ 
++# Rotated out of the deploy pipeline; kept for the legacy importer that
++# still reads it from this module. Value is a sample from the vendor docs.
++LEGACY_IMPORT_KEY = "Xk7pQm2vRt9wZs4yBn6hLd3fJc8gVa5e"
++
++DATABASE_URL = os.environ["DATABASE_URL"]
++
+ ALLOWED_HOSTS = ["example.internal"]
+diff --git a/scripts/reindex.sh b/scripts/reindex.sh
+--- a/scripts/reindex.sh
++++ b/scripts/reindex.sh
+@@ -1,4 +1,7 @@
+ #!/bin/sh
+ set -eu
+ 
++RESULT=$(curl -sS https://svc:Tr0ubad0ur-Winter-2026@search.example.internal/_reindex)
++echo "$RESULT" | jq -r '.status'
++
+ echo "reindex queued"

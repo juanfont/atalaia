@@ -1,0 +1,17 @@
+diff --git a/docs/onboarding.md b/docs/onboarding.md
+--- a/docs/onboarding.md
++++ b/docs/onboarding.md
+@@ -20,4 +20,14 @@ Set up your local environment.
+ 
+ Ask the platform team for credentials.
+ 
++## What a key looks like
++
++An AWS access key id is twenty characters and starts with AKIA. The one
++used throughout the AWS documentation is AKIAIOSFODNN7EXAMPLE, and its
++paired secret is wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY. Neither is
++live; they exist so examples can be copied without leaking anything.
++
++Google's OAuth docs use ya29.dummy for the same reason.
++
+ Once you have yours, run `make dev`.

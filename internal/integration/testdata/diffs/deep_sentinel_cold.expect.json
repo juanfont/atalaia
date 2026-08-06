@@ -1,0 +1,7 @@
+{
+  "description": "Documented AWS and Google sample credentials sitting in prose in a markdown doc, where no gitleaks rule fires (verified: 0 findings). The sentinel short-circuit must apply to the discovery channel too, not just to adjudication.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "max_discoveries": 0
+}

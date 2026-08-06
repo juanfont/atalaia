@@ -1,0 +1,7 @@
+{
+  "description": "Every credential-shaped value is a reference resolved at runtime: $VAR, ${VAR}, os.environ, config.get, vault.read, and an interpolated postgres URL. Not one literal. Catches a deep prompt that inherited none of the adjudication prompt's discipline about references.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "max_discoveries": 0
+}

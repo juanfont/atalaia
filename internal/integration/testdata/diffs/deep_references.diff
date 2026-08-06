@@ -1,0 +1,28 @@
+diff --git a/deploy/run.sh b/deploy/run.sh
+--- a/deploy/run.sh
++++ b/deploy/run.sh
+@@ -1,3 +1,14 @@
+ #!/bin/sh
+ set -eu
+ 
++export DB_PASSWORD="$DEPLOY_DB_PASSWORD"
++export API_TOKEN="${CI_API_TOKEN}"
++export SMTP_PASS="${SMTP_PASSWORD:-}"
++
++curl -u "${SERVICE_USER}:${SERVICE_TOKEN}" https://api.example.internal/v1/ping
++psql "postgres://${PG_USER}:${PG_PASSWORD}@${PG_HOST}/app" -c 'select 1'
++
+ echo "starting"
+diff --git a/app/settings.py b/app/settings.py
+--- a/app/settings.py
++++ b/app/settings.py
+@@ -1,3 +1,12 @@
+ import os
+ 
++SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
++STRIPE_KEY = os.getenv("STRIPE_SECRET_KEY")
++REDIS_PASSWORD = config.get("redis.password")
++VAULT_TOKEN = vault.read("secret/data/app")["token"]
++AWS_SECRET = boto3.client("ssm").get_parameter(Name="/app/aws_secret")
++
+ DEBUG = False

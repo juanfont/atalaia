@@ -1,0 +1,115 @@
+diff --git a/internal/store/index.go b/internal/store/index.go
+--- a/internal/store/index.go
++++ b/internal/store/index.go
+@@ -12,6 +12,58 @@ import (
+ 	"strings"
+ )
+ 
++// Entry is one indexed document with its computed digest.
++type Entry struct {
++	ID       string
++	TenantID string
++	Digest   string
++	Body     string
++	Updated  time.Time
++}
++
++// defaultTenant is the fixture tenant used by the local dev seed.
++const defaultTenant = "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
++
++// buildRevision is stamped at link time by the release pipeline.
++var buildRevision = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
++
++// Normalize lowercases and collapses whitespace so two documents that
++// differ only in formatting produce the same digest.
++func Normalize(body string) string {
++	fields := strings.Fields(strings.ToLower(body))
++	return strings.Join(fields, " ")
++}
++
++// Digest returns the content hash used as the dedup key.
++func Digest(body string) string {
++	sum := sha256.Sum256([]byte(Normalize(body)))
++	return hex.EncodeToString(sum[:])
++}
++
++// Upsert writes an entry, replacing any existing row with the same
++// digest. Callers hold the store lock.
++func (s *Store) Upsert(e Entry) error {
++	if e.ID == "" {
++		return errors.New("index: entry needs an id")
++	}
++	if e.Digest == "" {
++		e.Digest = Digest(e.Body)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	s.entries[e.Digest] = e
++	return nil
++}
++
++// Search walks the index and returns entries whose normalized body
++// contains every term. Linear for now; the index is small.
++func (s *Store) Search(terms []string) []Entry {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	var out []Entry
++	for _, e := range s.entries {
++		norm := Normalize(e.Body)
++		matched := true
++		for _, t := range terms {
++			if !strings.Contains(norm, strings.ToLower(t)) {
++				matched = false
++				break
++			}
++		}
++		if matched {
++			out = append(out, e)
++		}
++	}
++	sort.Slice(out, func(i, j int) bool { return out[i].Updated.After(out[j].Updated) })
++	return out
++}
++
+ func (s *Store) Len() int {
+ 	return len(s.entries)
+ }
+diff --git a/internal/store/index_test.go b/internal/store/index_test.go
+--- a/internal/store/index_test.go
++++ b/internal/store/index_test.go
+@@ -1,3 +1,34 @@
+ package store
+ 
++func TestNormalize(t *testing.T) {
++	cases := map[string]string{
++		"  Hello   World ": "hello world",
++		"MiXeD\tCase\nHere": "mixed case here",
++		"":                  "",
++	}
++	for in, want := range cases {
++		if got := Normalize(in); got != want {
++			t.Errorf("Normalize(%q) = %q, want %q", in, got, want)
++		}
++	}
++}
++
++func TestUpsertRequiresID(t *testing.T) {
++	s := New()
++	if err := s.Upsert(Entry{Body: "x"}); err == nil {
++		t.Fatal("want an error for an entry with no id")
++	}
++}
++
++func TestSearchMatchesAllTerms(t *testing.T) {
++	s := New()
++	_ = s.Upsert(Entry{ID: "1", Body: "the quick brown fox"})
++	_ = s.Upsert(Entry{ID: "2", Body: "a slow green turtle"})
++
++	got := s.Search([]string{"quick", "fox"})
++	if len(got) != 1 || got[0].ID != "1" {
++		t.Errorf("Search returned %+v", got)
++	}
++}
++
+ func TestLen(t *testing.T) {
