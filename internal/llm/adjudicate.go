@@ -44,6 +44,11 @@ func NewAdjudicator(cfg types.LLMConfig, client ChatCompleter) (*Adjudicator, er
 
 // QueueDepth and Inflight expose the semaphore state for the metrics
 // layer (milestone 6).
+// Semaphore exposes the shared LLM gate so the deep reader contends
+// with adjudication rather than opening a second queue against one
+// backend.
+func (a *Adjudicator) Semaphore() *Semaphore { return a.sem }
+
 func (a *Adjudicator) QueueDepth() int64 { return a.sem.QueueDepth() }
 func (a *Adjudicator) Inflight() int     { return a.sem.Inflight() }
 

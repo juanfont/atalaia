@@ -89,6 +89,18 @@ func (a *App) Serve() error {
 		return err
 	}
 
+	// Declared as the interface, assigned only inside the branch: a nil
+	// *llm.DeepReader stored in the interface would be non-nil at the
+	// API layer's nil check and panic on first use.
+	var deepScanner api.DeepScanner
+	if a.config.LLM.DeepScan.Enabled {
+		deepReader, err := llm.NewDeepReader(a.config.LLM, llmClient, adjudicator.Semaphore())
+		if err != nil {
+			return fmt.Errorf("build deep reader: %w", err)
+		}
+		deepScanner = deepReader
+	}
+
 	a.reachability = llm.NewReachabilityWatcher(llmClient, a.config.LLM.HealthcheckInterval)
 	a.reachability.Start()
 
@@ -103,6 +115,7 @@ func (a *App) Serve() error {
 		Config:       a.config,
 		Detectors:    dets,
 		Adjudicator:  adjudicator,
+		DeepScanner:  deepScanner,
 		Reachability: a.reachability,
 		Audit:        auditWriter,
 		Version:      Version,
