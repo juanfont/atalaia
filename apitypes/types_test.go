@@ -3,6 +3,7 @@ package apitypes
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -122,5 +123,68 @@ func TestHealthzAndVersionTags(t *testing.T) {
 	v, _ := json.Marshal(VersionResponse{Atalaia: "x", LLMModel: "m", Prompt: "gemma4:abc", Gitleaks: "?", Trufflehog: "?", Kingfisher: "?"})
 	if string(v) != `{"atalaia":"x","llm_model":"m","prompt":"gemma4:abc","gitleaks":"?","trufflehog":"?","kingfisher":"?"}` {
 		t.Errorf("version tags drift: %s", v)
+	}
+}
+
+func TestCheckResponse_OmitsDiscoveriesWhenAbsent(t *testing.T) {
+	b, err := json.Marshal(CheckResponse{RequestID: "r1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), "discoveries") {
+		t.Errorf("discoveries must be omitted when nil: %s", b)
+	}
+	if strings.Contains(string(b), "deep_scan") {
+		t.Errorf("deep_scan stats must be omitted when nil: %s", b)
+	}
+}
+
+func TestDiscovery_JSONShape(t *testing.T) {
+	b, err := json.Marshal(Discovery{
+		ID:           "abc123",
+		File:         "src/app.go",
+		Line:         42,
+		MatchPreview: "AKIA...MPLE",
+		Kind:         KindCredential,
+		Confidence:   0.9,
+		Reason:       "hardcoded provider key",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`"id":"abc123"`, `"file":"src/app.go"`, `"line":42`,
+		`"match_preview":"AKIA...MPLE"`, `"kind":"credential"`,
+		`"confidence":0.9`, `"reason":"hardcoded provider key"`,
+	} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("missing %s in %s", want, b)
+		}
+	}
+	if strings.Contains(string(b), "verdict") {
+		t.Errorf("Discovery must carry no verdict field: %s", b)
+	}
+	if strings.Contains(string(b), "detections") {
+		t.Errorf("Discovery must carry no detections field: %s", b)
+	}
+}
+
+func TestCheckRequest_DeepFlag(t *testing.T) {
+	var req CheckRequest
+	if err := json.Unmarshal([]byte(`{"diff":"d","deep":true}`), &req); err != nil {
+		t.Fatal(err)
+	}
+	if !req.Deep {
+		t.Error("deep flag did not decode")
+	}
+}
+
+func TestVersionResponse_OmitsPromptDeepWhenEmpty(t *testing.T) {
+	b, err := json.Marshal(VersionResponse{Atalaia: "v1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), "prompt_deep") {
+		t.Errorf("prompt_deep must be omitted when deep scan is off: %s", b)
 	}
 }
