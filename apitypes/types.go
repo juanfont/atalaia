@@ -21,6 +21,46 @@ type Detection struct {
 	Verified     bool   `json:"verified"`
 }
 
+// Discovery is a credential the LLM found in a diff that no detector
+// flagged. It is a LOWER-TRUST channel than Verdict: nothing
+// corroborates it but the model's judgement, checked only against the
+// requirement that the value actually appears in the submitted diff.
+// Do not gate a merge on a discovery without review.
+//
+// There is no verdict field: membership in the array is the claim.
+// There is no detections field: nothing detected it.
+type Discovery struct {
+	ID           string  `json:"id"`
+	File         string  `json:"file"`
+	Line         int     `json:"line"`
+	MatchPreview string  `json:"match_preview"`
+	Kind         string  `json:"kind"`
+	Confidence   float64 `json:"confidence"`
+	Reason       string  `json:"reason"`
+}
+
+// Discovery kinds.
+const (
+	KindCredential = "credential"
+	KindPrivateKey = "private_key"
+)
+
+// DeepScanStats reports what the deep read did. Ran is false when the
+// caller did not ask for it or the operator disabled it. Error is set
+// when the deep read failed: the request still succeeded, but coverage
+// is incomplete and an empty Discoveries must NOT be read as clean.
+type DeepScanStats struct {
+	Ran        bool   `json:"ran"`
+	Calls      int    `json:"calls"`
+	Windows    int    `json:"windows"`
+	Candidates int    `json:"candidates"`
+	Discovered int    `json:"discovered"`
+	Ungrounded int    `json:"ungrounded"`
+	Truncated  bool   `json:"truncated"`
+	LatencyMs  int64  `json:"latency_ms"`
+	Error      string `json:"error,omitempty"`
+}
+
 // Stats is the per-request summary surfaced alongside the verdicts.
 // Counts and timings are caller-facing observability; raw matches
 // never appear here.
@@ -47,6 +87,10 @@ type Stats struct {
 	// not run. When every detector fails and nothing was found,
 	// /check returns 503 instead of a 200 with empty verdicts.
 	DetectorErrors []DetectorError `json:"detector_errors,omitempty"`
+	// DeepScan is present only when the caller asked for a deep read.
+	// A nil DeepScan means no deep read was requested, which is not the
+	// same as a deep read that found nothing.
+	DeepScan *DeepScanStats `json:"deep_scan,omitempty"`
 }
 
 // DetectorError reports a single detector that failed during a scan.
@@ -62,13 +106,23 @@ type DetectorError struct {
 // not used.
 type CheckRequest struct {
 	Diff string `json:"diff"`
+	// Deep opts into the second LLM pass over the whole diff. Costs an
+	// LLM call even when detectors found nothing, and takes up to
+	// llm.deep_scan.max_windows sequential calls. For non-gating
+	// callers: a webhook watcher, not a pre-commit hook. Callers using
+	// the raw diff content types pass ?deep=1 instead.
+	Deep bool `json:"deep"`
 }
 
 // CheckResponse is the POST /check 200 body.
 type CheckResponse struct {
 	RequestID string    `json:"request_id"`
 	Verdicts  []Verdict `json:"verdicts"`
-	Stats     Stats     `json:"stats"`
+	// Discoveries is present only for deep requests. Disjoint from
+	// Verdicts by construction: a secret both a detector and the model
+	// find is reported once, in Verdicts.
+	Discoveries []Discovery `json:"discoveries,omitempty"`
+	Stats       Stats       `json:"stats"`
 }
 
 // HealthzResponse is the body for GET /healthz and GET /readyz.
@@ -87,7 +141,11 @@ type VersionResponse struct {
 	// changes whenever the on-disk template changes, so an operator can
 	// confirm the live prompt matches the release (a deploy that
 	// updates the binary but not prompts/ shows a stale hash here).
-	Prompt     string `json:"prompt"`
+	Prompt string `json:"prompt"`
+	// PromptDeep is the deep-scan prompt's "profile:hash" fingerprint,
+	// empty when deep scan is disabled. Without it a deploy that
+	// updates the binary but not the deep templates is invisible.
+	PromptDeep string `json:"prompt_deep,omitempty"`
 	Gitleaks   string `json:"gitleaks"`
 	Trufflehog string `json:"trufflehog"`
 	Kingfisher string `json:"kingfisher"`
