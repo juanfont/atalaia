@@ -61,10 +61,20 @@ llm:
     input_tokens: 80000
     output_tokens: 8000
     finding_context_lines: 30       # +/- lines around each finding in per-finding mode
+  deep_scan:                        # opt-in second pass: the LLM reads the diff cold for secrets no detector flagged
+    enabled: false                  # callers request it per-request with deep=true (or ?deep=1); this is the operator kill switch
+    max_windows: 8                  # coverage cap on budget-sized windows of added lines; beyond it, deep_scan.truncated=true
+    max_candidates: 50              # per LLM call; extras discarded before grounding
+    profile: gemma4_deep            # entry under llm.profiles holding the deep templates
+    require_findings: false         # true limits deep reads to diffs that already have detector findings
   profiles:
     gemma4:
       system_template: /etc/atalaia/prompts/gemma4_system.tmpl
       user_template: /etc/atalaia/prompts/gemma4_user.tmpl
+      response_format: json_schema
+    gemma4_deep:
+      system_template: /etc/atalaia/prompts/gemma4_deep_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_deep_user.tmpl
       response_format: json_schema
 
 observability:
