@@ -61,6 +61,20 @@ type fixture struct {
 	// fix: without per-call batching the model drops the tail of a big
 	// finding set, which gap-fills to "confirmed" and inflates this.
 	MaxConfirmed *int `json:"max_confirmed,omitempty"`
+	// Deep sends ?deep=1 and enables the discovery assertions below.
+	Deep bool `json:"deep,omitempty"`
+	// ExpectDiscoveries names values that must appear in discoveries[]:
+	// secrets no detector flags, which only the deep read can surface.
+	ExpectDiscoveries []discoveryExpectation `json:"expect_discoveries,omitempty"`
+	// MaxDiscoveries caps discoveries[] length. Zero with Deep set
+	// means "expect none": the false-alarm gate that decides whether
+	// the channel is worth reading at all.
+	MaxDiscoveries *int `json:"max_discoveries,omitempty"`
+}
+
+type discoveryExpectation struct {
+	Match string `json:"match"`
+	Kind  string `json:"kind"`
 }
 
 type verdict struct {
@@ -73,14 +87,34 @@ type verdict struct {
 	Reason       string  `json:"reason"`
 }
 
+type discovery struct {
+	ID           string  `json:"id"`
+	File         string  `json:"file"`
+	Line         int     `json:"line"`
+	MatchPreview string  `json:"match_preview"`
+	Kind         string  `json:"kind"`
+	Confidence   float64 `json:"confidence"`
+	Reason       string  `json:"reason"`
+}
+
 type checkResponse struct {
-	RequestID string    `json:"request_id"`
-	Verdicts  []verdict `json:"verdicts"`
-	Stats     struct {
+	RequestID   string      `json:"request_id"`
+	Verdicts    []verdict   `json:"verdicts"`
+	Discoveries []discovery `json:"discoveries"`
+	Stats       struct {
 		AfterDedup int  `json:"after_dedup"`
 		Confirmed  int  `json:"confirmed"`
 		Dismissed  int  `json:"dismissed"`
 		LLMInvoked bool `json:"llm_invoked"`
+		DeepScan   *struct {
+			Ran        bool   `json:"ran"`
+			Windows    int    `json:"windows"`
+			Candidates int    `json:"candidates"`
+			Discovered int    `json:"discovered"`
+			Ungrounded int    `json:"ungrounded"`
+			Truncated  bool   `json:"truncated"`
+			Error      string `json:"error"`
+		} `json:"deep_scan"`
 	} `json:"stats"`
 }
 
@@ -126,6 +160,9 @@ func TestIntegrationCorpus(t *testing.T) {
 		diffPath := diffPath
 		name := strings.TrimSuffix(filepath.Base(diffPath), ".diff")
 		t.Run(name, func(t *testing.T) {
+			if only := os.Getenv("INTEGRATION_ONLY"); only != "" && !strings.HasPrefix(name, only) {
+				t.Skipf("INTEGRATION_ONLY=%s", only)
+			}
 			diff, err := os.ReadFile(diffPath)
 			if err != nil {
 				t.Fatalf("read diff: %v", err)
@@ -149,7 +186,7 @@ func TestIntegrationCorpus(t *testing.T) {
 			var fHits, fTotal int
 			dist := map[string]map[string]int{} // match -> verdict label -> count
 			for i := 0; i < repeat; i++ {
-				resp, err := postCheck(base, token, diff)
+				resp, err := postCheck(base, token, diff, fx.Deep)
 				if err != nil {
 					t.Fatalf("run %d: POST /check: %v", i+1, err)
 				}
@@ -184,6 +221,10 @@ func TestIntegrationCorpus(t *testing.T) {
 					if !isGapFill(v) && v.Verdict == ex.Verdict {
 						fHits++
 					}
+				}
+
+				if fx.Deep {
+					gradeDiscoveries(t, i+1, fx, resp)
 				}
 			}
 
@@ -270,6 +311,72 @@ func minFixtureAgreement(t *testing.T) float64 {
 	return v
 }
 
+// gradeDiscoveries asserts the deep channel on one run. Both
+// directions matter: a missing expected discovery is the silent miss
+// this feature exists to fix, and an unexpected one is the false alarm
+// that would make the channel not worth reading.
+func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) {
+	t.Helper()
+
+	ds := resp.Stats.DeepScan
+	if ds == nil {
+		t.Errorf("run %d: fixture is deep but response carried no deep_scan stats", run)
+		return
+	}
+	if ds.Error != "" {
+		t.Errorf("run %d: deep scan failed: %s", run, ds.Error)
+		return
+	}
+	if !ds.Ran {
+		t.Errorf("run %d: deep scan did not run (is llm.deep_scan.enabled set in the config?)", run)
+		return
+	}
+	if ds.Truncated {
+		t.Logf("run %d: WARNING deep coverage truncated at %d windows", run, ds.Windows)
+	}
+	t.Logf("run %d: deep windows=%d candidates=%d discovered=%d ungrounded=%d",
+		run, ds.Windows, ds.Candidates, ds.Discovered, ds.Ungrounded)
+
+	if fx.MaxDiscoveries != nil && len(resp.Discoveries) > *fx.MaxDiscoveries {
+		for _, d := range resp.Discoveries {
+			t.Logf("run %d: unexpected discovery %s:%d %s (%s)", run, d.File, d.Line, d.MatchPreview, d.Reason)
+		}
+		t.Errorf("run %d: %d discoveries exceeds max_discoveries=%d, the deep read is crying wolf",
+			run, len(resp.Discoveries), *fx.MaxDiscoveries)
+	}
+
+	for _, want := range fx.ExpectDiscoveries {
+		d, ok := findDiscovery(resp.Discoveries, want.Match)
+		if !ok {
+			t.Errorf("run %d: expected discovery %q was not reported: the secret no detector flags went unmentioned",
+				run, redactForLog(want.Match))
+			continue
+		}
+		if want.Kind != "" && d.Kind != want.Kind {
+			t.Errorf("run %d: discovery %s kind=%q, want %q", run, d.ID, d.Kind, want.Kind)
+		}
+	}
+}
+
+// findDiscovery locates a discovery by raw match, reusing the same
+// preview-shape matching the verdict path uses.
+func findDiscovery(discoveries []discovery, raw string) (discovery, bool) {
+	for _, d := range discoveries {
+		if d.MatchPreview == raw || previewMatches(d.MatchPreview, raw) {
+			return d, true
+		}
+	}
+	return discovery{}, false
+}
+
+// redactForLog keeps expected-secret values out of test output.
+func redactForLog(s string) string {
+	if len(s) <= 8 {
+		return "(short value)"
+	}
+	return s[:4] + "..." + s[len(s)-4:]
+}
+
 // isGapFill recognises the conservative fallback the adjudicator
 // emits when the model returned no verdict for a given finding_id
 // (see internal/llm/adjudicate.go: confidence 0, fixed reason).
@@ -322,11 +429,19 @@ func previewMatches(preview, raw string) bool {
 
 func previewKey(p string) string { return p }
 
-func postCheck(base, token string, diff []byte) (*checkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+func postCheck(base, token string, diff []byte, deep bool) (*checkResponse, error) {
+	// A deep request is up to max_windows sequential LLM calls, so it
+	// needs a far longer client timeout than the default path.
+	timeout := 180 * time.Second
+	url := base + "/check"
+	if deep {
+		timeout = 900 * time.Second
+		url += "?deep=1"
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/check", bytes.NewReader(diff))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(diff))
 	if err != nil {
 		return nil, err
 	}

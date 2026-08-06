@@ -1,0 +1,7 @@
+{
+  "description": "A private key added as a bare file. gitleaks DOES flag it (rule=private-key, verified), so this is the collision case: the key belongs to verdicts[], the authoritative channel, and must not also appear in discoveries[]. Reporting one secret in two channels is the failure this gates.",
+  "deep": true,
+  "min_after_dedup": 1,
+  "expectations": [],
+  "max_discoveries": 0
+}

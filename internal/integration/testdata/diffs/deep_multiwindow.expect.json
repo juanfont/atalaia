@@ -1,0 +1,10 @@
+{
+  "description": "A basic-auth password in a URL at line 1200 of a 1600-line added-line set, which splits into exactly 2 windows at the smoke config's budget (verified). No gitleaks rule matches it. Proves coverage does not quietly stop after window one.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_discoveries": [
+    {"match": "Xr9-Autumn-Cascade-2026", "kind": "credential"}
+  ],
+  "max_discoveries": 1
+}

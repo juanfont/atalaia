@@ -8,7 +8,7 @@ KINGFISHER_VERSION ?= 1.27.0
 
 PREFIX ?= /usr/local
 
-.PHONY: build test test-integration smoke smoke-corpus smoke-corpus-deep vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
+.PHONY: build test test-integration smoke smoke-corpus smoke-corpus-deep smoke-corpus-discovery vet fmt tidy install-detectors install-trufflehog install-kingfisher clean
 
 build:
 	go build -ldflags '$(GO_LDFLAGS)' -o atalaia ./cmd/atalaia
@@ -44,6 +44,13 @@ smoke-corpus:
 # Slower; for nightly / pre-release, not every commit.
 smoke-corpus-deep:
 	INTEGRATION_REPEAT=$(or $(INTEGRATION_REPEAT),20) CONFIG=$(CONFIG) ./scripts/smoke-corpus.sh
+
+# Discovery corpus: the deep-scan fixtures only. Requires
+# llm.deep_scan.enabled in the config. Named "discovery", not "deep",
+# because smoke-corpus-deep above already means the repeat-N
+# non-determinism run and has nothing to do with deep scan.
+smoke-corpus-discovery:
+	INTEGRATION_ONLY=deep_ CONFIG=$(CONFIG) ./scripts/smoke-corpus.sh
 
 vet:
 	go vet ./...

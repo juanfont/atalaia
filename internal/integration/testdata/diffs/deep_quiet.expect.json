@@ -1,0 +1,7 @@
+{
+  "description": "Ordinary Go application code and its tests, no credentials anywhere. Carries the entropy-shaped decoys a noisy model bites on: a UUID tenant id and a sha256 build revision. Any discovery here is a false alarm, and a deep read that cries wolf on normal code is worse than no deep read. This fixture decides whether the channel is worth reading.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "max_discoveries": 0
+}
