@@ -72,9 +72,19 @@ type fixture struct {
 	MaxDiscoveries *int `json:"max_discoveries,omitempty"`
 }
 
+// discoveryExpectation names a secret the deep read must surface.
+//
+// Prefer file+line over match. The model chooses how much of the line
+// to return (a bare password, or the whole URL it sits in), and
+// URL-aware redaction reshapes the preview accordingly, so pinning the
+// exact string asserts the model's phrasing rather than the behaviour
+// that matters: did it find the secret, at the right place. Match stays
+// supported for values whose preview shape is stable.
 type discoveryExpectation struct {
-	Match string `json:"match"`
-	Kind  string `json:"kind"`
+	Match string `json:"match,omitempty"`
+	Kind  string `json:"kind,omitempty"`
+	File  string `json:"file,omitempty"`
+	Line  int    `json:"line,omitempty"`
 }
 
 type verdict struct {
@@ -346,10 +356,10 @@ func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) {
 	}
 
 	for _, want := range fx.ExpectDiscoveries {
-		d, ok := findDiscovery(resp.Discoveries, want.Match)
+		d, ok := findDiscovery(resp.Discoveries, want)
 		if !ok {
-			t.Errorf("run %d: expected discovery %q was not reported: the secret no detector flags went unmentioned",
-				run, redactForLog(want.Match))
+			t.Errorf("run %d: expected discovery %s was not reported: the secret no detector flags went unmentioned",
+				run, describeExpectation(want))
 			continue
 		}
 		if want.Kind != "" && d.Kind != want.Kind {
@@ -358,15 +368,31 @@ func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) {
 	}
 }
 
-// findDiscovery locates a discovery by raw match, reusing the same
-// preview-shape matching the verdict path uses.
-func findDiscovery(discoveries []discovery, raw string) (discovery, bool) {
+// findDiscovery locates a discovery matching the expectation. File+line
+// wins when given; otherwise it falls back to preview-shape matching on
+// the raw value, the same way the verdict path does.
+func findDiscovery(discoveries []discovery, want discoveryExpectation) (discovery, bool) {
+	if want.File != "" {
+		for _, d := range discoveries {
+			if d.File == want.File && (want.Line == 0 || d.Line == want.Line) {
+				return d, true
+			}
+		}
+		return discovery{}, false
+	}
 	for _, d := range discoveries {
-		if d.MatchPreview == raw || previewMatches(d.MatchPreview, raw) {
+		if d.MatchPreview == want.Match || previewMatches(d.MatchPreview, want.Match) {
 			return d, true
 		}
 	}
 	return discovery{}, false
+}
+
+func describeExpectation(want discoveryExpectation) string {
+	if want.File != "" {
+		return fmt.Sprintf("at %s:%d", want.File, want.Line)
+	}
+	return fmt.Sprintf("%q", redactForLog(want.Match))
 }
 
 // redactForLog keeps expected-secret values out of test output.

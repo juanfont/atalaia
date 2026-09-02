@@ -4,7 +4,11 @@
   "min_after_dedup": 0,
   "expectations": [],
   "expect_discoveries": [
-    {"match": "Xr9-Autumn-Cascade-2026", "kind": "credential"}
+    {
+      "file": "vendor/bundle.js",
+      "line": 1200,
+      "kind": "credential"
+    }
   ],
   "max_discoveries": 1
 }
