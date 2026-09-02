@@ -27,25 +27,40 @@ func TestBuildDeepWindows_AddedLinesOnly(t *testing.T) {
 	if truncated {
 		t.Errorf("small diff must not truncate")
 	}
-	if len(got) != 1 {
-		t.Fatalf("want 1 window, got %d", len(got))
-	}
-	body := got[0]
+	all := strings.Join(got, "\n")
 
-	if !strings.Contains(body, `const key = "AKIAIOSFODNN7EXAMPLE"`) {
-		t.Errorf("added line missing from window:\n%s", body)
+	if !strings.Contains(all, `const key = "AKIAIOSFODNN7EXAMPLE"`) {
+		t.Errorf("added line missing from windows:\n%s", all)
 	}
-	if !strings.Contains(body, "second-file-value") {
-		t.Errorf("second file's added line missing:\n%s", body)
+	if !strings.Contains(all, "second-file-value") {
+		t.Errorf("second file's added line missing:\n%s", all)
 	}
-	if strings.Contains(body, "removed-secret-value") {
-		t.Errorf("removed line must never be scanned:\n%s", body)
+	if strings.Contains(all, "removed-secret-value") {
+		t.Errorf("removed line must never be scanned:\n%s", all)
 	}
-	if strings.Contains(body, "package main") {
-		t.Errorf("context line must not be scanned:\n%s", body)
+	if strings.Contains(all, "package main") {
+		t.Errorf("context line must not be scanned:\n%s", all)
 	}
-	if !strings.Contains(body, "a.go") || !strings.Contains(body, "b.go") {
-		t.Errorf("window must name both files:\n%s", body)
+	if !strings.Contains(all, "a.go") || !strings.Contains(all, "b.go") {
+		t.Errorf("windows must name both files:\n%s", all)
+	}
+}
+
+// One file per window, even when several would fit the token budget.
+// Measured: when a window holds two files and the first carries
+// anything credential-shaped, the model reports that and stops, so the
+// second file's secret is never mentioned. Alone in a window the same
+// secret is found every time.
+func TestBuildDeepWindows_OneFilePerWindow(t *testing.T) {
+	got, _ := buildDeepWindows([]byte(twoFileDiff), 72000, 8)
+
+	if len(got) != 2 {
+		t.Fatalf("want one window per file, got %d: %q", len(got), got)
+	}
+	for i, w := range got {
+		if strings.Contains(w, "a.go") && strings.Contains(w, "b.go") {
+			t.Errorf("window %d mixes two files, which crowds out the later one:\n%s", i, w)
+		}
 	}
 }
 

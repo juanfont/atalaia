@@ -83,11 +83,12 @@ func TestDeepReader_ScansAndReturnsCandidates(t *testing.T) {
 	if len(got.Candidates) != 1 {
 		t.Fatalf("want 1 candidate, got %d", len(got.Candidates))
 	}
-	if got.Calls != 1 || got.Windows != 1 {
-		t.Errorf("Calls=%d Windows=%d, want 1 and 1", got.Calls, got.Windows)
+	// twoFileDiff touches two files, and windows hold one file each.
+	if got.Calls != 2 || got.Windows != 2 {
+		t.Errorf("Calls=%d Windows=%d, want 2 and 2 (one window per file)", got.Calls, got.Windows)
 	}
-	if len(client.requests) != 1 {
-		t.Fatalf("want 1 request, got %d", len(client.requests))
+	if len(client.requests) != 2 {
+		t.Fatalf("want 2 requests, got %d", len(client.requests))
 	}
 
 	// The deep prompt must not carry detector findings: it is a cold
@@ -140,8 +141,8 @@ func TestDeepReader_RequireFindingsSkipsCleanDiffs(t *testing.T) {
 	if _, err := r.Scan(context.Background(), []byte(twoFileDiff), 1); err != nil {
 		t.Fatal(err)
 	}
-	if len(client.requests) != 1 {
-		t.Errorf("with a finding present the scan must run, made %d calls", len(client.requests))
+	if len(client.requests) == 0 {
+		t.Error("with a finding present the scan must run, made no calls")
 	}
 }
 

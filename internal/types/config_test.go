@@ -124,8 +124,8 @@ func TestReadLLMConfig_DeepScanDefaults(t *testing.T) {
 	if c.DeepScan.WindowTokens != 4000 {
 		t.Errorf("window_tokens default = %d, want 4000 (deep read needs a small window)", c.DeepScan.WindowTokens)
 	}
-	if c.DeepScan.MaxWindows != 24 {
-		t.Errorf("max_windows default = %d, want 24", c.DeepScan.MaxWindows)
+	if c.DeepScan.MaxWindows != 48 {
+		t.Errorf("max_windows default = %d, want 48", c.DeepScan.MaxWindows)
 	}
 	if c.DeepScan.MaxCandidates != 50 {
 		t.Errorf("max_candidates default = %d, want 50", c.DeepScan.MaxCandidates)

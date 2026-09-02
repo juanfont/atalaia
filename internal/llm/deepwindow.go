@@ -42,6 +42,7 @@ func buildDeepWindows(diff []byte, budgetTokens, maxWindows int) ([]string, bool
 		windows []string
 		cur     strings.Builder
 		curTok  int
+		curPath string
 	)
 	flush := func() {
 		if cur.Len() > 0 {
@@ -52,6 +53,16 @@ func buildDeepWindows(diff []byte, budgetTokens, maxWindows int) ([]string, bool
 	}
 
 	for _, block := range detector.WalkDiff(diff) {
+		// One file per window. Measured: when a window holds two files
+		// and the first carries anything credential-shaped, the model
+		// reports that and stops, and the second file's secret is never
+		// mentioned. The same secret alone in a window is found every
+		// time (20/20 vs ~95% sharing). Packing files together trades
+		// recall for a few saved calls, and calls are cheap.
+		if block.Path != curPath {
+			flush()
+			curPath = block.Path
+		}
 		for _, chunk := range splitBlock(block, budget) {
 			t := estimateTokens(chunk)
 			if curTok > 0 && curTok+t > budget {
