@@ -152,9 +152,10 @@ type DeepScanConfig struct {
 	// budget.
 	WindowTokens int
 	// MaxWindows caps how many windows of added lines get scanned. Past
-	// the cap, coverage stops and stats report truncated. Smaller
-	// windows mean more of them, so this is sized against WindowTokens,
-	// not the context budget.
+	// the cap, coverage stops and stats report truncated. Windows hold
+	// at most one file each and are sized by WindowTokens, so a
+	// many-file diff needs a generous cap: one window is one LLM call,
+	// and a call is roughly 200ms.
 	MaxWindows int
 	// MaxCandidates caps candidates accepted from one LLM call. Extras
 	// are discarded before grounding, guarding a runaway model.
@@ -276,7 +277,7 @@ func setDefaults() {
 	viper.SetDefault("llm.use_tools", true)
 	viper.SetDefault("llm.deep_scan.enabled", false)
 	viper.SetDefault("llm.deep_scan.window_tokens", 4000)
-	viper.SetDefault("llm.deep_scan.max_windows", 24)
+	viper.SetDefault("llm.deep_scan.max_windows", 48)
 	viper.SetDefault("llm.deep_scan.max_candidates", 50)
 	viper.SetDefault("llm.deep_scan.profile", "gemma4_deep")
 	viper.SetDefault("llm.deep_scan.require_findings", false)

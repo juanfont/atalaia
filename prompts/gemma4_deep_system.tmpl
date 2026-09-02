@@ -34,9 +34,16 @@ is discarded.
 
 For private key material, return the BEGIN header line, not the key body.
 
+A window may hold added lines from several files. Each one starts with
+a line like "=== path/to/file". Work through every section: finding a
+credential in one file says nothing about the next, and stopping after
+the first hit is a common way to miss the one that matters. Report
+every credential you find, not just the first.
+
 Many diffs contain no credentials at all, and an empty list is a fine
-answer when that is true. But do not skim: a real credential that you
-pass over is the failure this task exists to prevent. Read every line
-before concluding a window is clean.
+answer when that is true. But do not skim, and do not answer
+immediately: a real credential that you pass over is the failure this
+task exists to prevent. Before you return an empty list, check that you
+have read every line of every section in the window.
 
 Return a JSON object matching the response schema.

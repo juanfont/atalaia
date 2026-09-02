@@ -64,7 +64,7 @@ llm:
   deep_scan:                        # opt-in second pass: the LLM reads the diff cold for secrets no detector flagged
     enabled: false                  # callers request it per-request with deep=true (or ?deep=1); this is the operator kill switch
     window_tokens: 4000             # size of ONE window of added lines; deliberately smaller than context_budget.input_tokens (recall drops as the window grows)
-    max_windows: 24                 # coverage cap on windows; smaller windows means more of them
+    max_windows: 48                 # coverage cap on windows; smaller windows means more of them
     max_candidates: 50              # per LLM call; extras discarded before grounding
     profile: gemma4_deep            # entry under llm.profiles holding the deep templates
     require_findings: false         # true limits deep reads to diffs that already have detector findings
