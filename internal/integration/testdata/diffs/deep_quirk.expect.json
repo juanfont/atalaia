@@ -1,13 +1,20 @@
 {
-  "description": "The reported quirk. gitleaks flags LEGACY_IMPORT_KEY (generic-api-key), which the surrounding comment marks as a vendor-doc sample, so it is a genuine false positive. In another file a basic-auth password sits inside a curl URL, which no gitleaks rule matches (verified). Gates both symptoms: the silent miss fails via an empty discoveries[], the contaminated verdict fails via max_confirmed.",
+  "description": "The reported quirk. gitleaks flags LEGACY_IMPORT_KEY (generic-api-key), which the surrounding comment marks as a vendor-doc sample, so it is a genuine false positive. In another file a basic-auth password sits inside a curl URL, which no gitleaks rule matches (verified). Gates both symptoms: the silent miss fails via a missing discovery at reindex.sh:4, the contaminated verdict fails via max_confirmed.",
   "deep": true,
   "min_after_dedup": 1,
   "max_confirmed": 0,
   "expectations": [
-    {"match": "Xk7pQm2vRt9wZs4yBn6hLd3fJc8gVa5e", "verdict": "dismissed"}
+    {
+      "match": "Xk7pQm2vRt9wZs4yBn6hLd3fJc8gVa5e",
+      "verdict": "dismissed"
+    }
   ],
   "expect_discoveries": [
-    {"match": "Tr0ubad0ur-Winter-2026", "kind": "credential"}
+    {
+      "file": "scripts/reindex.sh",
+      "line": 4,
+      "kind": "credential"
+    }
   ],
   "max_discoveries": 1
 }
