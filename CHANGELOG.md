@@ -50,7 +50,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
   Measured against Gemma 4 E4B before release: false alarms 0/9 across
   three clean fixtures, hallucinated (ungroundable) values 0, recall
-  9/10 on a basic-auth password in a URL that no gitleaks rule matches.
+  ~96% (50/52) on a basic-auth password in a URL that no gitleaks rule
+  matches. The residual is serving non-determinism, not atalaia: a
+  logging proxy confirmed the request bytes are identical across runs,
+  and the same prompt driven by hand scored 15/15.
   Getting there took two tuning findings. Window size drives recall (3/5
   at ~20k tokens per window versus 5/5 at ~4k), hence
   `deep_scan.window_tokens` (default 4000) sized independently of

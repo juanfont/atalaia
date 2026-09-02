@@ -455,12 +455,46 @@ Post-change corpus: six discovery fixtures pass three runs in a row,
 and the full 22-fixture corpus scores 16/16 verdict agreement (100%),
 unchanged from before the feature.
 
-**Residual limitation, worth stating plainly.** Recall is 9/10, not
-10/10. The deep read is a real improvement over a channel that could
-not report these secrets at all, but it is not a guarantee, and a
-`discoveries[]` that comes back empty is not proof a diff is clean. It
-never was: that is why this is a lower-trust channel that does not gate
-a merge.
+**Residual limitation, worth stating plainly.** Recall is about 96%
+(50/52 runs of the quirk fixture after the prompt fix), not 100%. The
+deep read is a real improvement over a channel that could not report
+these secrets at all, but it is not a guarantee, and a `discoveries[]`
+that comes back empty is not proof a diff is clean. It never was: that
+is why this is a lower-trust channel that does not gate a merge.
+
+### Where the residual ~4% comes from
+
+Investigated rather than assumed, because "the prompt is still wrong"
+and "the serving stack is not reproducible" call for different fixes.
+
+A logging proxy in front of vLLM captured every request atalaia sent
+across repeated runs of the same fixture. All of them hashed
+identically: one distinct request body across 22 captures. So atalaia
+is not varying its input, and the variance is in the model's response
+to identical bytes.
+
+The prompt is not the cause either. Driven by hand at temperature 0,
+the same window returned the secret 15/15 through the plain-content
+path and 15/15 through the tool-calling path atalaia actually uses.
+Churning the KV cache with a large unrelated diff between runs did not
+reproduce it either (12/12).
+
+What remains is serving-level non-determinism. The host runs Gemma 4
+E4B with fp8 weights and an fp8 KV cache, prefix caching on, chunked
+prefill on, and asynchronous scheduling. None of that guarantees
+bit-identical computation across differing cache and batch states, and
+this input sits near a decision boundary: the model is judging whether
+a password embedded in a URL clears the reporting bar. A borderline
+logit occasionally flips. On a miss the model returns an empty
+candidate list (`candidates: 0`), so it is a recall miss in the model,
+not a grounding drop.
+
+Fixing it in atalaia is not possible: the request is already fixed and
+deterministic. The options are operator-side (disable prefix caching
+and chunked prefill, at a throughput cost) or caller-side (a watcher
+that re-runs). Neither is worth it for a channel that is explicitly
+lower-trust and does not gate a merge, so the residual is documented
+rather than engineered around.
 
 **Real-world catch.** On `example4.diff`, an actual diff from this
 repo's working tree, the deep read found `$ODI_PASS = 'Hogsback';` at
