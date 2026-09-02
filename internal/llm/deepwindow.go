@@ -25,11 +25,15 @@ const minDeepWindowTokens = 256
 // them is also what makes the deep read affordable, since the
 // added-line set is a fraction of a typical diff.
 //
+// budgetTokens is the size of ONE window, not the model's context
+// limit: recall degrades as the window grows, so the deep read uses a
+// deliberately small window (llm.deep_scan.window_tokens).
+//
 // Windows are capped at maxWindows (0 means uncapped). When blocks
 // remain past the cap, truncated is true and the caller reports
 // incomplete coverage rather than a clean scan.
-func buildDeepWindows(diff []byte, inputBudget, outputBudget, maxWindows int) ([]string, bool) {
-	budget := inputBudget - outputBudget
+func buildDeepWindows(diff []byte, budgetTokens, maxWindows int) ([]string, bool) {
+	budget := budgetTokens
 	if budget < minDeepWindowTokens {
 		budget = minDeepWindowTokens
 	}

@@ -226,3 +226,47 @@ func (emptyChoiceClient) Complete(context.Context, ChatRequest) (ChatResponse, e
 	return ChatResponse{}, nil
 }
 func (emptyChoiceClient) Probe(context.Context) error { return nil }
+
+// The deep read must use its own window budget, not the adjudication
+// context budget. Recall on a buried secret degrades sharply as the
+// window grows, so a small window is the whole point.
+func TestDeepReader_UsesDeepWindowBudget(t *testing.T) {
+	cfg := deepTestConfig(t, 32)
+	cfg.ContextBudget.InputTokens = 100000 // adjudication's roomy budget
+	cfg.ContextBudget.OutputTokens = 4096
+	cfg.DeepScan.WindowTokens = 150 // deep read's deliberately small one
+
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(cfg, client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.Scan(context.Background(), []byte(fillerDiff(40)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Windows < 2 {
+		t.Errorf("windows=%d: the small deep budget must split this, not the 100k context budget", got.Windows)
+	}
+}
+
+func TestDeepReader_FallsBackToContextBudget(t *testing.T) {
+	cfg := deepTestConfig(t, 8)
+	cfg.ContextBudget.InputTokens = 400
+	cfg.ContextBudget.OutputTokens = 100
+	cfg.DeepScan.WindowTokens = 0 // unset
+
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(cfg, client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.Scan(context.Background(), []byte(twoFileDiff), 0); err != nil {
+		t.Fatal(err)
+	}
+	if len(client.requests) == 0 {
+		t.Error("unset window_tokens must fall back to the context budget, not scan nothing")
+	}
+}
