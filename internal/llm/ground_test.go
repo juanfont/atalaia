@@ -252,3 +252,37 @@ func TestGround_DropsPemEndMarkerOnly(t *testing.T) {
 		t.Errorf("Ungrounded = %d, want 1", stats.Ungrounded)
 	}
 }
+
+const varRefDiff = `diff --git a/deploy/run.sh b/deploy/run.sh
+--- a/deploy/run.sh
++++ b/deploy/run.sh
+@@ -1,1 +1,4 @@
+ #!/bin/sh
++curl -u "${SERVICE_USER}:${SERVICE_TOKEN}" https://api.example.internal/v1/ping
++psql "postgres://${PG_USER}:${PG_PASSWORD}@${PG_HOST}/app" -c 'select 1'
++export LEGACY_TOKEN="ZmFrZS1idXQtbGl0ZXJhbC10b2tlbi12YWx1ZQ"
+`
+
+// The model returns the bare variable NAME, which grounds happily
+// because it really is a substring of "${PG_PASSWORD}". Caught by
+// looking at where the value landed, not at the value alone.
+func TestGround_DropsBareVariableNameInsideReference(t *testing.T) {
+	for _, name := range []string{"PG_PASSWORD", "SERVICE_TOKEN", "SERVICE_USER"} {
+		got, _ := Ground([]byte(varRefDiff), []DeepCandidate{cand(name)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q names a secret rather than being one, must not be reported: %+v", name, got)
+		}
+	}
+}
+
+// The guard must not swallow a real literal that merely shares a line
+// with references, or one whose name resembles a variable.
+func TestGround_KeepsLiteralOnALineWithReferences(t *testing.T) {
+	got, _ := Ground([]byte(varRefDiff), []DeepCandidate{cand("ZmFrZS1idXQtbGl0ZXJhbC10b2tlbi12YWx1ZQ")}, nil)
+	if len(got) != 1 {
+		t.Fatalf("a literal assigned on its own line must still be reported, got %d", len(got))
+	}
+	if got[0].Line != 4 {
+		t.Errorf("Line = %d, want 4", got[0].Line)
+	}
+}
