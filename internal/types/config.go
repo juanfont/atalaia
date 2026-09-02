@@ -143,8 +143,18 @@ type LLMConfig struct {
 // including requests with zero detector findings.
 type DeepScanConfig struct {
 	Enabled bool
-	// MaxWindows caps how many budget-sized windows of added lines get
-	// scanned. Past the cap, coverage stops and stats report truncated.
+	// WindowTokens is the token budget for ONE window of added lines.
+	// Deliberately smaller than llm.context_budget.input_tokens: the
+	// adjudication prompt judges a candidate handed to it, while the
+	// deep read hunts a needle, and measured recall on a buried secret
+	// drops sharply as the window grows (3/5 at ~20k tokens per window
+	// vs 5/5 at ~4k on the same diff). <= 0 falls back to the context
+	// budget.
+	WindowTokens int
+	// MaxWindows caps how many windows of added lines get scanned. Past
+	// the cap, coverage stops and stats report truncated. Smaller
+	// windows mean more of them, so this is sized against WindowTokens,
+	// not the context budget.
 	MaxWindows int
 	// MaxCandidates caps candidates accepted from one LLM call. Extras
 	// are discarded before grounding, guarding a runaway model.
@@ -265,7 +275,8 @@ func setDefaults() {
 	viper.SetDefault("llm.context_budget.finding_context_lines", 30)
 	viper.SetDefault("llm.use_tools", true)
 	viper.SetDefault("llm.deep_scan.enabled", false)
-	viper.SetDefault("llm.deep_scan.max_windows", 8)
+	viper.SetDefault("llm.deep_scan.window_tokens", 4000)
+	viper.SetDefault("llm.deep_scan.max_windows", 24)
 	viper.SetDefault("llm.deep_scan.max_candidates", 50)
 	viper.SetDefault("llm.deep_scan.profile", "gemma4_deep")
 	viper.SetDefault("llm.deep_scan.require_findings", false)
@@ -369,6 +380,7 @@ func readLLMConfig() LLMConfig {
 		UseTools: viper.GetBool("llm.use_tools"),
 		DeepScan: DeepScanConfig{
 			Enabled:         viper.GetBool("llm.deep_scan.enabled"),
+			WindowTokens:    viper.GetInt("llm.deep_scan.window_tokens"),
 			MaxWindows:      viper.GetInt("llm.deep_scan.max_windows"),
 			MaxCandidates:   viper.GetInt("llm.deep_scan.max_candidates"),
 			Profile:         viper.GetString("llm.deep_scan.profile"),

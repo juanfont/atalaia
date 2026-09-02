@@ -59,7 +59,13 @@ func (r *DeepReader) Scan(ctx context.Context, diff []byte, findings int) (DeepR
 	}
 
 	cb := r.cfg.ContextBudget
-	windows, truncated := buildDeepWindows(diff, cb.InputTokens, cb.OutputTokens, r.cfg.DeepScan.MaxWindows)
+	// The deep read gets its own, smaller window than adjudication.
+	// Falls back to the shared context budget when unset.
+	windowTokens := r.cfg.DeepScan.WindowTokens
+	if windowTokens <= 0 {
+		windowTokens = cb.InputTokens - cb.OutputTokens
+	}
+	windows, truncated := buildDeepWindows(diff, windowTokens, r.cfg.DeepScan.MaxWindows)
 	if len(windows) == 0 {
 		return DeepResult{}, nil
 	}
