@@ -413,3 +413,56 @@ default path is untouched.
 - Widening scope beyond credentials and private key material (no PII,
   no internal hostnames).
 - Promoting a discovery into `verdicts[]`, now or automatically later.
+
+## Step zero results
+
+Measured 2026-08-09 against Gemma 4 E4B (FP8, tool calling) on the
+corpus fixtures. The plan gated the whole feature on two rates.
+
+**False alarm rate: 0.** Across `deep_quiet` (ordinary Go code carrying
+a UUID and a sha256 build revision), `deep_references` ($VAR, ${VAR},
+os.environ, vault.read, an interpolated postgres DSN) and
+`deep_sentinel_cold` (AWS sample keys in prose), 9 runs produced zero
+discoveries. The channel does not cry wolf on normal code, so
+`require_findings` stays false and the deep read runs on clean diffs as
+designed.
+
+**Hallucination rate: 0.** Every value the model returned across the
+fixtures plus `example4.diff` and `example5.diff` appears verbatim in
+its diff. The grounding gate discarded nothing because there was
+nothing to discard. It stays in regardless: it is the reason a
+fabricated value cannot be reported, and 0% today is a measurement, not
+a guarantee.
+
+**Recall needed work, and got it.** Two findings changed the design:
+
+1. *Window size drives recall.* On `deep_multiwindow` (secret at line
+   1200 of 1600 added lines) the same model found it 3/5 times at ~20k
+   tokens per window and 5/5 at ~4k. The adjudication budget judges a
+   candidate handed to it; the deep read hunts a needle, and recall
+   falls off with haystack size. Hence `deep_scan.window_tokens`
+   (default 4000), independent of `llm.context_budget`.
+
+2. *The prompt was suppressing recall.* On `deep_quirk` the first
+   prompt found the URL password 5/10 times. Naming the shapes regex is
+   worst at (passwords in URLs, credentials on command lines, DSNs,
+   config values, low-entropy word-like passwords) and dropping the
+   line that told the model an empty list was "the correct and common
+   answer" took it to 9/10, with the false-alarm rate still 0/9. That
+   line was buying precision the feature did not need.
+
+Post-change corpus: six discovery fixtures pass three runs in a row,
+and the full 22-fixture corpus scores 16/16 verdict agreement (100%),
+unchanged from before the feature.
+
+**Residual limitation, worth stating plainly.** Recall is 9/10, not
+10/10. The deep read is a real improvement over a channel that could
+not report these secrets at all, but it is not a guarantee, and a
+`discoveries[]` that comes back empty is not proof a diff is clean. It
+never was: that is why this is a lower-trust channel that does not gate
+a merge.
+
+**Real-world catch.** On `example4.diff`, an actual diff from this
+repo's working tree, the deep read found `$ODI_PASS = 'Hogsback';` at
+line 50: a hardcoded low-entropy database password that no detector
+flagged.
