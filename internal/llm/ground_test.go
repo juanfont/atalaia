@@ -231,3 +231,24 @@ func TestGround_NoCandidatesIsClean(t *testing.T) {
 		t.Errorf("stats should be zero, got %+v", stats)
 	}
 }
+
+// The model returned only the END delimiter of a PEM block. It locates
+// fine, but it is a marker, not key material, and reporting it would
+// surface the same key a second time alongside the detector's verdict.
+func TestGround_DropsPemEndMarkerOnly(t *testing.T) {
+	c := DeepCandidate{
+		Value:      "-----END OPENSSH PRIVATE KEY-----",
+		Kind:       "private_key",
+		Confidence: 0.9,
+		Reason:     "an SSH private key block",
+	}
+
+	got, stats := Ground([]byte(pemDiff), []DeepCandidate{c}, nil)
+
+	if len(got) != 0 {
+		t.Errorf("an END delimiter is not a credential: %+v", got)
+	}
+	if stats.Ungrounded != 1 {
+		t.Errorf("Ungrounded = %d, want 1", stats.Ungrounded)
+	}
+}
