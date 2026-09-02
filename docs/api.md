@@ -147,7 +147,7 @@ Credentials the LLM found in the diff that **no detector flagged**. Present only
 }
 ```
 
-**Recall is good, not perfect.** Measured ~96% (50/52) on a basic-auth password inside a URL that no gitleaks rule matches. The residual is non-determinism in the model server, not in atalaia: the request bytes are identical across runs. That is a large improvement over a channel that could not report such a secret at all, but an empty `discoveries[]` is **not** proof that a diff is clean.
+**Recall is good, not perfect.** Measured ~95% on a basic-auth password inside a URL that no gitleaks rule matches. The residual is non-determinism in the model server, not in atalaia: a logging proxy confirmed the request bytes are identical across runs, and on a miss the model returns an empty candidate list. That is a large improvement over a channel that could not report such a secret at all, but an empty `discoveries[]` is **not** proof that a diff is clean.
 
 **This is a lower-trust channel than `verdicts[]`.** Nothing corroborates a discovery but the model's judgement, checked against exactly one requirement: the value must appear verbatim in the diff you submitted. Atalaia searches the added lines for it and derives `file` and `line` itself; a candidate it cannot locate is discarded and counted in `stats.deep_scan.ungrounded`. So a fabricated secret and a fabricated line number are both impossible — but a real string the model *misjudged* as a credential is not. **Do not gate a merge on a discovery without review.**
 

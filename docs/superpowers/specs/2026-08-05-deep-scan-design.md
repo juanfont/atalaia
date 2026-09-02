@@ -455,46 +455,63 @@ Post-change corpus: six discovery fixtures pass three runs in a row,
 and the full 22-fixture corpus scores 16/16 verdict agreement (100%),
 unchanged from before the feature.
 
-**Residual limitation, worth stating plainly.** Recall is about 96%
-(50/52 runs of the quirk fixture after the prompt fix), not 100%. The
+**Residual limitation, worth stating plainly.** Recall is about 95% on
+the quirk fixture, not 100%. The
 deep read is a real improvement over a channel that could not report
 these secrets at all, but it is not a guarantee, and a `discoveries[]`
 that comes back empty is not proof a diff is clean. It never was: that
 is why this is a lower-trust channel that does not gate a merge.
 
-### Where the residual ~4% comes from
+### Where the residual ~5% comes from
 
-Investigated rather than assumed, because "the prompt is still wrong"
-and "the serving stack is not reproducible" call for different fixes.
+Investigated by capturing what the model actually returned on failing
+runs, through a logging proxy in front of vLLM. A first pass concluded
+"serving non-determinism" from the successes alone; that was premature.
+Looking at the misses showed two distinct modes, one of them fixable.
 
-A logging proxy in front of vLLM captured every request atalaia sent
-across repeated runs of the same fixture. All of them hashed
-identically: one distinct request body across 22 captures. So atalaia
-is not varying its input, and the variance is in the model's response
-to identical bytes.
+**Mode 1: answering before reading.** Three of four captured misses
+were `{"candidates":[]}` emitted in five completion tokens. The model
+did not weigh the password and reject it; it answered "nothing" without
+engaging. Telling the prompt to work through every section and to check
+every line before returning an empty list removed this mode from
+subsequent captures.
 
-The prompt is not the cause either. Driven by hand at temperature 0,
-the same window returned the secret 15/15 through the plain-content
-path and 15/15 through the tool-calling path atalaia actually uses.
-Churning the KV cache with a large unrelated diff between runs did not
-reproduce it either (12/12).
+**Mode 2: first hit wins.** The remaining misses were the model finding
+the decoy in the window's first file and stopping, never reaching the
+second file's secret. Prompting alone did not fix it, so windows now
+hold at most one file. On real diffs this costs nothing: `issue.diff`
+already produced 22 windows for 21 files at a 4k budget.
 
-What remains is serving-level non-determinism. The host runs Gemma 4
-E4B with fp8 weights and an fp8 KV cache, prefix caching on, chunked
-prefill on, and asynchronous scheduling. None of that guarantees
-bit-identical computation across differing cache and batch states, and
-this input sits near a decision boundary: the model is judging whether
-a password embedded in a URL clears the reporting bar. A borderline
-logit occasionally flips. On a miss the model returns an empty
-candidate list (`candidates: 0`), so it is a recall miss in the model,
-not a grounding drop.
+**What is left is genuinely the serving stack.** With the file alone in
+its window, the one miss in 40 was again a five-token empty answer on
+byte-identical input. A logging proxy confirmed atalaia sends one
+distinct request body across 42 captures, and the same prompt driven by
+hand returned the secret 15/15 on both the content and tool-calling
+paths. The host runs fp8 weights and an fp8 KV cache with prefix
+caching, chunked prefill and async scheduling, none of which guarantees
+bit-identical computation across differing cache and batch states.
 
-Fixing it in atalaia is not possible: the request is already fixed and
-deterministic. The options are operator-side (disable prefix caching
-and chunked prefill, at a throughput cost) or caller-side (a watcher
-that re-runs). Neither is worth it for a channel that is explicitly
-lower-trust and does not gate a merge, so the residual is documented
-rather than engineered around.
+Measured recall on the quirk fixture sits around 95% and the two fixes
+above did not move the aggregate at n=40, which is too small to resolve
+a two-point difference. They are kept because each removes an observed
+failure mode, not because the aggregate moved.
+
+**A precision regression, caught by the corpus.** Naming command lines
+and connection strings in the prompt made the model return bare
+variable names, `PG_PASSWORD` lifted out of `${PG_PASSWORD}`. Those
+ground happily, since the name really is a substring of the reference,
+and two reached `discoveries[]` on the references fixture. Grounding now
+checks where a value landed: if every occurrence in its line sits
+inside a `$VAR` or `${VAR}` reference, it names a secret rather than
+being one. This is exactly what the clean fixtures exist to catch, and
+it only surfaced because they run against a real model.
+
+Fixing the remaining flake in atalaia is not possible: the request is
+already fixed and deterministic. The options are operator-side (disable
+prefix caching and chunked prefill, at a throughput cost) or
+caller-side (a watcher that re-runs). Neither is worth it for a channel
+that is explicitly lower-trust and does not gate a merge, so the
+residual is documented rather than engineered around.
 
 **Real-world catch.** On `example4.diff`, an actual diff from this
 repo's working tree, the deep read found `$ODI_PASS = 'Hogsback';` at

@@ -50,8 +50,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
   Measured against Gemma 4 E4B before release: false alarms 0/9 across
   three clean fixtures, hallucinated (ungroundable) values 0, recall
-  ~96% (50/52) on a basic-auth password in a URL that no gitleaks rule
-  matches. The residual is serving non-determinism, not atalaia: a
+  ~95% on a basic-auth password in a URL that no gitleaks rule matches.
+  Getting there meant fixing two observed failure modes: the model
+  answering with an empty list in five tokens before reading (prompt),
+  and reporting the first credential in a window and stopping, so a
+  second file's secret went unmentioned (windows now hold one file
+  each). The residual is serving non-determinism, not atalaia: a
   logging proxy confirmed the request bytes are identical across runs,
   and the same prompt driven by hand scored 15/15.
   Getting there took two tuning findings. Window size drives recall (3/5
