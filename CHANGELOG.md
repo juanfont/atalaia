@@ -48,6 +48,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   A deep failure never fails the request; it reports in
   `stats.deep_scan.error` and `verdicts[]` stands alone.
 
+  Measured against Gemma 4 E4B before release: false alarms 0/9 across
+  three clean fixtures, hallucinated (ungroundable) values 0, recall
+  9/10 on a basic-auth password in a URL that no gitleaks rule matches.
+  Getting there took two tuning findings. Window size drives recall (3/5
+  at ~20k tokens per window versus 5/5 at ~4k), hence
+  `deep_scan.window_tokens` (default 4000) sized independently of
+  `llm.context_budget`. And the first prompt was suppressing recall by
+  telling the model an empty list was the expected answer; naming the
+  shapes regex misses instead took the quirk case from 5/10 to 9/10 with
+  no precision cost. An empty `discoveries[]` is not proof of a clean
+  diff.
+
   Six corpus fixtures behind `make smoke-corpus-discovery`, every
   premise verified against gitleaks rather than assumed: `deep_quirk`
   (the reported bug, gating both symptoms), `deep_quiet` and
