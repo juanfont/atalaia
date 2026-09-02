@@ -83,6 +83,17 @@ func Ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding)
 			continue
 		}
 
+		// A bare variable NAME grounds happily, because it really is in
+		// the line: "PG_PASSWORD" is a substring of "${PG_PASSWORD}".
+		// isReference cannot catch that, since the value the model
+		// returned carries no $ or braces of its own. Look at where it
+		// actually landed instead: if every occurrence in the line sits
+		// inside a $VAR or ${VAR} reference, it names a secret rather
+		// than being one.
+		if txt := addedLineText(diff, file, line); txt != "" && onlyInVarReference(txt, match) {
+			continue
+		}
+
 		id := detector.FindingID(detector.Finding{File: file, Line: line, Match: match})
 		if seen[id] {
 			continue
@@ -204,6 +215,56 @@ func collidesWithVerdict(taken []detector.DedupedFinding, file string, line int,
 		if strings.Contains(d.Match, needle) || strings.Contains(needle, d.Match) {
 			return true
 		}
+	}
+	return false
+}
+
+// addedLineText returns the text of one added line, located the same
+// way LocateInDiff locates a match.
+func addedLineText(diff []byte, file string, line int) string {
+	for _, b := range detector.WalkDiff(diff) {
+		if b.Path != file {
+			continue
+		}
+		lines := strings.Split(b.Content, "\n")
+		if idx := line - b.StartLine; idx >= 0 && idx < len(lines) {
+			return lines[idx]
+		}
+	}
+	return ""
+}
+
+// onlyInVarReference reports whether every occurrence of needle in line
+// sits inside a shell or template variable reference. One bare
+// occurrence is enough to treat the value as a literal.
+func onlyInVarReference(line, needle string) bool {
+	found := false
+	for i := 0; ; {
+		j := strings.Index(line[i:], needle)
+		if j < 0 {
+			break
+		}
+		pos := i + j
+		found = true
+		if !varRefAt(line, pos) {
+			return false
+		}
+		i = pos + 1
+		if i >= len(line) {
+			break
+		}
+	}
+	return found
+}
+
+// varRefAt reports whether the token starting at pos is introduced by
+// $ or ${.
+func varRefAt(line string, pos int) bool {
+	if pos >= 2 && line[pos-2] == '$' && line[pos-1] == '{' {
+		return true
+	}
+	if pos >= 1 && line[pos-1] == '$' {
+		return true
 	}
 	return false
 }
