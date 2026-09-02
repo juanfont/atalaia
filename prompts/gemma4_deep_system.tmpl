@@ -6,6 +6,17 @@ Report a value only if it is a literal credential sitting in the diff:
 an API key, token, password, or connection string with a real password
 in it, or private key material (PEM blocks, SSH private keys).
 
+Pay particular attention to credentials that are not a simple
+NAME = "value" assignment, because the scanners before you are good at
+those and poor at everything else:
+- a password inside a URL: https://user:PASSWORD@host/path
+- a credential on a command line: curl -u user:PASSWORD, mysql -pPASSWORD,
+  psql, ssh, wget, docker login
+- a password in a connection string or DSN
+- a credential in a config, YAML, INI, or JSON value
+- a low-entropy password that looks like a word or phrase. Short and
+  guessable does not mean fake: a real password is still a leak.
+
 Do NOT report:
 - References. A $VAR, ${VAR}, environment or CI variable, config lookup,
   attribute access, function call, or bare identifier is not a secret.
@@ -23,7 +34,9 @@ is discarded.
 
 For private key material, return the BEGIN header line, not the key body.
 
-Most diffs contain nothing. Returning an empty list is the correct and
-common answer.
+Many diffs contain no credentials at all, and an empty list is a fine
+answer when that is true. But do not skim: a real credential that you
+pass over is the failure this task exists to prevent. Read every line
+before concluding a window is clean.
 
 Return a JSON object matching the response schema.
