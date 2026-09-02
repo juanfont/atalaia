@@ -118,13 +118,16 @@ func Ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding)
 // groundingNeedle picks the string to search the diff for, and rejects
 // candidates not worth searching.
 //
-// Private key material gets its header line rather than the whole
-// value: a PEM block spans dozens of lines, LocateInDiff searches line
-// by line, and no small model reproduces a key body verbatim.
+// Private key material grounds on its BEGIN header rather than the
+// whole value: a PEM block spans dozens of lines, LocateInDiff searches
+// line by line, and no small model reproduces a key body verbatim.
+// Requiring the BEGIN line specifically also rejects a candidate that
+// is only the END delimiter, which locates fine but is a marker, not a
+// credential, and would report the same key a second time.
 func groundingNeedle(c DeepCandidate) (string, bool) {
 	v := c.Value
 	if c.Kind == "private_key" {
-		v = firstNonEmptyLine(v)
+		v = pemHeaderLine(v)
 	}
 	v = strings.TrimSpace(v)
 
@@ -205,9 +208,12 @@ func collidesWithVerdict(taken []detector.DedupedFinding, file string, line int,
 	return false
 }
 
-func firstNonEmptyLine(s string) string {
+// pemHeaderLine returns the first "-----BEGIN ...-----" line in s, or
+// "" when there is none. A private-key candidate without a BEGIN line
+// is not groundable as key material.
+func pemHeaderLine(s string) string {
 	for _, line := range strings.Split(s, "\n") {
-		if t := strings.TrimSpace(line); t != "" {
+		if t := strings.TrimSpace(line); strings.HasPrefix(t, "-----BEGIN") {
 			return t
 		}
 	}
