@@ -66,7 +66,7 @@ Also accepted: `text/plain`, `application/x-patch`, missing/blank Content-Type (
 
 **`deep` (bool, default false)** opts into a second LLM pass that reads the diff cold and reports credentials no detector flagged. JSON callers set `"deep": true` in the body; raw-diff callers use `?deep=1` on the URL.
 
-This is for **non-gating callers** — a webhook watcher, not a pre-commit hook. It costs an LLM call even when detectors found nothing, and takes up to `llm.deep_scan.max_windows` sequential calls, so size your client timeout accordingly (see [deployment.md](deployment.md)). Requires `llm.deep_scan.enabled` on the server; when the operator has it off, the request still succeeds and reports `stats.deep_scan.ran: false`.
+This is for **non-gating callers** — a webhook watcher, not a pre-commit hook. It costs an LLM call even when detectors found nothing, and takes one sequential call per window (one window per file, capped at `llm.deep_scan.max_windows`, default 48), so size your client timeout accordingly (see [deployment.md](deployment.md)). Requires `llm.deep_scan.enabled` on the server; when the operator has it off, the request still succeeds and reports `stats.deep_scan.ran: false`.
 
 **Body size cap**: `server.max_body_bytes` (default 10 MiB). Larger bodies return 400.
 
@@ -209,7 +209,9 @@ Per-request observability. Counts, not summaries.
 - `ran: false` means the deep read did not happen — the operator has `llm.deep_scan.enabled: false`, or `require_findings` is on and the diff had no detector findings. An empty `discoveries[]` here says nothing about the diff.
 - `error` non-empty means the deep read **failed** (timeout, backend error, unparseable output). The request still succeeded and `verdicts[]` is valid, but discovery coverage is incomplete: do **not** read an empty `discoveries[]` alongside an error as clean. Same contract as `detector_errors[]`.
 - `truncated: true` means coverage stopped at `llm.deep_scan.max_windows` with added lines left unscanned. Raise the cap or split the diff.
+- `windows` and `calls` are the added-line set split into scanning units, one LLM call each. Two things size them. `llm.deep_scan.window_tokens` (default 4000) caps one window, deliberately far below `llm.context_budget.input_tokens`: recall on a buried secret falls off as the window grows (measured 3/5 at ~20k tokens per window versus 5/5 at ~4k). And **a window holds at most one file**, because when one window carried two files the model would report a credential from the first and stop, never mentioning the second. Both trade extra calls for finding things; a call is roughly 200 ms.
 - `candidates` is what the model claimed; `discovered` is what survived grounding; `ungrounded` is what was discarded as not present in the diff. **`ungrounded ÷ candidates` is the model's hallucination rate for this request** — the number worth alerting on across requests (`atalaia_deep_ungrounded_total` / `atalaia_deep_candidates_total`).
+- **These three do not add up, by design.** `candidates − discovered − ungrounded` is the remainder dropped by the filters between locating a value and reporting it: known sentinel values, bare variable names that only ever occur inside a `$VAR` / `${VAR}` reference, the same secret found in two windows, and secrets a detector already reported (those belong to `verdicts[]`). A non-zero remainder is normal and healthy. It is not currently broken out per reason; ask if you want that as separate counters.
 
 ### A realistic worked example
 
