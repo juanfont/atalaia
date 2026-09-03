@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.6.0], 2026-09-03
+
 ### Added
 
 - **Deep scan**: an opt-in second LLM pass that reads a diff cold and
