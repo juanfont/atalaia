@@ -67,9 +67,9 @@ llm:
     max_windows: 48                 # coverage cap on windows; smaller windows means more of them
     max_candidates: 50              # per LLM call; extras discarded before grounding
     profile: gemma4_deep            # entry under llm.profiles holding the deep templates
-    require_findings: false         # true limits deep reads to diffs that already have detector findings (cuts deep volume to the flagged fraction)
-    max_added_lines: 0              # skip the deep read on diffs with more added lines than this; 0 = no limit
-    sample_rate: 1.0                # run the deep read on this fraction of eligible requests; a load-shedding lever
+    require_findings: false         # true limits deep reads to diffs the detectors already flagged. A precision knob, not a load lever: it drops the coverage deep exists for
+    max_added_lines: 0              # skip the deep read on diffs with more added lines than this; 0 = no limit. Load-shedding lever
+    sample_rate: 1.0                # run the deep read on this fraction of eligible requests, uniformly. Load-shedding lever that keeps coverage
     admission_wait: 1s              # how long to wait for a free LLM slot before deferring; never queues behind adjudication
   profiles:
     gemma4:
