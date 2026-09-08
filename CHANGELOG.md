@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.7.0], 2026-09-08
+
 ### Fixed
 
 - **Deep scan no longer starves adjudication or 503s the scan.** In
@@ -32,11 +34,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ### Added
 
 - Selective deep scanning, for high-volume instances:
-  `llm.deep_scan.max_added_lines` skips the biggest diffs,
-  `llm.deep_scan.sample_rate` runs the deep read on a fraction of
-  eligible requests, and the existing `require_findings` limits it to
-  diffs the detectors flagged. All report `status: skipped` with the
-  rule named. `llm.deep_scan.admission_wait` (default 1s) bounds how
+  `llm.deep_scan.max_added_lines` skips the biggest diffs and
+  `llm.deep_scan.sample_rate` runs the deep read on a uniform fraction
+  of eligible requests. Both shed load while keeping the coverage deep
+  exists for. The existing `require_findings` is not a load lever: it
+  restricts the deep read to diffs the detectors already flagged, which
+  drops the zero-finding diffs where an unflagged secret most often
+  hides. All three report `status: skipped` with the rule named. `llm.deep_scan.admission_wait` (default 1s) bounds how
   long the deep read waits for a free slot on a lightly loaded server;
   it never waits behind a queued adjudication.
 
