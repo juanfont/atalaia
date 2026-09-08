@@ -67,7 +67,11 @@ var (
 		Help: "Findings the LLM did not return a verdict for; filled with fallback.",
 	})
 
-	// DeepScanTotal counts deep reads by outcome: ok, error, disabled.
+	// DeepScanTotal counts deep reads by outcome, labelled with the
+	// same status strings the API reports: complete, partial, deferred,
+	// skipped, disabled, failed. deferred and partial climbing together
+	// is the signal that the backend is saturated and the deep channel
+	// is being shed to protect adjudication.
 	DeepScanTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "atalaia_deep_scan_total",
 		Help: "Deep scans attempted, by result.",

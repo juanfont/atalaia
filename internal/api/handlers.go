@@ -20,14 +20,6 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-// deepOutcome carries the deep read back from its goroutine. The error
-// is handled, never returned to the caller as a failure: verdicts[] is
-// the primary product and stands on its own.
-type deepOutcome struct {
-	result llm.DeepResult
-	err    error
-}
-
 func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	reqID := requestID(r)
@@ -70,20 +62,6 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 
 	deduped := detector.Dedup(raw)
 
-	// ---- deep stage (opt-in, concurrent with adjudication) ----
-	// Started before Adjudicate so the two overlap when the backend has
-	// capacity. Both contend for the same LLM semaphore, so at
-	// max_inflight 1 this degrades to taking turns, which is correct. A
-	// deep request therefore occupies up to two queue waiters.
-	var deepCh chan deepOutcome
-	if deep && a.deepScanner != nil {
-		deepCh = make(chan deepOutcome, 1)
-		go func() {
-			res, err := a.deepScanner.Scan(r.Context(), diff, len(deduped))
-			deepCh <- deepOutcome{result: res, err: err}
-		}()
-	}
-
 	// ---- LLM stage ----
 	result, err := a.adjudicator.Adjudicate(r.Context(), diff, deduped)
 	if err != nil {
@@ -106,10 +84,18 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictDismissed).Add(float64(dismissed))
 	metrics.VerdictsTotal.WithLabelValues(apitypes.VerdictUnreviewed).Add(float64(unreviewed))
 
-	// ---- collect the deep read ----
-	// A deep failure never fails the request. It surfaces in stats so a
-	// caller cannot read missing discoveries as a clean diff, the same
-	// contract DetectorErrors carries.
+	// ---- deep stage (opt-in, after adjudication) ----
+	// Runs after adjudication, never alongside it. Concurrent admission
+	// let the deep read take the one LLM slot first, turning its own
+	// request's adjudication into a queued waiter it then yielded to,
+	// so every deep request deferred itself. Sequencing removes that;
+	// at max_inflight 1 the overlap bought nothing anyway.
+	//
+	// The deep read never queues and never fails the request. Under
+	// load it comes back deferred or partial, the shallow verdicts go
+	// out as a 200, and stats.deep_scan.status says which. That is the
+	// contract a watcher needs: a busy backend degrades the deep
+	// channel, it does not invalidate the scan.
 	var (
 		discoveries []apitypes.Discovery
 		deepStats   *apitypes.DeepScanStats
@@ -117,28 +103,35 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 	)
 	if deep {
 		deepStats = &apitypes.DeepScanStats{}
-		if deepCh == nil {
-			// Operator disabled deep scan. Report it rather than
-			// silently answering as though it ran.
-			metrics.DeepScanTotal.WithLabelValues("disabled").Inc()
-		} else if outcome := <-deepCh; outcome.err != nil {
-			deepStats.Error = outcome.err.Error()
-			a.logger.Warn().Str("request_id", reqID).Err(outcome.err).Msg("deep scan failed")
-			metrics.DeepScanTotal.WithLabelValues("error").Inc()
-		} else {
-			metrics.DeepScanTotal.WithLabelValues("ok").Inc()
-			grounded, gstats := llm.Ground(diff, outcome.result.Candidates, deduped)
-			deepRaw = grounded
-			discoveries = convertDiscoveries(grounded)
-			deepStats.Ran = true
-			deepStats.Calls = outcome.result.Calls
-			deepStats.Windows = outcome.result.Windows
-			deepStats.Truncated = outcome.result.Truncated
-			deepStats.LatencyMs = outcome.result.Latency.Milliseconds()
-			deepStats.Candidates = gstats.Candidates
-			deepStats.Discovered = gstats.Discovered
-			deepStats.Ungrounded = gstats.Ungrounded
+		switch {
+		case a.deepScanner == nil:
+			deepStats.Status = apitypes.DeepStatusDisabled
+		default:
+			res, err := a.deepScanner.Scan(r.Context(), diff, len(deduped))
+			if err != nil {
+				deepStats.Status = apitypes.DeepStatusFailed
+				deepStats.Error = err.Error()
+				a.logger.Warn().Str("request_id", reqID).Err(err).Msg("deep scan failed")
+				break
+			}
+			deepStats.Status = string(res.Status)
+			deepStats.Reason = res.Reason
+			deepStats.Ran = res.Status == llm.DeepComplete || res.Status == llm.DeepPartial
+			deepStats.Calls = res.Calls
+			deepStats.Windows = res.Windows
+			deepStats.WindowsScanned = res.WindowsScanned
+			deepStats.Truncated = res.Truncated
+			deepStats.LatencyMs = res.Latency.Milliseconds()
+			if deepStats.Ran {
+				grounded, gstats := llm.Ground(diff, res.Candidates, deduped)
+				deepRaw = grounded
+				discoveries = convertDiscoveries(grounded)
+				deepStats.Candidates = gstats.Candidates
+				deepStats.Discovered = gstats.Discovered
+				deepStats.Ungrounded = gstats.Ungrounded
+			}
 		}
+		metrics.DeepScanTotal.WithLabelValues(deepStats.Status).Inc()
 	}
 
 	total := time.Since(start)
@@ -181,6 +174,7 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 		Int64("total_ms", total.Milliseconds()).
 		Bool("truncated", result.Truncated).
 		Bool("deep", deep).
+		Str("deep_status", deepStatusForLog(deepStats)).
 		Int("discoveries", len(discoveries)).
 		Msg("check")
 
@@ -436,6 +430,13 @@ func convertDetections(in []detector.Detection) []apitypes.Detection {
 		}
 	}
 	return out
+}
+
+func deepStatusForLog(ds *apitypes.DeepScanStats) string {
+	if ds == nil {
+		return ""
+	}
+	return ds.Status
 }
 
 // convertDiscoveries maps grounded discoveries to the wire shape. The

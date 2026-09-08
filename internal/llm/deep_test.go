@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/juanfont/atalaia/internal/types"
 )
@@ -269,5 +270,196 @@ func TestDeepReader_FallsBackToContextBudget(t *testing.T) {
 	}
 	if len(client.requests) == 0 {
 		t.Error("unset window_tokens must fall back to the context budget, not scan nothing")
+	}
+}
+
+// ---- admission and selection ----
+
+// The deep read must never queue behind a busy backend. A held slot
+// means "not now": the shallow result goes back to the caller with the
+// deep read marked deferred, instead of the whole request 503ing.
+func TestDeepReader_DefersWhenBackendBusy(t *testing.T) {
+	sem := NewSemaphore(1, 16)
+	if err := sem.Acquire(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	defer sem.Release()
+
+	client := &fakeDeepClient{}
+	cfg := deepTestConfig(t, 8)
+	cfg.DeepScan.AdmissionWait = 0
+	r, err := NewDeepReader(cfg, client, sem)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if err != nil {
+		t.Fatalf("deferral is not an error: %v", err)
+	}
+	if got.Status != DeepDeferred {
+		t.Errorf("Status = %q, want %q", got.Status, DeepDeferred)
+	}
+	if got.Calls != 0 || len(client.requests) != 0 {
+		t.Errorf("a deferred read must make no LLM call, made %d", len(client.requests))
+	}
+	if got.Windows == 0 {
+		t.Error("Windows should still report what would have been scanned")
+	}
+	if sem.QueueDepth() != 1 {
+		t.Errorf("a deferred read must not linger as a waiter: depth=%d, want 1", sem.QueueDepth())
+	}
+}
+
+// yieldingClient registers an Acquire waiter during its first call and
+// blocks until that waiter is queued. When the reader releases the
+// slot after window one, the waiter takes it (a blocked sender is
+// handed the buffer slot directly on Release) and holds it, like an
+// adjudication running a call. The reader's next TryAcquire finds the
+// slot busy, waits out its admission budget, and yields: partial.
+type yieldingClient struct {
+	fakeDeepClient
+	sem   *Semaphore
+	hold  time.Duration
+	once  sync.Once
+	freed chan struct{}
+}
+
+func (y *yieldingClient) Complete(ctx context.Context, req ChatRequest) (ChatResponse, error) {
+	y.once.Do(func() {
+		go func() {
+			_ = y.sem.Acquire(context.Background())
+			time.Sleep(y.hold)
+			y.sem.Release()
+			close(y.freed)
+		}()
+		deadline := time.Now().Add(time.Second)
+		for y.sem.QueueDepth() < 2 && time.Now().Before(deadline) {
+			time.Sleep(time.Millisecond)
+		}
+	})
+	return y.fakeDeepClient.Complete(ctx, req)
+}
+
+func TestDeepReader_YieldsMidScanToWaiter(t *testing.T) {
+	sem := NewSemaphore(1, 16)
+	client := &yieldingClient{
+		fakeDeepClient: fakeDeepClient{replies: []string{
+			`{"candidates":[{"value":"found-in-window-one","kind":"credential","confidence":0.9,"reason":"x"}]}`,
+		}},
+		sem:   sem,
+		hold:  300 * time.Millisecond, // longer than the admission wait
+		freed: make(chan struct{}),
+	}
+	cfg := deepTestConfig(t, 32)
+	cfg.DeepScan.WindowTokens = 150
+	cfg.DeepScan.AdmissionWait = 50 * time.Millisecond
+	r, err := NewDeepReader(cfg, client, sem)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.Scan(context.Background(), []byte(fillerDiff(40)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-client.freed
+
+	if got.Status != DeepPartial {
+		t.Fatalf("Status = %q, want %q (windows=%d scanned=%d)", got.Status, DeepPartial, got.Windows, got.WindowsScanned)
+	}
+	if got.WindowsScanned != 1 {
+		t.Errorf("WindowsScanned = %d, want 1: must stop as soon as a waiter appears", got.WindowsScanned)
+	}
+	if got.Windows < 2 {
+		t.Errorf("Windows = %d, want the full planned count", got.Windows)
+	}
+	if len(got.Candidates) != 1 {
+		t.Errorf("candidates from the scanned window must be kept, got %d", len(got.Candidates))
+	}
+}
+
+func TestDeepReader_CompleteStatusOnNormalRun(t *testing.T) {
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(deepTestConfig(t, 8), client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != DeepComplete {
+		t.Errorf("Status = %q, want %q", got.Status, DeepComplete)
+	}
+	if got.WindowsScanned != got.Windows {
+		t.Errorf("WindowsScanned=%d Windows=%d, want equal on a complete run", got.WindowsScanned, got.Windows)
+	}
+}
+
+func TestDeepReader_RequireFindingsReportsSkipped(t *testing.T) {
+	cfg := deepTestConfig(t, 8)
+	cfg.DeepScan.RequireFindings = true
+	r, err := NewDeepReader(cfg, &fakeDeepClient{}, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != DeepSkipped || got.Reason != "require_findings" {
+		t.Errorf("got status=%q reason=%q, want skipped/require_findings", got.Status, got.Reason)
+	}
+}
+
+func TestDeepReader_MaxAddedLinesSkipsBigDiffs(t *testing.T) {
+	cfg := deepTestConfig(t, 8)
+	cfg.DeepScan.MaxAddedLines = 10
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(cfg, client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.Scan(context.Background(), []byte(fillerDiff(40)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != DeepSkipped || got.Reason != "max_added_lines" {
+		t.Errorf("40 added lines over a cap of 10 must skip, got status=%q reason=%q", got.Status, got.Reason)
+	}
+	if len(client.requests) != 0 {
+		t.Errorf("skipped read must make no calls, made %d", len(client.requests))
+	}
+
+	got, err = r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != DeepComplete {
+		t.Errorf("3 added lines under a cap of 10 must run, got %q", got.Status)
+	}
+}
+
+func TestDeepReader_SampleRateSkipsByDraw(t *testing.T) {
+	cfg := deepTestConfig(t, 8)
+	cfg.DeepScan.SampleRate = 0.5
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(cfg, client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r.draw = func() float64 { return 0.9 } // above the rate: skip
+	got, _ := r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if got.Status != DeepSkipped || got.Reason != "sample_rate" {
+		t.Errorf("draw 0.9 at rate 0.5 must skip, got status=%q reason=%q", got.Status, got.Reason)
+	}
+
+	r.draw = func() float64 { return 0.1 } // below the rate: run
+	got, _ = r.Scan(context.Background(), []byte(twoFileDiff), 0)
+	if got.Status != DeepComplete {
+		t.Errorf("draw 0.1 at rate 0.5 must run, got %q", got.Status)
 	}
 }

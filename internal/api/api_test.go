@@ -706,6 +706,7 @@ func TestCheck_NoDeepFlagMakesNoDeepCall(t *testing.T) {
 
 func TestCheck_DeepFlagReturnsDiscoveries(t *testing.T) {
 	deep := &fakeDeepScanner{result: llm.DeepResult{
+		Status: llm.DeepComplete,
 		Candidates: []llm.DeepCandidate{{
 			Value:      deepURLPassword,
 			Kind:       "credential",
@@ -751,6 +752,7 @@ func TestCheck_DeepFlagReturnsDiscoveries(t *testing.T) {
 // The anti-hallucination gate, end to end through the handler.
 func TestCheck_DeepHallucinationIsDropped(t *testing.T) {
 	deep := &fakeDeepScanner{result: llm.DeepResult{
+		Status: llm.DeepComplete,
 		Candidates: []llm.DeepCandidate{{
 			Value:      "sk-live-THIS-IS-NOT-IN-THE-DIFF",
 			Kind:       "credential",
@@ -868,5 +870,151 @@ func TestVersion_OmitsDeepFingerprintWhenDisabled(t *testing.T) {
 	}
 	if v.PromptDeep != "" {
 		t.Errorf("PromptDeep = %q, want empty when deep scan is off", v.PromptDeep)
+	}
+}
+
+// ---- deep admission: the shallow result must never pay for the deep read ----
+
+// orderedDeepScanner records when Scan runs relative to adjudication,
+// via a shared sequence the fake adjudicator also appends to.
+type orderedDeepScanner struct {
+	seq    *[]string
+	result llm.DeepResult
+}
+
+func (o *orderedDeepScanner) Scan(_ context.Context, _ []byte, _ int) (llm.DeepResult, error) {
+	*o.seq = append(*o.seq, "deep")
+	return o.result, nil
+}
+func (o *orderedDeepScanner) PromptFingerprint() string { return "gemma4_deep:abc123" }
+
+func newDeepTestServerWith(t *testing.T, adj Adjudicator, deep DeepScanner) *httptest.Server {
+	t.Helper()
+	cfg := &types.Config{
+		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
+		Detectors: types.DetectorsConfig{Enabled: []string{"gitleaks"}},
+		LLM:       types.LLMConfig{Model: "test-model"},
+	}
+	g, err := detector.NewGitleaks(cfg.Detectors.Gitleaks)
+	if err != nil {
+		t.Fatalf("gitleaks: %v", err)
+	}
+	router := mux.NewRouter()
+	if _, err := NewApp(context.Background(), Deps{
+		Config: cfg, Detectors: []detector.Detector{g}, Adjudicator: adj,
+		DeepScanner: deep, Reachability: fakeReachability{ready: true},
+		Version: "test", Router: router,
+	}); err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	return httptest.NewServer(router)
+}
+
+// The deep read runs after adjudication, not alongside it. Concurrent
+// admission let the deep read take the one LLM slot first, turning its
+// own request's adjudication into a queued waiter it then yielded to:
+// every deep request deferred itself. Sequencing removes the
+// self-contention; at max_inflight 1 the overlap bought nothing anyway.
+func TestCheck_DeepRunsAfterAdjudication(t *testing.T) {
+	var seq []string
+	adj := &fakeAdjudicator{adjudicate: func(deduped []detector.DedupedFinding) (llm.AdjudicateResult, error) {
+		seq = append(seq, "adjudicate")
+		verdicts := make([]llm.Verdict, len(deduped))
+		for i, d := range deduped {
+			verdicts[i] = llm.Verdict{FindingID: d.ID, Verdict: llm.VerdictDismissed, Confidence: 0.9, Reason: "fake"}
+		}
+		return llm.AdjudicateResult{Result: llm.Result{Verdicts: verdicts, LLMInvoked: true, LLMCalls: 1}}, nil
+	}}
+	deep := &orderedDeepScanner{seq: &seq, result: llm.DeepResult{Status: llm.DeepComplete}}
+	srv := newDeepTestServerWith(t, adj, deep)
+	defer srv.Close()
+
+	res, _ := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if len(seq) != 2 || seq[0] != "adjudicate" || seq[1] != "deep" {
+		t.Errorf("order = %v, want [adjudicate deep]", seq)
+	}
+}
+
+func TestCheck_DeepDeferredIsA200WithShallowResult(t *testing.T) {
+	deep := &fakeDeepScanner{result: llm.DeepResult{Status: llm.DeepDeferred, Reason: "backend busy", Windows: 2}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("a deferred deep read must not fail the request, got %d", res.StatusCode)
+	}
+	if len(resp.Verdicts) == 0 {
+		t.Error("shallow verdicts must be returned when the deep read defers")
+	}
+	ds := resp.Stats.DeepScan
+	if ds == nil || ds.Status != apitypes.DeepStatusDeferred {
+		t.Fatalf("deep_scan.status = %+v, want deferred", ds)
+	}
+	if ds.Ran {
+		t.Error("deferred must report ran: false")
+	}
+	if ds.Reason != "backend busy" || ds.Windows != 2 || ds.WindowsScanned != 0 {
+		t.Errorf("deferred stats not carried through: %+v", ds)
+	}
+	if ds.Error != "" {
+		t.Errorf("deferral is not an error, got %q", ds.Error)
+	}
+}
+
+func TestCheck_DeepPartialKeepsDiscoveriesAndSaysSo(t *testing.T) {
+	deep := &fakeDeepScanner{result: llm.DeepResult{
+		Status: llm.DeepPartial, Reason: "backend busy",
+		Windows: 2, WindowsScanned: 1, Calls: 1,
+		Candidates: []llm.DeepCandidate{{Value: deepURLPassword, Kind: "credential", Confidence: 0.9, Reason: "x"}},
+	}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	ds := resp.Stats.DeepScan
+	if ds == nil || ds.Status != apitypes.DeepStatusPartial {
+		t.Fatalf("status = %+v, want partial", ds)
+	}
+	if !ds.Ran || ds.WindowsScanned != 1 || ds.Windows != 2 {
+		t.Errorf("partial stats: %+v", ds)
+	}
+	if len(resp.Discoveries) != 1 {
+		t.Errorf("discoveries from scanned windows must be returned on partial, got %d", len(resp.Discoveries))
+	}
+}
+
+func TestCheck_DeepSkippedPassesReasonThrough(t *testing.T) {
+	deep := &fakeDeepScanner{result: llm.DeepResult{Status: llm.DeepSkipped, Reason: "require_findings"}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	ds := resp.Stats.DeepScan
+	if ds == nil || ds.Status != apitypes.DeepStatusSkipped || ds.Reason != "require_findings" || ds.Ran {
+		t.Errorf("skipped stats = %+v", ds)
+	}
+}
+
+func TestCheck_DeepStatusForDisabledAndFailed(t *testing.T) {
+	srv := newDeepTestServer(t, nil)
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	srv.Close()
+	if resp.Stats.DeepScan == nil || resp.Stats.DeepScan.Status != apitypes.DeepStatusDisabled {
+		t.Errorf("disabled: %+v", resp.Stats.DeepScan)
+	}
+
+	srv = newDeepTestServer(t, &fakeDeepScanner{err: errors.New("boom")})
+	defer srv.Close()
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("failed deep read must not fail the request, got %d", res.StatusCode)
+	}
+	ds := resp.Stats.DeepScan
+	if ds == nil || ds.Status != apitypes.DeepStatusFailed || ds.Error == "" || ds.Ran {
+		t.Errorf("failed: %+v", ds)
 	}
 }

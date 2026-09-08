@@ -136,6 +136,36 @@ func TestReadLLMConfig_DeepScanDefaults(t *testing.T) {
 	if c.DeepScan.RequireFindings {
 		t.Errorf("require_findings must default off")
 	}
+	if c.DeepScan.MaxAddedLines != 0 {
+		t.Errorf("max_added_lines default = %d, want 0 (no limit)", c.DeepScan.MaxAddedLines)
+	}
+	if c.DeepScan.SampleRate != 1.0 {
+		t.Errorf("sample_rate default = %v, want 1.0 (every request)", c.DeepScan.SampleRate)
+	}
+	if c.DeepScan.AdmissionWait != time.Second {
+		t.Errorf("admission_wait default = %v, want 1s", c.DeepScan.AdmissionWait)
+	}
+}
+
+func TestValidateConfig_DeepScanSampleRateBounds(t *testing.T) {
+	for _, bad := range []float64{0, -0.1, 1.5} {
+		cfg := deepScanTestConfig()
+		cfg.LLM.Profiles["gemma4_deep"] = LLMProfile{SystemTemplate: "s", UserTemplate: "u"}
+		cfg.LLM.DeepScan.Enabled = true
+		cfg.LLM.DeepScan.Profile = "gemma4_deep"
+		cfg.LLM.DeepScan.SampleRate = bad
+		if err := validateConfig(cfg); err == nil || !strings.Contains(err.Error(), "sample_rate") {
+			t.Errorf("sample_rate=%v must be rejected, got %v", bad, err)
+		}
+	}
+	cfg := deepScanTestConfig()
+	cfg.LLM.Profiles["gemma4_deep"] = LLMProfile{SystemTemplate: "s", UserTemplate: "u"}
+	cfg.LLM.DeepScan.Enabled = true
+	cfg.LLM.DeepScan.Profile = "gemma4_deep"
+	cfg.LLM.DeepScan.SampleRate = 1.0
+	if err := validateConfig(cfg); err != nil {
+		t.Errorf("sample_rate=1.0 must pass, got %v", err)
+	}
 }
 
 // deepScanTestConfig is a config that passes validateConfig, so a test
