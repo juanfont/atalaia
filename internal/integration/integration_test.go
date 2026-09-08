@@ -117,6 +117,8 @@ type checkResponse struct {
 		Dismissed  int  `json:"dismissed"`
 		LLMInvoked bool `json:"llm_invoked"`
 		DeepScan   *struct {
+			Status     string `json:"status"`
+			Reason     string `json:"reason"`
 			Ran        bool   `json:"ran"`
 			Windows    int    `json:"windows"`
 			Candidates int    `json:"candidates"`
@@ -348,7 +350,10 @@ func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) (h
 		return 0, 0
 	}
 	if !ds.Ran {
-		t.Errorf("run %d: deep scan did not run (is llm.deep_scan.enabled set in the config?)", run)
+		// The corpus runs against an idle server, so a deferred or
+		// partial read here is a bug, not load.
+		t.Errorf("run %d: deep scan did not complete: status=%s reason=%q (is llm.deep_scan.enabled set in the config?)",
+			run, ds.Status, ds.Reason)
 		return 0, 0
 	}
 	if ds.Truncated {

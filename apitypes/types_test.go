@@ -188,3 +188,19 @@ func TestVersionResponse_OmitsPromptDeepWhenEmpty(t *testing.T) {
 		t.Errorf("prompt_deep must be omitted when deep scan is off: %s", b)
 	}
 }
+
+func TestDeepScanStats_StatusIsAlwaysPresent(t *testing.T) {
+	b, err := json.Marshal(DeepScanStats{Status: DeepStatusDeferred, Reason: "backend busy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"status":"deferred"`, `"reason":"backend busy"`, `"ran":false`, `"windows_scanned":0`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("missing %s in %s", want, b)
+		}
+	}
+	b, _ = json.Marshal(DeepScanStats{Status: DeepStatusComplete})
+	if strings.Contains(string(b), "reason") {
+		t.Errorf("reason must be omitted when empty: %s", b)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync/atomic"
+	"time"
 
 	"github.com/juanfont/atalaia/internal/metrics"
 )
@@ -53,6 +54,59 @@ func (s *Semaphore) Acquire(ctx context.Context) error {
 		metrics.LLMQueueDepth.Dec()
 		return ctx.Err()
 	}
+}
+
+// TryAcquire takes a slot only if one is free, waiting at most wait
+// for one to open, and never while another caller is queued in
+// Acquire. It is the deep read's admission path.
+//
+// The difference from Acquire is the whole point: a refused TryAcquire
+// is never a waiter. It does not bump depth, so it cannot push an
+// Acquire caller past queue_max, and it yields to anyone already
+// queued. Adjudication owns the queue; the deep read borrows idle
+// capacity and steps aside the moment there is contention. Under load
+// that means the deep read defers instead of turning the shallow
+// result into a 503.
+func (s *Semaphore) TryAcquire(ctx context.Context, wait time.Duration) bool {
+	if s.waiters() > 0 {
+		return false
+	}
+	if wait <= 0 {
+		select {
+		case s.slots <- struct{}{}:
+		default:
+			return false
+		}
+	} else {
+		timer := time.NewTimer(wait)
+		defer timer.Stop()
+		select {
+		case s.slots <- struct{}{}:
+		case <-timer.C:
+			return false
+		case <-ctx.Done():
+			return false
+		}
+	}
+	// A waiter may have queued while we were waiting for the slot. It
+	// has priority: hand the slot straight back rather than jump ahead.
+	if s.waiters() > 0 {
+		<-s.slots
+		return false
+	}
+	atomic.AddInt64(&s.depth, 1)
+	metrics.LLMQueueDepth.Inc()
+	metrics.LLMInflight.Inc()
+	return true
+}
+
+// waiters is how many Acquire callers are queued for a slot right now.
+func (s *Semaphore) waiters() int64 {
+	w := atomic.LoadInt64(&s.depth) - int64(len(s.slots))
+	if w < 0 {
+		return 0
+	}
+	return w
 }
 
 func (s *Semaphore) Release() {

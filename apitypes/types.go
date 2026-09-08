@@ -45,21 +45,47 @@ const (
 	KindPrivateKey = "private_key"
 )
 
-// DeepScanStats reports what the deep read did. Ran is false when the
-// caller did not ask for it or the operator disabled it. Error is set
-// when the deep read failed: the request still succeeded, but coverage
-// is incomplete and an empty Discoveries must NOT be read as clean.
+// DeepScanStats reports what the deep read did.
+//
+// Status is the field to branch on. The shallow verdicts[] are valid
+// under every status; only "complete" means the deep channel covered
+// the whole diff, so under any other status an empty Discoveries must
+// NOT be read as clean. Ran is kept for compatibility and is true for
+// "complete" and "partial".
 type DeepScanStats struct {
-	Ran        bool   `json:"ran"`
-	Calls      int    `json:"calls"`
-	Windows    int    `json:"windows"`
-	Candidates int    `json:"candidates"`
-	Discovered int    `json:"discovered"`
-	Ungrounded int    `json:"ungrounded"`
-	Truncated  bool   `json:"truncated"`
-	LatencyMs  int64  `json:"latency_ms"`
-	Error      string `json:"error,omitempty"`
+	// Status is one of:
+	//   complete  every planned window was scanned
+	//   partial   some windows scanned, then the read stepped aside for
+	//             queued adjudication work; WindowsScanned < Windows
+	//   deferred  backend busy, no window scanned; re-request later or
+	//             accept the shallow result
+	//   skipped   a selection rule excluded this diff; see Reason
+	//   disabled  the operator has llm.deep_scan.enabled off
+	//   failed    the deep read errored; see Error
+	Status string `json:"status"`
+	// Reason names the rule or condition behind skipped/deferred/partial.
+	Reason         string `json:"reason,omitempty"`
+	Ran            bool   `json:"ran"`
+	Calls          int    `json:"calls"`
+	Windows        int    `json:"windows"`
+	WindowsScanned int    `json:"windows_scanned"`
+	Candidates     int    `json:"candidates"`
+	Discovered     int    `json:"discovered"`
+	Ungrounded     int    `json:"ungrounded"`
+	Truncated      bool   `json:"truncated"`
+	LatencyMs      int64  `json:"latency_ms"`
+	Error          string `json:"error,omitempty"`
 }
+
+// DeepScanStats.Status values.
+const (
+	DeepStatusComplete = "complete"
+	DeepStatusPartial  = "partial"
+	DeepStatusDeferred = "deferred"
+	DeepStatusSkipped  = "skipped"
+	DeepStatusDisabled = "disabled"
+	DeepStatusFailed   = "failed"
+)
 
 // Stats is the per-request summary surfaced alongside the verdicts.
 // Counts and timings are caller-facing observability; raw matches

@@ -166,8 +166,23 @@ type DeepScanConfig struct {
 	Profile string
 	// RequireFindings limits the deep read to diffs that already carry
 	// at least one detector finding. Set true when cold recall over
-	// clean diffs proves too noisy for the deployment.
+	// clean diffs proves too noisy for the deployment, or to cut deep
+	// volume to the fraction of pushes the detectors flagged.
 	RequireFindings bool
+	// MaxAddedLines skips the deep read on diffs with more added lines
+	// than this. 0 means no limit. A load-shedding lever: the biggest
+	// diffs cost the most windows and are the likeliest to truncate.
+	MaxAddedLines int
+	// SampleRate runs the deep read on this fraction of eligible
+	// requests, 0 < rate <= 1. 1 means every request. Another
+	// load-shedding lever; a skipped request reports it as skipped.
+	SampleRate float64
+	// AdmissionWait is how long the deep read will wait for a free LLM
+	// slot before deferring. It never queues: if any adjudication is
+	// already waiting for the slot, the deep read defers at once
+	// regardless of this value. The wait only lets it catch a slot
+	// between short calls on a lightly loaded server.
+	AdmissionWait time.Duration
 }
 
 type ContextBudgetConfig struct {
@@ -281,6 +296,9 @@ func setDefaults() {
 	viper.SetDefault("llm.deep_scan.max_candidates", 50)
 	viper.SetDefault("llm.deep_scan.profile", "gemma4_deep")
 	viper.SetDefault("llm.deep_scan.require_findings", false)
+	viper.SetDefault("llm.deep_scan.max_added_lines", 0)
+	viper.SetDefault("llm.deep_scan.sample_rate", 1.0)
+	viper.SetDefault("llm.deep_scan.admission_wait", "1s")
 
 	// observability
 	viper.SetDefault("observability.log_level", "info")
@@ -386,6 +404,9 @@ func readLLMConfig() LLMConfig {
 			MaxCandidates:   viper.GetInt("llm.deep_scan.max_candidates"),
 			Profile:         viper.GetString("llm.deep_scan.profile"),
 			RequireFindings: viper.GetBool("llm.deep_scan.require_findings"),
+			MaxAddedLines:   viper.GetInt("llm.deep_scan.max_added_lines"),
+			SampleRate:      viper.GetFloat64("llm.deep_scan.sample_rate"),
+			AdmissionWait:   viper.GetDuration("llm.deep_scan.admission_wait"),
 		},
 	}
 
@@ -479,6 +500,9 @@ func validateConfig(cfg *Config) error {
 			errs = append(errs, fmt.Sprintf("llm.deep_scan.profile: %q is not configured under llm.profiles", cfg.LLM.DeepScan.Profile))
 		case p.SystemTemplate == "" || p.UserTemplate == "":
 			errs = append(errs, fmt.Sprintf("llm.profiles.%s: system_template and user_template are required for deep scan", cfg.LLM.DeepScan.Profile))
+		}
+		if r := cfg.LLM.DeepScan.SampleRate; r <= 0 || r > 1 {
+			errs = append(errs, fmt.Sprintf("llm.deep_scan.sample_rate must be in (0, 1], got %v", r))
 		}
 	}
 
