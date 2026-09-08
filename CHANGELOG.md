@@ -4,6 +4,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- **Deep scan no longer starves adjudication or 503s the scan.** In
+  0.6.0 the deep read joined the same LLM queue as adjudication, with
+  the same priority, counting against `queue_max` and holding the slot
+  for every window. At production push volume on a single-slot backend
+  the deep reads filled the queue, arriving adjudications hit queue
+  full, and the whole request 503ed: the cheap, valid detector-driven
+  verdicts were thrown away to make room for the lower-trust channel.
+  Reported from a GitLab watcher at ~54 scans/min: roughly half of all
+  scans marked untrustworthy, deep mode halving trust instead of adding
+  coverage.
+
+  The deep read now never queues. It takes the LLM slot only when one
+  is free and no adjudication is waiting for it, one window at a time,
+  and steps aside on contention. It also runs after adjudication rather
+  than alongside it, so it cannot delay its own request's verdicts.
+  Under load it reports `stats.deep_scan.status: deferred` (nothing
+  scanned) or `partial` (some windows scanned) and the shallow result
+  goes out as a normal 200. **API note:** `deep_scan` gains `status`
+  (`complete|partial|deferred|skipped|disabled|failed`), `reason` and
+  `windows_scanned`; branch on `status`. `ran` is kept for
+  compatibility. `atalaia_deep_scan_total` is now labelled with the
+  same status strings.
+
+### Added
+
+- Selective deep scanning, for high-volume instances:
+  `llm.deep_scan.max_added_lines` skips the biggest diffs,
+  `llm.deep_scan.sample_rate` runs the deep read on a fraction of
+  eligible requests, and the existing `require_findings` limits it to
+  diffs the detectors flagged. All report `status: skipped` with the
+  rule named. `llm.deep_scan.admission_wait` (default 1s) bounds how
+  long the deep read waits for a free slot on a lightly loaded server;
+  it never waits behind a queued adjudication.
+
 ## [0.6.0], 2026-09-03
 
 ### Added
