@@ -1,0 +1,7 @@
+{
+  "description": "A .env.example straight out of production: every value is test, changeme, root-token or a <template>, and half the keys are usernames, hosts and ports. Seen in the wild: the model returned whole KEY=value lines and six of them reached a Teams card. Any discovery here is a false alarm.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "max_discoveries": 0
+}

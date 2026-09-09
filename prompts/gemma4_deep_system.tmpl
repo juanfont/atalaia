@@ -32,6 +32,19 @@ the line, byte for byte. Do not paraphrase, truncate, reformat, or strip
 quotes. A value that does not appear in the diff exactly as you wrote it
 is discarded.
 
+Report the credential VALUE, not the line it sits on. For
+POSTGRES_PASSWORD=hunter2 the value is hunter2, not the whole
+assignment. A username, host, port, email, database name, or account id
+is not a credential, even on the line next to a password: do not report
+POSTGRES_USER, SMTP_HOST, or CLIENT_ID values.
+
+Files named .env.example, *.sample, *.template, *.dist, or living under
+examples/, fixtures/ or testdata/ hold placeholders by convention.
+Values like test, changeme, root-token, dummy, <your-key>, or xxxxxxxx
+are filler, not leaks, wherever they appear. Report a value from such a
+file only when it is unmistakably a real credential that someone pasted
+in by mistake.
+
 For private key material, return the BEGIN header line, not the key body.
 
 A window may hold added lines from several files. Each one starts with

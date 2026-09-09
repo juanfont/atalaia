@@ -1,0 +1,27 @@
+diff --git a/.env.example b/.env.example
+new file mode 100644
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,22 @@
++# Copy to .env and fill in real values.
++POSTGRES_HOST=localhost
++POSTGRES_PORT=5432
++POSTGRES_DB=app
++POSTGRES_USER=test
++POSTGRES_PASSWORD=test
++
++SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/app
++SPRING_DATASOURCE_USERNAME=test
++SPRING_DATASOURCE_PASSWORD=test
++
++REDIS_URL=redis://localhost:6379/0
++
++SMTP_HOST=smtp.example.internal
++SMTP_USER=notifications
++SMTP_PASSWORD=changeme
++
++VAULT_ADDR=http://127.0.0.1:8200
++VAULT_TOKEN=root-token
++VAULT_DEV_ROOT_TOKEN_ID=root-token
++
++STRIPE_SECRET_KEY=<your-stripe-secret-key>

@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/juanfont/atalaia/internal/detector"
@@ -69,7 +70,31 @@ func Ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding)
 			continue
 		}
 
-		file, line, match := locate(diff, needle)
+		// An assignment-shaped candidate ("KEY=value", "key: value")
+		// is located by the full text the model returned, which pins
+		// the line precisely, but the secret it describes is the
+		// value. Everything downstream (length, placeholder, sentinel,
+		// id, preview) must see the value, or "POSTGRES_PASSWORD=test"
+		// sails through as a 22-character secret and the preview
+		// redacts the key name.
+		var file string
+		var line int
+		var match string
+		if key, val, isAssign := assignmentValue(needle); isAssign {
+			if !isSecretKey(key, val) || isPlaceholder(val) || len(val) < minCandidateChars {
+				continue
+			}
+			file, line, _ = locate(diff, needle)
+			if file == "" {
+				file, line, _ = locate(diff, val)
+			}
+			match = val
+		} else {
+			if isPlaceholder(needle) {
+				continue
+			}
+			file, line, match = locate(diff, needle)
+		}
 		if file == "" {
 			stats.Ungrounded++
 			metrics.DeepUngroundedTotal.Inc()
@@ -264,6 +289,145 @@ func varRefAt(line string, pos int) bool {
 		return true
 	}
 	if pos >= 1 && line[pos-1] == '$' {
+		return true
+	}
+	return false
+}
+
+// assignmentRE matches "KEY=value", "key: value" and the common
+// declaration prefixes ("export KEY=", "const key =", "let", "var",
+// "val") with an identifier-shaped key. Anything else is treated as a
+// bare value.
+var assignmentRE = regexp.MustCompile(`^\s*(?:(?:export|const|let|var|val)\s+)?([A-Za-z_][A-Za-z0-9_.-]*)\s*(?:=|:\s)\s*(.*)$`)
+
+// assignmentValue splits an assignment-shaped candidate into key and
+// value. The value is unquoted and stripped of trailing punctuation the
+// same way a bare candidate is. Returns false for anything that is not
+// assignment-shaped, or whose value is empty.
+func assignmentValue(s string) (key, val string, ok bool) {
+	m := assignmentRE.FindStringSubmatch(s)
+	if m == nil {
+		return "", "", false
+	}
+	val = normalizeCandidate(m[2])
+	if val == "" {
+		return "", "", false
+	}
+	return m[1], val, true
+}
+
+// nonSecretKeySuffixes are assignment keys whose values are, by their
+// own name, not credentials: identities, locations, and addresses. The
+// model reported POSTGRES_USER=test as "a plain-text username", which
+// is correct and not a leak.
+var nonSecretKeySuffixes = []string{
+	"USER", "USERNAME", "USERID", "USER_ID", "LOGIN", "EMAIL",
+	"HOST", "HOSTNAME", "PORT", "DOMAIN", "REGION", "ZONE", "BUCKET",
+	"DB", "DATABASE", "DBNAME", "DB_NAME", "SCHEMA", "TABLE",
+	"CLIENT_ID", "APP_ID", "ACCOUNT_ID", "PROJECT_ID", "TENANT_ID", "ORG_ID",
+	"NAME", "ENV", "ENVIRONMENT", "MODE", "LEVEL", "VERSION",
+}
+
+// isSecretKey reports whether an assignment key could name a secret.
+// A value that is itself a URL with embedded credentials is a secret
+// under any key, including DATABASE_URL.
+func isSecretKey(key, val string) bool {
+	if urlWithCredentials(val) {
+		return true
+	}
+	k := strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(key, "-", "_"), ".", "_"))
+	for _, suffix := range nonSecretKeySuffixes {
+		if k == suffix || strings.HasSuffix(k, "_"+suffix) {
+			return false
+		}
+	}
+	return true
+}
+
+// urlWithCredentials reports whether v looks like scheme://user:pass@host.
+func urlWithCredentials(v string) bool {
+	i := strings.Index(v, "://")
+	if i < 0 {
+		return false
+	}
+	rest := v[i+3:]
+	at := strings.Index(rest, "@")
+	if at < 0 {
+		return false
+	}
+	return strings.Contains(rest[:at], ":")
+}
+
+// urlPassword returns the password segment of scheme://user:pass@host,
+// or "" when there is none.
+func urlPassword(v string) string {
+	i := strings.Index(v, "://")
+	if i < 0 {
+		return ""
+	}
+	rest := v[i+3:]
+	at := strings.Index(rest, "@")
+	if at < 0 {
+		return ""
+	}
+	userinfo := rest[:at]
+	if c := strings.Index(userinfo, ":"); c >= 0 {
+		return userinfo[c+1:]
+	}
+	return ""
+}
+
+// placeholderWords are values that are filler by convention. Exact
+// match after lowercasing. Deliberately short: a real weak password
+// like hunter2 is still a leak, so this is for words nobody uses as a
+// password, only as a stand-in for one.
+var placeholderWords = map[string]bool{
+	"test": true, "testing": true, "example": true, "sample": true,
+	"changeme": true, "change-me": true, "change_me": true,
+	"placeholder": true, "dummy": true, "fake": true,
+	"password": true, "passwd": true, "secret": true, "token": true,
+	"todo": true, "fixme": true, "tbd": true,
+	"none": true, "null": true, "nil": true, "empty": true, "unset": true,
+	"redacted": true, "removed": true,
+	"root-token": true, "dev-token": true, "dev-only-token": true, "test-token": true,
+	"your-token": true, "your-key": true, "your-secret": true, "your-password": true,
+}
+
+// isPlaceholder reports whether a value is template filler rather than
+// a credential: a known placeholder word, a <template> or {{template}}
+// marker, a your_/my_/example_ prefix, or one repeated character.
+func isPlaceholder(v string) bool {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return true
+	}
+	// For a URL with embedded credentials, the password is the secret.
+	// Judge that, not the whole URL: "example.internal" in the host is
+	// not filler, and "test" as the password is.
+	if urlWithCredentials(v) {
+		return isPlaceholder(urlPassword(v))
+	}
+	lower := strings.ToLower(v)
+	if placeholderWords[lower] {
+		return true
+	}
+	if (strings.HasPrefix(v, "<") && strings.HasSuffix(v, ">")) ||
+		(strings.HasPrefix(v, "{{") && strings.HasSuffix(v, "}}")) ||
+		(strings.HasPrefix(v, "%") && strings.HasSuffix(v, "%") && len(v) > 2) {
+		return true
+	}
+	for _, p := range []string{"your-", "your_", "my-", "my_", "example-", "example_", "replace-", "replace_", "insert-", "insert_"} {
+		if strings.HasPrefix(lower, p) {
+			return true
+		}
+	}
+	for _, w := range []string{"example", "placeholder", "changeme", "dummy"} {
+		if strings.Contains(lower, w) {
+			return true
+		}
+	}
+	// One repeated character: xxxxxxxx, ********, 00000000.
+	if len(v) >= 4 && strings.Count(v, v[:1]) == len(v) {
 		return true
 	}
 	return false
