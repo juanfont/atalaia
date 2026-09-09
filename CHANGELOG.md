@@ -4,6 +4,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- **Deep scan no longer reports `KEY=value` lines, placeholders, or
+  usernames as secrets.** Seen in production: six "credentials" from a
+  `.env.example` reached a Teams card, among them `POSTGRES_USER=test`
+  described by the model itself as "a plain-text username". The model
+  had returned whole assignment lines; they grounded verbatim, so the
+  value the length and placeholder checks should have examined (`test`)
+  was never seen, and the preview redacted the key name instead of the
+  secret (`POST****test`).
+
+  Grounding now recognises assignment-shaped candidates (`KEY=value`,
+  `key: value`, `export`/`const`/`let`/`var` declarations), locates the
+  line by the full text the model returned, and reports the value. The
+  value is what the min-length, sentinel and placeholder checks see,
+  and what the id and preview describe. Two new rejections: values that
+  are filler by convention (`test`, `changeme`, `root-token`, `dummy`,
+  `<your-key>`, `{{template}}`, one repeated character, and a short
+  list of the like), and keys that name identities or addresses rather
+  than secrets (`_USER`, `_HOST`, `_PORT`, `_EMAIL`, `_CLIENT_ID`, ...).
+  A URL with embedded credentials is a secret under any key, so
+  `DATABASE_URL=postgres://app:PASS@host` still reports. The deep
+  prompt now also asks for the value rather than the line, and says
+  that usernames, hosts and ids are not credentials and that
+  `.env.example`-style files hold placeholders by convention. New
+  corpus fixture `deep_env_example` gates it.
+
 ## [0.7.0], 2026-09-08
 
 ### Fixed

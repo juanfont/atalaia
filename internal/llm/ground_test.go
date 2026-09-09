@@ -286,3 +286,125 @@ func TestGround_KeepsLiteralOnALineWithReferences(t *testing.T) {
 		t.Errorf("Line = %d, want 4", got[0].Line)
 	}
 }
+
+// ---- assignment-shaped candidates ----
+//
+// Seen in production: the model returned whole "KEY=value" lines from a
+// .env.example. They grounded verbatim, so the value the min-length and
+// placeholder checks should have seen ("test") was never examined, and
+// the preview redacted the KEY instead of the secret.
+
+const envDiff = `diff --git a/.env.example b/.env.example
+--- a/.env.example
++++ b/.env.example
+@@ -0,0 +1,8 @@
++POSTGRES_PASSWORD=test
++POSTGRES_USER=test
++SPRING_DATASOURCE_USERNAME=admin
++SPRING_DATASOURCE_PASSWORD=changeme
++VAULT_TOKEN=root-token
++DATABASE_URL=postgres://app:Tr0ubad0ur-Winter-2026@db.internal/app
++export STRIPE_SECRET_KEY="sk_live_9f8a7b6c5d4e3f2a1b0c"
++SMTP_HOST=smtp.example.internal
+`
+
+func TestGround_AssignmentLineGroundsOnItsValue(t *testing.T) {
+	got, _ := Ground([]byte(envDiff), []DeepCandidate{cand(`export STRIPE_SECRET_KEY="sk_live_9f8a7b6c5d4e3f2a1b0c"`)}, nil)
+
+	if len(got) != 1 {
+		t.Fatalf("want the value reported once, got %d", len(got))
+	}
+	d := got[0]
+	if d.Match != "sk_live_9f8a7b6c5d4e3f2a1b0c" {
+		t.Errorf("Match = %q, want the value, not the line", d.Match)
+	}
+	if d.Line != 7 {
+		t.Errorf("Line = %d, want 7: locate on the full line the model returned, report the value", d.Line)
+	}
+	if strings.Contains(d.MatchPreview, "STRIPE") {
+		t.Errorf("preview must redact the secret, not the key name: %q", d.MatchPreview)
+	}
+}
+
+func TestGround_PlaceholderValuesAreNotSecrets(t *testing.T) {
+	for _, line := range []string{
+		"POSTGRES_PASSWORD=test",
+		"SPRING_DATASOURCE_PASSWORD=changeme",
+		"VAULT_TOKEN=root-token",
+	} {
+		got, _ := Ground([]byte(envDiff), []DeepCandidate{cand(line)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q is a placeholder and must not be reported: %+v", line, got)
+		}
+	}
+}
+
+func TestGround_NonSecretKeysAreNotSecrets(t *testing.T) {
+	for _, line := range []string{
+		"POSTGRES_USER=test",
+		"SPRING_DATASOURCE_USERNAME=admin",
+		"SMTP_HOST=smtp.example.internal",
+	} {
+		got, _ := Ground([]byte(envDiff), []DeepCandidate{cand(line)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q names a user or host, not a credential, must not be reported: %+v", line, got)
+		}
+	}
+}
+
+// A URL with embedded credentials is a secret whatever the key is
+// called, and the reported value must be the URL, not the line.
+func TestGround_URLWithCredentialsSurvivesKeyRule(t *testing.T) {
+	got, _ := Ground([]byte(envDiff), []DeepCandidate{cand("DATABASE_URL=postgres://app:Tr0ubad0ur-Winter-2026@db.internal/app")}, nil)
+	if len(got) != 1 {
+		t.Fatalf("a DSN with a password must be reported, got %d", len(got))
+	}
+	if got[0].Match != "postgres://app:Tr0ubad0ur-Winter-2026@db.internal/app" {
+		t.Errorf("Match = %q, want the URL value", got[0].Match)
+	}
+	if got[0].Line != 6 {
+		t.Errorf("Line = %d, want 6", got[0].Line)
+	}
+}
+
+// Bare values (no KEY=) still work exactly as before.
+func TestGround_BareValueUnchanged(t *testing.T) {
+	got, _ := Ground([]byte(envDiff), []DeepCandidate{cand("Tr0ubad0ur-Winter-2026")}, nil)
+	if len(got) != 1 || got[0].Match != "Tr0ubad0ur-Winter-2026" || got[0].Line != 6 {
+		t.Errorf("bare value grounding regressed: %+v", got)
+	}
+}
+
+func TestGround_TemplateShapedValuesAreNotSecrets(t *testing.T) {
+	diff := "diff --git a/c.yml b/c.yml\n--- a/c.yml\n+++ b/c.yml\n@@ -0,0 +1,3 @@\n+api_key: <your-api-key-here>\n+token: {{ vault.token }}\n+secret: xxxxxxxxxxxxxxxx\n"
+	for _, v := range []string{"<your-api-key-here>", "{{ vault.token }}", "xxxxxxxxxxxxxxxx", "api_key: <your-api-key-here>"} {
+		got, _ := Ground([]byte(diff), []DeepCandidate{cand(v)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q is template filler, must not be reported: %+v", v, got)
+		}
+	}
+}
+
+func TestGround_DeclarationLineGroundsOnItsValue(t *testing.T) {
+	diff := "diff --git a/u.js b/u.js\n--- a/u.js\n+++ b/u.js\n@@ -0,0 +1,1 @@\n+const uploadEndpoint = \"https://uploader:Xr9-Autumn-Cascade-2026@assets.example.internal/v2/put\";\n"
+	got, _ := Ground([]byte(diff), []DeepCandidate{cand(`const uploadEndpoint = "https://uploader:Xr9-Autumn-Cascade-2026@assets.example.internal/v2/put";`)}, nil)
+	if len(got) != 1 {
+		t.Fatalf("want 1, got %d", len(got))
+	}
+	if got[0].Match != "https://uploader:Xr9-Autumn-Cascade-2026@assets.example.internal/v2/put" {
+		t.Errorf("Match = %q, want the URL value without the declaration", got[0].Match)
+	}
+}
+
+// The placeholder check judges a URL by its password, not its host.
+func TestGround_URLPlaceholderJudgedByPassword(t *testing.T) {
+	diff := "diff --git a/c.sh b/c.sh\n--- a/c.sh\n+++ b/c.sh\n@@ -0,0 +1,2 @@\n+curl https://svc:test@search.example.internal/x\n+curl https://svc:Tr0ubad0ur-Winter-2026@search.example.internal/x\n"
+	got, _ := Ground([]byte(diff), []DeepCandidate{cand("https://svc:test@search.example.internal/x")}, nil)
+	if len(got) != 0 {
+		t.Errorf("a URL whose password is 'test' is filler: %+v", got)
+	}
+	got, _ = Ground([]byte(diff), []DeepCandidate{cand("https://svc:Tr0ubad0ur-Winter-2026@search.example.internal/x")}, nil)
+	if len(got) != 1 || got[0].Line != 2 {
+		t.Errorf("a real password in a URL to an example.* host must still report: %+v", got)
+	}
+}
