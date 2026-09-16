@@ -1,0 +1,23 @@
+{
+  "description": "uuid role: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "data-role",
+    "javascript",
+    "positive"
+  ],
+  "pair": "uuid_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "src/settings.js",
+      "line": 1,
+      "kind": "credential",
+      "value": "8e12c940-35af-4e62-9cb1-b7a9de508421"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

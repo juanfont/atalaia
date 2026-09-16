@@ -1,0 +1,12 @@
+diff --git a/tests/test_local.py b/tests/test_local.py
+--- a/tests/test_local.py
++++ b/tests/test_local.py
+@@ -0,0 +1,3 @@
++def test_local(client, monkeypatch):
++    monkeypatch.setitem(client.application.config, "TOKEN", "secrettoken")
++    assert client.get("/private", headers={"Authorization": "Bearer secrettoken"}).status_code == 200
+diff --git a/app/db.py b/app/db.py
+--- a/app/db.py
++++ b/app/db.py
+@@ -0,0 +1,1 @@
++connection = connect(os.environ["DATABASE_URL"])

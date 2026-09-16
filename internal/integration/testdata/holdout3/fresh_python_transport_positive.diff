@@ -1,0 +1,6 @@
+diff --git a/tests/test_fetch.py b/tests/test_fetch.py
+--- /dev/null
++++ b/tests/test_fetch.py
+@@ -0,0 +1,2 @@
++client = httpx.Client()
++reply = client.get("https://orders.internal/current", headers={"Authorization": "Bearer n8Fk3Ds7Vw2Qa9Lm6Rx4"})

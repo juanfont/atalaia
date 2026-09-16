@@ -1,0 +1,10 @@
+diff --git a/tests/Feature/UploadTest.php b/tests/Feature/UploadTest.php
+--- /dev/null
++++ b/tests/Feature/UploadTest.php
+@@ -0,0 +1,6 @@
++<?php
++public function test_upload(): void {
++    config(['services.upload.token' => 'd9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf']);
++    $this->withHeaders(['Authorization' => 'Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf'])
++        ->post('/upload')->assertNoContent();
++}

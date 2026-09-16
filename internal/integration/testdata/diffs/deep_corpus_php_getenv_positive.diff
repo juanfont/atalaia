@@ -1,0 +1,7 @@
+diff --git a/src/client.php b/src/client.php
+--- /dev/null
++++ b/src/client.php
+@@ -0,0 +1,3 @@
++<?php
++$token = "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf";
++$client = new ApiClient($token);

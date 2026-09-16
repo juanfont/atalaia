@@ -1,0 +1,6 @@
+diff --git a/scripts/export.sh b/scripts/export.sh
+--- /dev/null
++++ b/scripts/export.sh
+@@ -0,0 +1,2 @@
++#!/bin/sh
++curl --fail -u "reporter:BirchHarbor62" https://reports.internal/export

@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: k8s_data_role, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "data-role",
+    "yaml",
+    "positive"
+  ],
+  "pair": "holdout_k8s_data_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "deploy/data.yaml",
+      "line": 6,
+      "kind": "credential",
+      "value": "V2lsbG93TGFnb29uODc="
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

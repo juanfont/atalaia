@@ -38,7 +38,8 @@ func (f *fakeDeepClient) Probe(context.Context) error { return nil }
 func chatResponseWith(content string) ChatResponse {
 	var resp ChatResponse
 	resp.Choices = append(resp.Choices, struct {
-		Message Message `json:"message"`
+		Message      Message `json:"message"`
+		FinishReason string  `json:"finish_reason"`
 	}{Message: Message{Role: "assistant", Content: content}})
 	return resp
 }

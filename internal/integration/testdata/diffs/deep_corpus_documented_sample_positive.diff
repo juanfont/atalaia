@@ -1,0 +1,7 @@
+diff --git a/docs/client_example.py b/docs/client_example.py
+--- /dev/null
++++ b/docs/client_example.py
+@@ -0,0 +1,3 @@
++# This script exports the deployed service's report.
++client = ApiClient(base_url="https://reports.internal", token="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++client.export_to("report.json")

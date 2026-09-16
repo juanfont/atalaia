@@ -1,0 +1,11 @@
+diff --git a/tests/auth.rs b/tests/auth.rs
+--- /dev/null
++++ b/tests/auth.rs
+@@ -0,0 +1,7 @@
++#[tokio::test]
++async fn local_auth() {
++    let app = router(Config { api_token: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf".into() });
++    let req = Request::builder().uri("/private")
++        .header("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf").body(Body::empty()).unwrap();
++    assert_eq!(app.oneshot(req).await.unwrap().status(), StatusCode::OK);
++}

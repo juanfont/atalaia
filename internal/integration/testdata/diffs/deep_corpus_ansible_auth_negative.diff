@@ -1,0 +1,10 @@
+diff --git a/ansible/tasks/check.yml b/ansible/tasks/check.yml
+--- /dev/null
++++ b/ansible/tasks/check.yml
+@@ -0,0 +1,6 @@
++- name: Check the deployment
++  ansible.builtin.uri:
++    url: https://gateway.internal/status
++    url_username: monitor
++    url_password: "{{ lookup('env', 'MONITOR_PASSWORD') }}"
++    force_basic_auth: true

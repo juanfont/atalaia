@@ -1,0 +1,6 @@
+diff --git a/tests/test_billing.py b/tests/test_billing.py
+--- /dev/null
++++ b/tests/test_billing.py
+@@ -0,0 +1,2 @@
++client = BillingClient("https://ledger.internal", api_key="qe25ae776a0d4ff864b58ea8dfbe9e")
++assert client.invoice_count() > 0

@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand/v2"
 	"strings"
@@ -124,11 +125,12 @@ func (r *DeepReader) Scan(ctx context.Context, diff []byte, findings int) (DeepR
 		if !r.sem.TryAcquire(ctx, r.cfg.DeepScan.AdmissionWait) {
 			break
 		}
-		cands, err := r.scanWindow(ctx, w, i, len(windows))
+		cands, calls, err := r.scanWindow(ctx, w, i, len(windows))
 		r.sem.Release()
-		out.Calls++
+		out.Calls += calls
 		if err != nil {
-			return DeepResult{}, err
+			out.Latency = time.Since(start)
+			return out, err
 		}
 		out.WindowsScanned++
 		out.Candidates = append(out.Candidates, cands...)
@@ -165,7 +167,7 @@ func countAddedLines(diff []byte) int {
 
 // scanWindow is one LLM call. Split out so the per-call timeout's
 // cancel runs when the call finishes, not when the whole scan does.
-func (r *DeepReader) scanWindow(ctx context.Context, window string, i, total int) ([]DeepCandidate, error) {
+func (r *DeepReader) scanWindow(ctx context.Context, window string, i, total int) ([]DeepCandidate, int, error) {
 	callCtx := ctx
 	if r.cfg.RequestTimeout > 0 {
 		var cancel func()
@@ -174,12 +176,28 @@ func (r *DeepReader) scanWindow(ctx context.Context, window string, i, total int
 	}
 
 	system, user, err := r.prompt.RenderDeep(DeepPromptData{Window: window})
+	var sources []SourceLiteral
+	if err == nil && r.cfg.DeepScan.SourceLiterals {
+		sources = sourceLiterals(window)
+		enhanced := user + sourceCatalogPrompt(sources)
+		tokens := estimateTokens(system + enhanced)
+		if r.cfg.UseTools {
+			toolJSON, _ := json.Marshal(deepToolWithSources(sources))
+			tokens += estimateTokens(string(toolJSON))
+		}
+		if r.cfg.ContextBudget.InputTokens <= 0 || tokens <= r.cfg.ContextBudget.InputTokens {
+			user = enhanced
+		} else {
+			sources = nil
+		}
+	}
 	if err != nil {
-		return nil, fmt.Errorf("render deep window %d/%d: %w", i+1, total, err)
+		return nil, 0, fmt.Errorf("render deep window %d/%d: %w", i+1, total, err)
 	}
 
 	req := ChatRequest{
-		Model: r.cfg.Model,
+		ChatTemplateKwargs: thinkingParameters(r.cfg.EnableThinking),
+		Model:              r.cfg.Model,
 		Messages: []Message{
 			{Role: "system", Content: system},
 			{Role: "user", Content: user},
@@ -191,40 +209,39 @@ func (r *DeepReader) scanWindow(ctx context.Context, window string, i, total int
 		// tool path below is the principled fix where supported.
 	}
 	if r.cfg.UseTools {
-		req.Tools = []Tool{DeepTool()}
+		req.Tools = []Tool{deepToolWithSources(sources)}
 		req.ToolChoice = map[string]any{
 			"type":     "function",
 			"function": map[string]any{"name": DeepToolName},
 		}
 	}
 
-	resp, err := r.client.Complete(callCtx, req)
-	if err != nil {
-		return nil, fmt.Errorf("deep call %d/%d: %w", i+1, total, err)
-	}
-	if len(resp.Choices) == 0 {
-		return nil, fmt.Errorf("deep call %d/%d: response carried no choices", i+1, total)
-	}
-
-	msg := resp.Choices[0].Message
-	var cands []DeepCandidate
-	switch {
-	case r.cfg.UseTools && len(msg.ToolCalls) > 0:
-		cands, err = parseDeepToolCalls(msg.ToolCalls)
-	default:
-		cands, err = parseDeepResponse(msg.Content)
-	}
-	if err != nil {
-		preview := msg.Content
-		if len(preview) > 400 {
-			preview = preview[:400] + "..."
+	cands, calls, err := completeParsed(callCtx, r.client, req, func(msg Message) ([]DeepCandidate, error) {
+		var parsed []DeepCandidate
+		var err error
+		if r.cfg.UseTools && len(msg.ToolCalls) > 0 {
+			parsed, err = parseDeepToolCallsWithSources(msg.ToolCalls, sources)
+		} else {
+			parsed, err = parseDeepResponseWithSources(msg.Content, sources)
 		}
-		return nil, fmt.Errorf("parse deep response %d/%d (%d chars, %d tool_calls): %w; head=%q",
-			i+1, total, len(msg.Content), len(msg.ToolCalls), err, preview)
+		if err != nil {
+			return nil, err
+		}
+		if len(sources) > 0 {
+			for _, candidate := range parsed {
+				if candidate.Kind != "private_key" && candidate.Kind != KindTestData && !strings.Contains(window, candidate.Value) {
+					return nil, fmt.Errorf("candidate value absent from source; use source_id for catalogued literals")
+				}
+			}
+		}
+		return parsed, nil
+	})
+	if err != nil {
+		return nil, calls, fmt.Errorf("deep window %d/%d: %w", i+1, total, err)
 	}
 
 	if max := r.cfg.DeepScan.MaxCandidates; max > 0 && len(cands) > max {
 		cands = cands[:max]
 	}
-	return cands, nil
+	return cands, calls, nil
 }

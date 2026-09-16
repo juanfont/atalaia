@@ -1,0 +1,5 @@
+diff --git a/src/store.rs b/src/store.rs
+--- /dev/null
++++ b/src/store.rs
+@@ -0,0 +1,1 @@
++let pool = PgPool::connect(&std::env::var("DATABASE_URL")?).await?;

@@ -1,0 +1,8 @@
+diff --git a/tests/test_service.py b/tests/test_service.py
+--- /dev/null
++++ b/tests/test_service.py
+@@ -0,0 +1,4 @@
++def test_service():
++    session = requests.Session()
++    session.headers["Authorization"] = "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
++    assert session.get("https://gateway.internal/private").status_code == 200

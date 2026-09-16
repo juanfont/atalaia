@@ -1,0 +1,5 @@
+diff --git a/app/db.go b/app/db.go
+--- /dev/null
++++ b/app/db.go
+@@ -0,0 +1,1 @@
++db, err := sql.Open("mysql", os.Getenv("DATABASE_DSN"))

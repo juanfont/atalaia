@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: nested_scope. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_nested_scope",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_batch.py",
+      "line": 4,
+      "kind": "credential",
+      "value": "d7Qr3Ka9Vm2Ls8Yp5Nc6"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,23 @@
+{
+  "description": "rotation: only added credential locations may be reported. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "diff-boundary",
+    "python",
+    "positive"
+  ],
+  "pair": "rotation",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/db.py",
+      "line": 30,
+      "value": "JuniperQuay83",
+      "kind": "credential"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

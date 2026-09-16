@@ -1,0 +1,10 @@
+diff --git a/tests/OrdersTests.cs b/tests/OrdersTests.cs
+--- /dev/null
++++ b/tests/OrdersTests.cs
+@@ -0,0 +1,6 @@
++sealed class LocalHandler : HttpMessageHandler {
++    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
++}
++var client = new HttpClient(new LocalHandler());
++client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "h3Vb7Rm2Ta9Qx6Ls4Wp8");
++var reply = await client.GetAsync("https://orders.internal/current");

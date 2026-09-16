@@ -1,0 +1,15 @@
+{
+  "description": "Frozen round-four contrast: json_pair. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "negative"
+  ],
+  "pair": "unseen4_json_pair",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

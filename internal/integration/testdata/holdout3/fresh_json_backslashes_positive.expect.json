@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Literal backslashes in JSON require another escaping layer in model output.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_json_backslashes",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "config/archive.json",
+      "line": 1,
+      "kind": "credential",
+      "value": "Lake\\\\Route91"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

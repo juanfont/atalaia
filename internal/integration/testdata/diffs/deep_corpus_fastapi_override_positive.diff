@@ -1,0 +1,9 @@
+diff --git a/tests/test_auth.py b/tests/test_auth.py
+--- /dev/null
++++ b/tests/test_auth.py
+@@ -0,0 +1,5 @@
++import httpx
++
++def test_deployed_auth():
++    response = httpx.get("https://billing.internal/private", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    assert response.status_code == 200

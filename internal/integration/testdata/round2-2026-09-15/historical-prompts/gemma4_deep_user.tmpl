@@ -1,0 +1,12 @@
+Added lines under review:
+```
+{{.Window}}
+```
+
+Classify literal authentication sent to an existing service as "credential".
+Use "test_data" only when explicit test setup creates or mocks the receiving
+endpoint's authentication. A test filename or assertion is not that evidence.
+
+Return a JSON object of this exact shape, no extra text:
+
+{"candidates":[{"value":"<verbatim value from a line above>","kind":"credential"|"private_key"|"test_data","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}

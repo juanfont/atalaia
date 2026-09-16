@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Explicit invented-value prose versus an operational instruction.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_documentation_literal",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "docs/rotate.md",
+      "line": 4,
+      "kind": "credential",
+      "value": "v4Kn8Tc3Qm9Wp6Ds2La7"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

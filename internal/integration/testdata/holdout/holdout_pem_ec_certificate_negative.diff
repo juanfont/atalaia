@@ -1,0 +1,15 @@
+diff --git a/deploy/service.pem b/deploy/service.pem
+--- /dev/null
++++ b/deploy/service.pem
+@@ -0,0 +1,11 @@
++-----BEGIN CERTIFICATE-----
++MIIBnjCCAUOgAwIBAgIUc6EYCTpjKlIldGXXwcHhGI/ndDAwCgYIKoZIzj0EAwIw
++JDEiMCAGA1UEAwwZc3ludGhldGljLWhvbGRvdXQuaW52YWxpZDAeFw0yNjA5MTUy
++MTAwMjlaFw0yNjA5MTYyMTAwMjlaMCQxIjAgBgNVBAMMGXN5bnRoZXRpYy1ob2xk
++b3V0LmludmFsaWQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARwISUXNNYcb+xC
++LvpEwsUNq3tp5eClUdE9IMInEwYE5ru6FK1abcpSNFgIXk0cIlKTn1LBA+Bdd4nN
++hKPhR1YMo1MwUTAdBgNVHQ4EFgQUq4SLKcDdG2bHarZJMinNTC9yIgcwHwYDVR0j
++BBgwFoAUq4SLKcDdG2bHarZJMinNTC9yIgcwDwYDVR0TAQH/BAUwAwEB/zAKBggq
++hkjOPQQDAgNJADBGAiEAjxSHiiEW3pHiAflFAoEqiDLtLtMFDkbH0+yRYF/fHEMC
++IQDz3dQnMayAfbSIXYGU6UtCkfsBFPlCoMrWaAB8uMLg8w==
++-----END CERTIFICATE-----

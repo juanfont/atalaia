@@ -1,0 +1,17 @@
+diff --git a/deploy/app.yaml b/deploy/app.yaml
+--- /dev/null
++++ b/deploy/app.yaml
+@@ -0,0 +1,13 @@
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: api
++spec:
++  template:
++    spec:
++      containers:
++        - name: api
++          image: registry.internal/api:42
++          env:
++            - name: API_TOKEN
++              value: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"

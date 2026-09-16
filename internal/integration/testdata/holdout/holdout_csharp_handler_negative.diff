@@ -1,0 +1,9 @@
+diff --git a/tests/ClientTests.cs b/tests/ClientTests.cs
+--- /dev/null
++++ b/tests/ClientTests.cs
+@@ -0,0 +1,5 @@
++var handler = new MockHttpMessageHandler();
++handler.When("https://ledger.internal/private").Respond("application/json", "{}");
++using var client = handler.ToHttpClient();
++client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "q49ec51ce8d628b44a42bf9b644008");
++await client.GetAsync("https://ledger.internal/private");

@@ -1,0 +1,10 @@
+{
+  "status": "Rejected and stopped early for live-credential recall regressions; no complete-corpus score assigned",
+  "recorded_at": "2026-09-16T08:32:08.863294+00:00",
+  "completed_requests": 98,
+  "observed_missed_cases": [
+    "deep_corpus_junit_mock_secret_positive",
+    "deep_corpus_laravel_config_positive"
+  ],
+  "records_sha256": "c5a399268ca5be109dd3ecf1b90c8a3accb8abaa3235b402e074fbafe96d966b"
+}

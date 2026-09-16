@@ -1,0 +1,9 @@
+diff --git a/cypress/e2e/auth.cy.ts b/cypress/e2e/auth.cy.ts
+--- /dev/null
++++ b/cypress/e2e/auth.cy.ts
+@@ -0,0 +1,5 @@
++it("renders mocked session data", () => {
++  cy.intercept("GET", "/api/session", { statusCode: 200, body: { token: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" } });
++  cy.visit("/login");
++  cy.contains("Signed in").should("be.visible");
++});

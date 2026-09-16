@@ -1,0 +1,11 @@
+diff --git a/spec/requests/export_spec.rb b/spec/requests/export_spec.rb
+--- /dev/null
++++ b/spec/requests/export_spec.rb
+@@ -0,0 +1,7 @@
++RSpec.describe "export" do
++  it "accepts the locally installed token" do
++    allow(Rails.configuration).to receive(:export_token).and_return("d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    get "/export", headers: { "Authorization" => "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" }
++    expect(response).to have_http_status(:ok)
++  end
++end

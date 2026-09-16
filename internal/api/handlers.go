@@ -108,6 +108,11 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			deepStats.Status = apitypes.DeepStatusDisabled
 		default:
 			res, err := a.deepScanner.Scan(r.Context(), diff, len(deduped))
+			deepStats.Calls = res.Calls
+			deepStats.Windows = res.Windows
+			deepStats.WindowsScanned = res.WindowsScanned
+			deepStats.Truncated = res.Truncated
+			deepStats.LatencyMs = res.Latency.Milliseconds()
 			if err != nil {
 				deepStats.Status = apitypes.DeepStatusFailed
 				deepStats.Error = err.Error()
@@ -117,11 +122,6 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			deepStats.Status = string(res.Status)
 			deepStats.Reason = res.Reason
 			deepStats.Ran = res.Status == llm.DeepComplete || res.Status == llm.DeepPartial
-			deepStats.Calls = res.Calls
-			deepStats.Windows = res.Windows
-			deepStats.WindowsScanned = res.WindowsScanned
-			deepStats.Truncated = res.Truncated
-			deepStats.LatencyMs = res.Latency.Milliseconds()
 			if deepStats.Ran {
 				grounded, gstats := llm.Ground(diff, res.Candidates, deduped)
 				deepRaw = grounded

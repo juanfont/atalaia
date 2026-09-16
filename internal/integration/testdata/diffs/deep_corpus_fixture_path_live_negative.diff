@@ -1,0 +1,6 @@
+diff --git a/tests/fixtures/bootstrap.py b/tests/fixtures/bootstrap.py
+--- /dev/null
++++ b/tests/fixtures/bootstrap.py
+@@ -0,0 +1,2 @@
++def fixture_app():
++    return FakeService(expected_token="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")

@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. A UUID bearer credential versus an ordinary tracing identifier.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_uuid_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/query.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "ac8e0123-3d71-43a2-b534-28bca969f121"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

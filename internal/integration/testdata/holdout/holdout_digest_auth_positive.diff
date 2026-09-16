@@ -1,0 +1,5 @@
+diff --git a/app/sign.py b/app/sign.py
+--- /dev/null
++++ b/app/sign.py
+@@ -0,0 +1,1 @@
++signature = hmac.new(bytes.fromhex("2af82fa16752dfe3fa37a64b8c8a3ee7fc8f63e21af9118845a6ae0c1c328748"), payload, hashlib.sha256).hexdigest()

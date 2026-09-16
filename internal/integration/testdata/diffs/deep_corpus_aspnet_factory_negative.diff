@@ -1,0 +1,13 @@
+diff --git a/tests/ApiTests.cs b/tests/ApiTests.cs
+--- /dev/null
++++ b/tests/ApiTests.cs
+@@ -0,0 +1,9 @@
++[Fact]
++public async Task LocalAuthentication() {
++    var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
++        builder.ConfigureAppConfiguration((context, config) => config.AddInMemoryCollection(
++            new Dictionary<string, string?> { ["ApiToken"] = "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" })));
++    var client = factory.CreateClient();
++    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf");
++    Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/private")).StatusCode);
++}

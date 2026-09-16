@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: fetch_injection. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_fetch_injection",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/client.test.js",
+      "line": 2,
+      "kind": "credential",
+      "value": "a9Wm2Qr6Jv8Pc3Ns5Kd7"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

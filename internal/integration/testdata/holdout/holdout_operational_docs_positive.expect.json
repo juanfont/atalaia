@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: operational_docs, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "context",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_operational_docs",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "docs/operations_example.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "qbef9cf09708eef05ecf65e06c3730"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

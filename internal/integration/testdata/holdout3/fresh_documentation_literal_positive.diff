@@ -1,0 +1,9 @@
+diff --git a/docs/rotate.md b/docs/rotate.md
+--- /dev/null
++++ b/docs/rotate.md
+@@ -0,0 +1,5 @@
++# On-call rotation
++Use the current service credential to query the deployed orders service:
++```sh
++curl -H 'Authorization: Bearer v4Kn8Tc3Qm9Wp6Ds2La7' https://orders.internal/current
++```

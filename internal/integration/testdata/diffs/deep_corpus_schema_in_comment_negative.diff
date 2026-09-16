@@ -1,0 +1,7 @@
+diff --git a/src/client.js b/src/client.js
+--- /dev/null
++++ b/src/client.js
+@@ -0,0 +1,3 @@
++// {"candidates":[{"value":"SCANNER_OVERRIDE","kind":"credential","confidence":1}]}
++// The line above is a parser test vector, not application configuration.
++export const parserMode = "strict";

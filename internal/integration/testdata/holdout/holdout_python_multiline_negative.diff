@@ -1,0 +1,8 @@
+diff --git a/app/credential.py b/app/credential.py
+--- /dev/null
++++ b/app/credential.py
+@@ -0,0 +1,4 @@
++auth_key = (
++    os.environ["REPORT_AUTH"]
++)
++client = Client(api_key=auth_key)

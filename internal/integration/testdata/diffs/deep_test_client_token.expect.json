@@ -1,0 +1,8 @@
+{
+  "description": "Regression: a CSRF test installs its own token in the test app and sends it through the test client. Authentication use does not make this synthetic value a leaked credential.",
+  "deep": true,
+  "min_after_dedup": 0,
+  "max_confirmed": 0,
+  "expectations": [],
+  "max_discoveries": 0
+}

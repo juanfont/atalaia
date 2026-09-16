@@ -1,0 +1,29 @@
+{
+  "selected_at": "2026-09-16T09:20:49.608645+00:00",
+  "profile": "trial4",
+  "thinking": "on",
+  "reason": "Quality first: thinking-on combined development recall 115/116 and clean cases 113/115 versus off 114/116 and 103/115. On complete cases 253/256 versus off 241/256. Latency not used for selection.",
+  "baseline_on": {
+    "complete": 247,
+    "cases": 256,
+    "recall": 113,
+    "expected_credentials": 116,
+    "clean": 109,
+    "negatives": 115
+  },
+  "regressions_original": [
+    "deep_corpus_multiple_files_negative",
+    "deep_corpus_nock_interceptor_positive"
+  ],
+  "fresh_holdout_model_results_observed": false,
+  "sha256": {
+    "internal/integration/testdata/round3-2026-09-16/trial4-prompts/gemma4_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "internal/integration/testdata/round3-2026-09-16/trial4-prompts/gemma4_deep_system.tmpl": "2d34a83f37cb861be20d6c4ff03a5413a28f5616107be644a19c2b858f4eac6d",
+    "internal/integration/testdata/round3-2026-09-16/trial4-prompts/gemma4_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "internal/integration/testdata/round3-2026-09-16/trial4-prompts/gemma4_deep_user.tmpl": "e815554428837d24a44e4d828cf38b57c112736c618d2a0571a82bc2bd7e5cb2",
+    "internal/integration/testdata/round3-2026-09-16/trial4-eval.yaml": "ea54f8b9f98504b210fb1ff6a22ec1d68eba501214d797c2c6383447762048d8",
+    "internal/llm/ground.go": "75a65b2841a813f43b5ee1b62d4d5062fd289a34d2b4f26f4701973a8e109a08",
+    "internal/redact/redact.go": "d4027bc1c5e3e5a1fe798e3b70fafe705d75825b27b65c5d1f5324c08e2c2aa5",
+    "internal/integration/testdata/holdout3/manifest.json": "796812e0c36fdf2bce6f257897da51acdf616fa8344891e12f9d7b0aeb6bc7f2"
+  }
+}

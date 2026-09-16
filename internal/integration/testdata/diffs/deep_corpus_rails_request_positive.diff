@@ -1,0 +1,13 @@
+diff --git a/spec/requests/export_spec.rb b/spec/requests/export_spec.rb
+--- /dev/null
++++ b/spec/requests/export_spec.rb
+@@ -0,0 +1,9 @@
++RSpec.describe "deployed export" do
++  it "accepts the service token" do
++    uri = URI("https://reports.internal/export")
++    request = Net::HTTP::Get.new(uri)
++    request["Authorization"] = "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
++    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
++    expect(response.code).to eq("200")
++  end
++end

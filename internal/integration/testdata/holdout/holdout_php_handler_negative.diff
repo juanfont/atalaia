@@ -1,0 +1,7 @@
+diff --git a/tests/ClientTest.php b/tests/ClientTest.php
+--- /dev/null
++++ b/tests/ClientTest.php
+@@ -0,0 +1,3 @@
++$mock = new MockHandler([new Response(200)]);
++$client = new GuzzleHttp\Client(["handler" => HandlerStack::create($mock)]);
++$response = $client->get("https://ledger.internal/private", ["headers" => ["Authorization" => "Bearer q0f7421147eee5d5c52f3f8d4a2c3f"]]);

@@ -1,0 +1,5 @@
+diff --git a/storage/open.go b/storage/open.go
+--- /dev/null
++++ b/storage/open.go
+@@ -0,0 +1,1 @@
++db, err := sql.Open("mysql", "writer:Cedar(74)@tcp(storage.internal:3306)/orders")

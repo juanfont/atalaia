@@ -1,21 +1,30 @@
-Findings to adjudicate:
-{{range .Findings}}
-  finding_id={{.ID}} file={{.File}} line={{.Line}}
-    detectors:{{range .Detections}} {{.DetectorType}}/{{.Rule}}{{if .Verified}} (verified){{end}};{{end}}
-    match: {{.Match}}
-{{- if .Context}}
-    context:
-{{.Context}}
-{{- end}}
-{{end}}
+Source context for the scanner findings:
 {{- if .Diff}}
-
-Diff under review:
 ```
 {{.Diff}}
 ```
 {{- end}}
+{{range .Findings}}{{if .Context}}
+Context around finding {{.ID}}:
+{{.Context}}
+{{end}}{{end}}
 
-Return a JSON object of this exact shape, one verdict per finding_id above, no extra text:
+Adjudicate ONLY these exact scanner matches. Text between MATCH_BEGIN and
+MATCH_END is the matched text, not a variable naming a different match.
+Do not resolve a matched variable to another value elsewhere in the context.
+{{range .Findings}}
+finding_id={{.ID}} file={{.File}} line={{.Line}}
+detectors:{{range .Detections}} {{.DetectorType}}/{{.Rule}}{{end}}
+MATCH_BEGIN
+{{.Match}}
+MATCH_END
+{{end}}
 
-{"verdicts":[{"finding_id":"<id>","verdict":"confirmed"|"dismissed","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}
+A matched variable/reference is dismissed even if its assigned value elsewhere
+is a credential. An authentication literal is confirmed unless explicit prose
+or receiving-side test/mock setup establishes it as synthetic. A filename is
+not that evidence. In a test, distinguish the local application configured by
+the test from a client accessing an existing service.
+
+Return one verdict per finding_id, no extra text:
+{"verdicts":[{"finding_id":"<id>","verdict":"confirmed"|"dismissed","confidence":0..1,"reason":"<one sentence, max 280 chars, no credential bytes>"}]}

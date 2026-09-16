@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: ruby_multiline, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "syntax",
+    "ruby",
+    "positive"
+  ],
+  "pair": "holdout_ruby_multiline",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/credentials.rb",
+      "line": 2,
+      "kind": "credential",
+      "value": "ElmInlet28"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,23 @@
+{
+  "description": "key rsa: only added credential locations may be reported. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "key-material",
+    "pem",
+    "positive"
+  ],
+  "pair": "key_rsa",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/keys/rsa.pem",
+      "line": 1,
+      "value": "-----BEGIN PRIVATE KEY-----",
+      "kind": "private_key"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

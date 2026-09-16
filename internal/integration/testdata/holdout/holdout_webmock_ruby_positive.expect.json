@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: webmock_ruby, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "ruby",
+    "positive"
+  ],
+  "pair": "holdout_webmock_ruby",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "spec/client_spec.rb",
+      "line": 1,
+      "kind": "credential",
+      "value": "q2348ecd284ad9c5fe1abe0376d89b"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

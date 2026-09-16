@@ -1,0 +1,6 @@
+diff --git a/src/test/java/ClientTest.java b/src/test/java/ClientTest.java
+--- /dev/null
++++ b/src/test/java/ClientTest.java
+@@ -0,0 +1,2 @@
++var request = new Request.Builder().url("https://ledger.internal/private").header("Authorization", "Bearer qe088935e49041e0ccd492dd16e060").build();
++assertEquals(200, new OkHttpClient().newCall(request).execute().code());

@@ -1,0 +1,23 @@
+{
+  "description": "context and added same value: only added credential locations may be reported. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "diff-boundary",
+    "python",
+    "positive"
+  ],
+  "pair": "context_and_added_same_value",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/db.py",
+      "line": 8,
+      "value": "BirchHarbor62",
+      "kind": "credential"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. The injected transport returns an in-memory response without checking auth.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_go_roundtrip",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/orders_test.go",
+      "line": 3,
+      "kind": "credential",
+      "value": "g5Dz2Kp8Sr4Jm7Wx9Ba6"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

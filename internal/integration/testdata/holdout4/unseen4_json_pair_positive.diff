@@ -1,0 +1,5 @@
+diff --git a/settings/relay.json b/settings/relay.json
+--- /dev/null
++++ b/settings/relay.json
+@@ -0,0 +1,1 @@
++{"relay":{"password":"Granite\\Canal84","url":"https://relay.internal"}}

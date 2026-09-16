@@ -1,0 +1,6 @@
+diff --git a/app/Database.cs b/app/Database.cs
+--- /dev/null
++++ b/app/Database.cs
+@@ -0,0 +1,2 @@
++var dsn = $"Host={dbHost};Username=reader;Password=LaurelStrait62;Database=ledger";
++var connection = new NpgsqlConnection(dsn);

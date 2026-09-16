@@ -1,0 +1,23 @@
+{
+  "description": "rust dsn: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "connection",
+    "rust",
+    "positive"
+  ],
+  "pair": "rust_dsn",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "src/store.rs",
+      "line": 1,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -140,6 +140,7 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 	var (
 		llmVerdicts  []Verdict
 		totalLatency time.Duration
+		totalCalls   int
 	)
 	for i, batch := range batches {
 		callCtx := ctx
@@ -155,7 +156,8 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 		}
 
 		req := ChatRequest{
-			Model: a.cfg.Model,
+			ChatTemplateKwargs: thinkingParameters(a.cfg.EnableThinking),
+			Model:              a.cfg.Model,
 			Messages: []Message{
 				{Role: "system", Content: system},
 				{Role: "user", Content: user},
@@ -176,28 +178,18 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 		}
 
 		start := time.Now()
-		resp, err := a.client.Complete(callCtx, req)
+		parsed, calls, err := completeParsed(callCtx, a.client, req, func(msg Message) ([]Verdict, error) {
+			if a.cfg.UseTools && len(msg.ToolCalls) > 0 {
+				return parseToolCallVerdicts(msg.ToolCalls)
+			}
+			return parseVerdictResponse(msg.Content)
+		})
 		totalLatency += time.Since(start)
+		totalCalls += calls
 		if err != nil {
-			return AdjudicateResult{}, fmt.Errorf("llm call batch %d/%d: %w", i+1, len(batches), err)
+			return AdjudicateResult{}, fmt.Errorf("llm batch %d/%d: %w", i+1, len(batches), err)
 		}
 
-		msg := resp.Choices[0].Message
-		var parsed []Verdict
-		switch {
-		case a.cfg.UseTools && len(msg.ToolCalls) > 0:
-			parsed, err = parseToolCallVerdicts(msg.ToolCalls)
-		default:
-			parsed, err = parseVerdictResponse(msg.Content)
-		}
-		if err != nil {
-			preview := msg.Content
-			if len(preview) > 400 {
-				preview = preview[:400] + "..."
-			}
-			return AdjudicateResult{}, fmt.Errorf("parse llm response batch %d/%d (%d chars, %d tool_calls): %w; head=%q",
-				i+1, len(batches), len(msg.Content), len(msg.ToolCalls), err, preview)
-		}
 		llmVerdicts = append(llmVerdicts, parsed...)
 	}
 
@@ -206,7 +198,7 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 		Result: Result{
 			Verdicts:   verdicts,
 			LLMInvoked: true,
-			LLMCalls:   len(batches),
+			LLMCalls:   totalCalls,
 			LLMLatency: totalLatency,
 		},
 		Truncated: truncated,

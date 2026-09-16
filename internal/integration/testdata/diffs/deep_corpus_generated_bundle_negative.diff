@@ -1,0 +1,5 @@
+diff --git a/vendor/client.min.js b/vendor/client.min.js
+--- /dev/null
++++ b/vendor/client.min.js
+@@ -0,0 +1,1 @@
++(()=>{const release="8e12c94035af4e629cb1b7a9de508421";window.release=release})();

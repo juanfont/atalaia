@@ -1,0 +1,6 @@
+diff --git a/src/test/ClientTest.kt b/src/test/ClientTest.kt
+--- /dev/null
++++ b/src/test/ClientTest.kt
+@@ -0,0 +1,2 @@
++val client = HttpClient(MockEngine { respond("ok", HttpStatusCode.OK) })
++val response = client.get("https://ledger.internal/private") { bearerAuth("qb30416068bc7b49c1889658b84aeb") }

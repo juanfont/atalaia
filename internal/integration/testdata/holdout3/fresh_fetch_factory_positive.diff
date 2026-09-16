@@ -1,0 +1,6 @@
+diff --git a/testdata/probe.js b/testdata/probe.js
+--- /dev/null
++++ b/testdata/probe.js
+@@ -0,0 +1,2 @@
++const client = makeClient(globalThis.fetch);
++await client.get("https://orders.internal/", {Authorization: "Bearer s9Rp3Dx7Lm2Wa6Nc8Jv4"});

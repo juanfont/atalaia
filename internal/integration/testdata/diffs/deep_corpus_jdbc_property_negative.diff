@@ -1,0 +1,5 @@
+diff --git a/ReportStore.java b/ReportStore.java
+--- /dev/null
++++ b/ReportStore.java
+@@ -0,0 +1,1 @@
++var connection = DriverManager.getConnection(System.getenv("JDBC_URL"));

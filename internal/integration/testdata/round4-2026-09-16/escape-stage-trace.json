@@ -1,0 +1,26 @@
+[
+  {
+    "case": "fresh_json_backslashes_positive",
+    "source_value_in_rendered_prompt": true,
+    "source_backslash_count": 2,
+    "api_argument_backslash_count": 1,
+    "api_argument_matches_source": false,
+    "go_candidate_matches_decoded_api_argument": true,
+    "grounding_outcomes": [
+      "not_found"
+    ],
+    "arguments_sha256": "d6abc85801c4b97ee0fa278d2cca2cb27a1e51f4fc92e7b92d45b59d698d2a32"
+  },
+  {
+    "case": "fresh_json_source_bytes_positive",
+    "source_value_in_rendered_prompt": true,
+    "source_backslash_count": 1,
+    "api_argument_backslash_count": 0,
+    "api_argument_matches_source": false,
+    "go_candidate_matches_decoded_api_argument": true,
+    "grounding_outcomes": [
+      "not_found"
+    ],
+    "arguments_sha256": "75517176a3f835e7d08de5438d1a272271f776a1a0c2f46354a858d1f80113ec"
+  }
+]

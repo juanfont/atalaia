@@ -1,0 +1,9 @@
+diff --git a/tests/test_export.py b/tests/test_export.py
+--- /dev/null
++++ b/tests/test_export.py
+@@ -0,0 +1,5 @@
++import requests
++
++def test_deployed_export():
++    result = requests.get("https://reports.internal/export", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    assert result.status_code == 200

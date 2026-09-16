@@ -1,0 +1,6 @@
+diff --git a/fixtures/check_live.py b/fixtures/check_live.py
+--- /dev/null
++++ b/fixtures/check_live.py
+@@ -0,0 +1,2 @@
++# Query the deployed audit service.
++response = requests.get("https://audit.internal/events", headers={"Authorization":"Bearer q068008d4f6d0793f2cd0865e77bbd"})

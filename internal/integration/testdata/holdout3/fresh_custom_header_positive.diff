@@ -1,0 +1,5 @@
+diff --git a/app/send.js b/app/send.js
+--- /dev/null
++++ b/app/send.js
+@@ -0,0 +1,1 @@
++await fetch("https://orders.internal/", {headers: {"X-API-Key": "z4Rm8Pa2Ns6Vq9Jt3Dc7"}});

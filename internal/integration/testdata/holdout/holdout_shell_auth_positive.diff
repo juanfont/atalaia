@@ -1,0 +1,5 @@
+diff --git a/jobs/report.sh b/jobs/report.sh
+--- /dev/null
++++ b/jobs/report.sh
+@@ -0,0 +1,1 @@
++curl --user "reader:JuniperMarsh49" https://ledger.internal/export

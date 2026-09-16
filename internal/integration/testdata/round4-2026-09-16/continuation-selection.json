@@ -1,0 +1,104 @@
+{
+  "frozen_at": "2026-09-16T14:53:06.604463+00:00",
+  "candidate": "source",
+  "thinking": "on",
+  "source_literals": true,
+  "fresh_results_observed": false,
+  "policy": "Measure this development candidate on the frozen set against retained and round-three prompts. No tuning after fresh outcomes. Adoption requires preserved fresh recall and fewer false alerts.",
+  "comparison_runtime": "Same current runtime for all three profiles; source_literals disabled for retained/reference. No baseline Go overlay.",
+  "development": {
+    "source-targeted-repeat": {
+      "cases": 20,
+      "cases_passed_all_runs": 19,
+      "credentials_found": {
+        "passed": 19,
+        "total": 20
+      },
+      "clean_scans": {
+        "passed": 20,
+        "total": 20
+      },
+      "failed_cases": [
+        "fresh_mock_scope_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0
+    },
+    "source-development48": {
+      "cases": 48,
+      "cases_passed_all_runs": 48,
+      "credentials_found": {
+        "passed": 24,
+        "total": 24
+      },
+      "clean_scans": {
+        "passed": 24,
+        "total": 24
+      },
+      "failed_cases": [],
+      "http_errors": 0,
+      "deep_errors": 0
+    },
+    "source-development176": {
+      "cases": 176,
+      "cases_passed_all_runs": 174,
+      "credentials_found": {
+        "passed": 75,
+        "total": 76
+      },
+      "clean_scans": {
+        "passed": 74,
+        "total": 75
+      },
+      "failed_cases": [
+        "deep_corpus_aspnet_factory_negative",
+        "deep_corpus_nock_interceptor_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0
+    },
+    "source-development80": {
+      "cases": 80,
+      "cases_passed_all_runs": 79,
+      "credentials_found": {
+        "passed": 40,
+        "total": 40
+      },
+      "clean_scans": {
+        "passed": 39,
+        "total": 40
+      },
+      "failed_cases": [
+        "holdout_webmock_ruby_negative"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0
+    }
+  },
+  "sha256": {
+    "internal/integration/testdata/round4-2026-09-16/source-prompts/gemma4_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "internal/integration/testdata/round4-2026-09-16/source-prompts/gemma4_deep_system.tmpl": "1539aa84a4f4f4f7eb1522a8bbbf1f9fed905799b8d6a75c4c8e6fd8a9b52658",
+    "internal/integration/testdata/round4-2026-09-16/source-prompts/gemma4_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "internal/integration/testdata/round4-2026-09-16/source-prompts/gemma4_deep_user.tmpl": "1e11d628d2dbdee5f5575091d6b8a3aa559ee6f070b81e3ebe9f39d1741662c2",
+    "internal/integration/testdata/round4-2026-09-16/source-eval.yaml": "1167f6ef0dbf516e1326eadd17619d54b7c662bc3a87ffe8c38d9a732378a68f",
+    "internal/integration/testdata/round4-2026-09-16/retained-eval.yaml": "0b82ac6a8fd8f17a14a6cdc1b622a0cfb0c0446460f9fda5c3984cba37e5b40a",
+    "internal/integration/testdata/round4-2026-09-16/reference-eval.yaml": "e1af18f8d5053195c03c854d91c8fba557081a34456e1cfa5e8c776510126d47",
+    "internal/integration/testdata/holdout4/manifest.json": "f330d2555e6f33f2a14013a2851da817a38e3eb7c625f3c68d22e9d41db9db74",
+    "internal/llm/shortcircuit.go": "673472a0e16422cb24044897faea3e696548296843db85b461922c5588b20cb0",
+    "internal/llm/deepwindow.go": "97f5b17021e83a52164e3862bd18889d8ae213310f5c14ea081e0cc110025e87",
+    "internal/llm/client.go": "7a39add5cab4f3f815f6f3e5d25d67c76172292cbd43f95a9a7edd4ee31488cf",
+    "internal/llm/schema.go": "8325945c2dc1d66d273cb51b0f4b62e8da72b84803af8a029b4981a4073b4404",
+    "internal/llm/ground.go": "75a65b2841a813f43b5ee1b62d4d5062fd289a34d2b4f26f4701973a8e109a08",
+    "internal/llm/deep.go": "c49ac6da040e396d69f7a5fc239630f5517515eb98cee8db5297d70df794d326",
+    "internal/llm/adjudicate.go": "37498cb2e1df570d2bfc89d004c2b693ea7c7d435aac419a376b5af8f0ab233e",
+    "internal/llm/sourceliterals.go": "07e1191659f41c735610b38416ae53a384d9d427317aab6d9e005cb74756888c",
+    "internal/llm/prompt.go": "f9a4a5751b3db03b47594ce3df7ba3c5a97ae68064ed8332bd53b29b58b18061",
+    "internal/llm/health.go": "e1027fe07f3b834109eb25ce26baaac578c0913f2a14a6094e9d7ef57b8e15af",
+    "internal/llm/semaphore.go": "7a43c30155c6d75f45fbf0262f4a181910d73b225432dc3b880758a2ba3c1dbd",
+    "internal/llm/recovery.go": "de9feee7ce7bbacc239b8c0a9e4009c5f848ff0dedc17701bf794d9190545b4a",
+    "internal/llm/context.go": "a8766a0f48106af2c0fc93a8f825870676cd669932b0dddc9f20e5c4570af7f6",
+    "internal/llm/deepparse.go": "cc59b4426e07260ac14caae04c5d2a93b5b66e26ad19bc01f7bbf4947e1ea4be",
+    "internal/llm/types.go": "8b99c43b3d09d576aaa39a71bcfd6ff823f85062a7b27ed8c3ab83f7fd54e8c2",
+    "internal/types/config.go": "ed2f0430145f23404c6f6f67891d80d151736efa38f6c54dea93f3aae5f39322"
+  }
+}

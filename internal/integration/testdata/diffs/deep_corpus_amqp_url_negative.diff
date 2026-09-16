@@ -1,0 +1,5 @@
+diff --git a/worker.py b/worker.py
+--- /dev/null
++++ b/worker.py
+@@ -0,0 +1,1 @@
++connection = pika.BlockingConnection(pika.URLParameters(os.environ["AMQP_URL"]))

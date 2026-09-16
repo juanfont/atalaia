@@ -1,0 +1,5 @@
+diff --git a/jobs/mirror.sh b/jobs/mirror.sh
+--- /dev/null
++++ b/jobs/mirror.sh
+@@ -0,0 +1,1 @@
++git fetch https://f7Kv3Jn9Wd2Mq8Ca5Ls6@code.internal/infra/mirror.git

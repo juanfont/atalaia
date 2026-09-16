@@ -1,0 +1,5 @@
+diff --git a/config/worker.env b/config/worker.env
+--- /dev/null
++++ b/config/worker.env
+@@ -0,0 +1,1 @@
++ARCHIVE_PATH=Harbor\Pavilion69

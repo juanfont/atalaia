@@ -1,0 +1,18 @@
+{
+  "description": "line offset: only removed/context/non-credential content; no alerts are allowed. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "diff-boundary",
+    "python",
+    "negative"
+  ],
+  "pair": "line_offset",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

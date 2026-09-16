@@ -116,7 +116,7 @@ Verify and run:
 Two more `make` targets are available against a config that points at a real LLM:
 
 - `make smoke CONFIG=path/to/atalaia.yaml`: end-to-end pipeline check, single fixture diff, assert response shape.
-- `make smoke-corpus CONFIG=...`: full integration corpus (`internal/integration/testdata/diffs/`) with six fixtures covering real-credential and false-positive cases, graded on aggregate agreement (default floor 0.5, `INTEGRATION_MIN_AGREEMENT` to tune).
+- `make smoke-corpus CONFIG=...`: [176-fixture integration corpus](internal/integration/testdata/README.md), including 75 positive/negative contrast pairs. Expanded cases require the expected credentials and reject unexpected alerts; legacy aggregate agreement defaults to 0.8 (`INTEGRATION_MIN_AGREEMENT`). Filter with `INTEGRATION_TAG` or `INTEGRATION_ONLY`, and repeat selected families with `INTEGRATION_REPEAT`.
 
 ## Container
 

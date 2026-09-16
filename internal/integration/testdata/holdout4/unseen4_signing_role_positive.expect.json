@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: signing_role. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_signing_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "jobs/sign.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "35a7c984e26d0f41b893a67cd5e21490"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

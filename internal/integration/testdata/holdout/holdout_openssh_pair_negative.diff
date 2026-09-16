@@ -1,0 +1,5 @@
+diff --git a/deploy/service.key b/deploy/service.key
+--- /dev/null
++++ b/deploy/service.key
+@@ -0,0 +1,1 @@
++ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPT829rXB2Fas3rWE01iCbcsIFX9EEBEz3gGoJ3hWGdi synthetic-holdout

@@ -2,6 +2,7 @@ package detector
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/juanfont/atalaia/internal/types"
@@ -141,5 +142,44 @@ func TestGitleaks_SentinelIsAllowlistedByDefault(t *testing.T) {
 		if f.Match == "AKIAIOSFODNN7EXAMPLE" || f.Match == "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" {
 			t.Errorf("gitleaks unexpectedly matched documented sentinel %q", f.Match)
 		}
+	}
+}
+
+func TestGitleaks_KubernetesScalarDeduplicatesAtValueLine(t *testing.T) {
+	g, err := NewGitleaks(types.GitleaksConfig{Config: "../../gitleaks-aggressive.toml"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, quote := range []string{"", "\"", "'"} {
+		t.Run("quote="+quote, func(t *testing.T) {
+			const value = "Q2VkYXJIYXJib3I3Mg=="
+			diff := "diff --git a/deploy/secret.yaml b/deploy/secret.yaml\n--- /dev/null\n+++ b/deploy/secret.yaml\n@@ -0,0 +41,6 @@\n+apiVersion: v1\n+kind: Secret\n+metadata:\n+  name: database\n+data:\n+  password: " + quote + value + quote + "\n"
+			findings, err := g.Scan(context.Background(), []byte(diff))
+			if err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, f := range findings {
+				if f.Rule == "kubernetes-secret-yaml" {
+					found = true
+					if f.Line != 46 || f.Match != value {
+						t.Fatalf("wrong capture location or value: %+v", f)
+					}
+				}
+			}
+			if !found {
+				t.Fatal("Kubernetes rule did not run")
+			}
+			dedup := Dedup(findings)
+			count := 0
+			for _, f := range dedup {
+				if strings.Contains(f.Match, value) {
+					count++
+				}
+			}
+			if count != 1 {
+				t.Fatalf("same secret produced %d findings: %+v", count, dedup)
+			}
+		})
 	}
 }

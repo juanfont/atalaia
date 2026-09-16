@@ -1,0 +1,5 @@
+diff --git a/jobs/load.sh b/jobs/load.sh
+--- /dev/null
++++ b/jobs/load.sh
+@@ -0,0 +1,1 @@
++PGPASSWORD="AlderBay87" psql -h "$DB_HOST" -U reader ledger

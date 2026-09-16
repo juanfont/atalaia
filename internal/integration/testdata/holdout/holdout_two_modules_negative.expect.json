@@ -1,0 +1,19 @@
+{
+  "description": "Frozen round-two holdout: two_modules, negative. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "mixed",
+    "python",
+    "negative"
+  ],
+  "pair": "holdout_two_modules",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

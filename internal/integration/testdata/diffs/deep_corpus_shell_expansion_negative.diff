@@ -1,0 +1,6 @@
+diff --git a/bin/status.sh b/bin/status.sh
+--- /dev/null
++++ b/bin/status.sh
+@@ -0,0 +1,2 @@
++#!/bin/sh
++curl -H "Authorization: Bearer ${SERVICE_TOKEN}" https://gateway.internal/status

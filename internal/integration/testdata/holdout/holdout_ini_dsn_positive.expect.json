@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: ini_dsn, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "connection",
+    "ini",
+    "positive"
+  ],
+  "pair": "holdout_ini_dsn",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "config/database.ini",
+      "line": 2,
+      "kind": "credential",
+      "value": "MagnoliaCape63"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

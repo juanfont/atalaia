@@ -1,0 +1,7 @@
+diff --git a/client/config.go b/client/config.go
+--- /dev/null
++++ b/client/config.go
+@@ -0,0 +1,3 @@
++package client
++var token = os.Getenv("SERVICE_TOKEN")
++var client = NewClient(token)

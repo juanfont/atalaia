@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: python_patch, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_python_patch",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_billing.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "qe25ae776a0d4ff864b58ea8dfbe9e"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,6 @@
+diff --git a/config/database.ini b/config/database.ini
+--- /dev/null
++++ b/config/database.ini
+@@ -0,0 +1,2 @@
++[database]
++connection=Server=db.internal;User Id=reader;Password=MagnoliaCape63;Database=ledger

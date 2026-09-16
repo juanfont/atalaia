@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-09-16T10:34:17.828770+00:00",
+  "scope": "items 1 and 2; targeted development only; no new independent holdout",
+  "thinking": "on",
+  "source_hashes": {
+    "internal/integration/testdata/round4-2026-09-16/reference-prompts/gemma4_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "internal/integration/testdata/round4-2026-09-16/reference-prompts/gemma4_deep_system.tmpl": "2d34a83f37cb861be20d6c4ff03a5413a28f5616107be644a19c2b858f4eac6d",
+    "internal/integration/testdata/round4-2026-09-16/reference-prompts/gemma4_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "internal/integration/testdata/round4-2026-09-16/reference-prompts/gemma4_deep_user.tmpl": "e815554428837d24a44e4d828cf38b57c112736c618d2a0571a82bc2bd7e5cb2",
+    "internal/integration/testdata/round4-2026-09-16/recall-prompts/gemma4_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "internal/integration/testdata/round4-2026-09-16/recall-prompts/gemma4_deep_system.tmpl": "b245d1d5b7a81ccc2cab4f682a642b799910d40712a82ea3e60711f9fec9155d",
+    "internal/integration/testdata/round4-2026-09-16/recall-prompts/gemma4_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "internal/integration/testdata/round4-2026-09-16/recall-prompts/gemma4_deep_user.tmpl": "413faca607424ca53e08c41f31a4fc1a084bb36be3d8f74f2a0bef5f14be91ed"
+  }
+}

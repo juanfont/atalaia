@@ -1,0 +1,6 @@
+diff --git a/tests/client.spec.ts b/tests/client.spec.ts
+--- /dev/null
++++ b/tests/client.spec.ts
+@@ -0,0 +1,2 @@
++const response = await axios.get("https://ledger.internal/private", {headers: {Authorization: "Bearer q0175df85344a85e76ca7e8b9dd7b0"}});
++expect(response.status).toBe(200);

@@ -1,0 +1,5 @@
+diff --git a/app/query.py b/app/query.py
+--- /dev/null
++++ b/app/query.py
+@@ -0,0 +1,1 @@
++reply = requests.get("https://orders.internal/", headers={"X-Request-ID": "ac8e0123-3d71-43a2-b534-28bca969f121"})

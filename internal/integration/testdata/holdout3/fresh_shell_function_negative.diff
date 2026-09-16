@@ -1,0 +1,5 @@
+diff --git a/jobs/export.sh b/jobs/export.sh
+--- /dev/null
++++ b/jobs/export.sh
+@@ -0,0 +1,1 @@
++curl --user "exporter:$(load_password)" https://archive.internal/

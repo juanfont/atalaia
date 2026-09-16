@@ -1,0 +1,4 @@
+diff --git a/legacy/db.py b/app/db.py
+similarity index 100%
+rename from legacy/db.py
+rename to app/db.py

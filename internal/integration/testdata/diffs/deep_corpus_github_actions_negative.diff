@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+--- /dev/null
++++ b/.github/workflows/publish.yml
+@@ -0,0 +1,9 @@
++name: publish
++on: push
++jobs:
++  upload:
++    runs-on: ubuntu-latest
++    steps:
++      - run: curl -H "Authorization:Bearer $UPLOAD_TOKEN" https://uploads.internal/
++        env:
++          UPLOAD_TOKEN: ${{ secrets.UPLOAD_TOKEN }}

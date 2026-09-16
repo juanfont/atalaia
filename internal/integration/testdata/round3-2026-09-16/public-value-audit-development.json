@@ -1,0 +1,9 @@
+[
+  {
+    "run": "trial4-on-holdout",
+    "requests": 80,
+    "expected_values_checked": 40,
+    "echoes": [],
+    "records_sha256": "8187eaed6c7c5889492b00e5cd9cc7b6f7c6904730c85c839dbba792069ab1de"
+  }
+]

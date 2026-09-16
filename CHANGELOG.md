@@ -4,7 +4,84 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.8.0], 2026-09-16
+
+### Added
+
+- Add opt-in source-literal selection for deep scan and the validated
+  `gemma4_source` / `gemma4_source_deep` prompt pair. Models can select escaped
+  source values by window-local IDs; unknown IDs fail and exact grounding remains.
+  Freeze 32 additional contrast cases, bringing the corpus to 336 fixtures.
+  See the [round-four comparison](internal/integration/testdata/ROUND4-CONTINUATION.md).
+
+- Freeze 48 additional synthetic cases for quality-first validation, including
+  mock scope, separate live clients, source escaping and credential roles.
+
+- Add a test-only stage recorder and evaluation summaries for raw synthetic
+  cases, completion status, token usage, reasoning and latency. Freeze 40 new
+  contrast pairs for evaluation after prompt selection. Add an optional
+  `llm.enable_thinking` backend-template override.
+
+- Expand the evaluation corpus from 26 to 176 fixtures with 75 paired
+  positive/negative scenarios across languages, test frameworks,
+  deployment configuration, credential formats, encodings and diff
+  boundaries. Add offline fixture integrity checks, channel-independent
+  credential assertions, strict alert/unreviewed limits, tag filtering,
+  separate recall and clean-scan summaries, and an adjustable corpus
+  runner timeout. These are challenge cases; model failures remain
+  visible instead of being removed from the corpus.
+
 ### Fixed
+
+- Recommend explicit thinking on for the evaluated Gemma deployment. Preserve
+  candidate prompt experiments and fresh-holdout results, including the recall
+  regressions that prevented adopting those templates. Keep the backend default
+  unchanged. See the [round-three evaluation](internal/integration/testdata/ROUND3.md).
+
+- Scrub credential components from explanations when a model returns a whole
+  connection string. Mask MySQL DSN userinfo in previews, including short
+  passwords that generic head/tail masking could expose.
+
+- Preserve function-shaped passwords when added source proves they are a
+  complete quoted literal or a password inside a quoted connection string.
+  Keep rejecting unquoted calls and interpolation.
+
+- Sort deduplicated findings and their detector provenance deterministically.
+  Concurrent scanner/rule completion can no longer reorder prompts or change
+  which findings survive a request cap.
+
+- Recover malformed or truncated LLM completions with at most one replacement
+  under the original deadline and per-attempt token limit. Count actual attempts and
+  retain failed deep-scan progress. Remove model-response excerpts and backend
+  bodies from error messages so those paths cannot echo credential bytes.
+
+- Refine deep prompting around explicit test-server authentication setup
+  and credentials sent to existing services. Record the unchanged-corpus
+  [before/after measurement](internal/integration/testdata/IMPROVEMENTS.md)
+  and keep remaining model failures visible.
+
+- Locate Gitleaks secret captures at their actual line, including captures
+  inside multiline matches. Normalize single-line Kubernetes Secret
+  scalars so overlapping rules deduplicate into one finding.
+- Preserve literal MySQL DSNs containing `tcp(...)` during deep grounding;
+  parentheses alone no longer imply a function reference. Reject basic
+  authentication pairs whose password is only a runtime variable.
+
+- Require a recognized private-key PEM header during deep grounding.
+  Public keys and certificates cannot become discoveries merely because
+  the model labels them private keys. Reject PEM closing delimiters as credentials.
+
+- Teach both prompt profiles to distinguish credentials created by a
+  test from credentials used to access an existing service. Deep scan
+  accepts an internal `test_data` classification that grounding drops,
+  so a model can explicitly reject a synthetic credential even when its
+  bytes occur in the diff. Public discovery kinds are unchanged. Add corpus
+  fixtures for a test-client token, an opaque-token variant, and a
+  password used by a test against an existing service. Deploy the updated
+  binary and prompt templates together so `test_data` is discarded.
+- Send `temperature: 0` explicitly in LLM requests. JSON serialization
+  previously omitted zero, leaving the backend's sampling default in
+  effect despite adjudication and deep scan requesting zero.
 
 - **Deep scan no longer reports `KEY=value` lines, placeholders, or
   usernames as secrets.** Seen in production: six "credentials" from a

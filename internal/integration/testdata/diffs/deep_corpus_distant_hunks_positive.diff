@@ -1,0 +1,8 @@
+diff --git a/app/db.py b/app/db.py
+--- a/app/db.py
++++ b/app/db.py
+@@ -5,1 +5,2 @@
+ host = "db.internal"
++timeout = 20
+@@ -499,0 +501,1 @@
++password = "BirchHarbor62"

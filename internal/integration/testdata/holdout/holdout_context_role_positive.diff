@@ -1,0 +1,5 @@
+diff --git a/config/context.env b/config/context.env
+--- /dev/null
++++ b/config/context.env
+@@ -0,0 +1,1 @@
++DB_PASSWORD=SequoiaReef97

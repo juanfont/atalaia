@@ -1,0 +1,12 @@
+Added source lines under review:
+```
+{{.Window}}
+```
+
+Check credential role, literal source bytes, and synthetic setup for each
+value. An intercepted request is synthetic even when its mock never checks
+authentication. A separate real request remains live. Preserve source escapes
+exactly; escape backslashes again when serializing your JSON response.
+
+Return only this JSON object:
+{"candidates":[{"value":"<verbatim source value>","kind":"credential"|"private_key"|"test_data","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}

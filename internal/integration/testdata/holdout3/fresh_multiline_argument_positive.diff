@@ -1,0 +1,8 @@
+diff --git a/app/connect.py b/app/connect.py
+--- /dev/null
++++ b/app/connect.py
+@@ -0,0 +1,4 @@
++api_token = (
++    "b7Nm2Jr9Qc4La6Dx8Vs3"
++)
++client = Orders(api_token=api_token)

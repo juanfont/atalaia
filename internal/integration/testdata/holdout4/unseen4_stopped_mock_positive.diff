@@ -1,0 +1,9 @@
+diff --git a/tests/test_report.py b/tests/test_report.py
+--- /dev/null
++++ b/tests/test_report.py
+@@ -0,0 +1,5 @@
++routes = responses.RequestsMock()
++routes.start()
++routes.add(responses.GET, "https://report.internal/", json=[])
++routes.stop()
++requests.get("https://report.internal/", headers={"Authorization": "Bearer n4Pd8Sa6Yc2Lm7Vk9Qr3"})

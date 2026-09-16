@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: rust_mockito, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "rust",
+    "positive"
+  ],
+  "pair": "holdout_rust_mockito",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/client.rs",
+      "line": 1,
+      "kind": "credential",
+      "value": "q3f835e01200c5d6ad29c837375cb4"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

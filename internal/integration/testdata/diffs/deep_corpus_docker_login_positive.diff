@@ -1,0 +1,6 @@
+diff --git a/scripts/publish.sh b/scripts/publish.sh
+--- /dev/null
++++ b/scripts/publish.sh
+@@ -0,0 +1,2 @@
++#!/bin/sh
++printf "%s" "BirchHarbor62" | docker login registry.internal -u publisher --password-stdin

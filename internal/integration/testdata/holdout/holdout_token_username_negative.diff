@@ -1,0 +1,6 @@
+diff --git a/jobs/clone.sh b/jobs/clone.sh
+--- /dev/null
++++ b/jobs/clone.sh
+@@ -0,0 +1,2 @@
++# Invented token used only to test URL parsing; no network call is made.
++parsed_url="https://glpat-q2a0229276f339450fda394024c8b7@git.internal/division/reports.git"

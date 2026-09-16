@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Local function shadowing prevents a request; the ordinary client sends it.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_javascript_fetch",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/orders.test.js",
+      "line": 1,
+      "kind": "credential",
+      "value": "b7Qw9Hs4Lp6Nc2Vr8Dx3"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

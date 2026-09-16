@@ -1,0 +1,6 @@
+diff --git a/src/settings.js b/src/settings.js
+--- /dev/null
++++ b/src/settings.js
+@@ -0,0 +1,2 @@
++const releaseId = "8e12c940-35af-4e62-9cb1-b7a9de508421";
++console.info(releaseId);

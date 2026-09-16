@@ -1,0 +1,8 @@
+diff --git a/tests/fetch.test.js b/tests/fetch.test.js
+--- /dev/null
++++ b/tests/fetch.test.js
+@@ -0,0 +1,4 @@
++const saved = globalThis.fetch;
++globalThis.fetch = async () => new Response("[]");
++globalThis.fetch = saved;
++await fetch("https://billing.internal/", {headers: {Authorization: "Bearer h6Ns2Vp9Kc4Qa8Jm3Rd7"}});

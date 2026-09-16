@@ -1,0 +1,7 @@
+diff --git a/chart/templates/deployment.yaml b/chart/templates/deployment.yaml
+--- /dev/null
++++ b/chart/templates/deployment.yaml
+@@ -0,0 +1,3 @@
++env:
++  - name: API_TOKEN
++    value: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"

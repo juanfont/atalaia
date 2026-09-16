@@ -106,6 +106,9 @@ type KingfisherConfig struct {
 }
 
 type LLMConfig struct {
+	// EnableThinking is an optional backend chat-template override. Nil leaves
+	// backend defaults untouched; false explicitly disables reasoning.
+	EnableThinking        *bool
 	Endpoint              string
 	Model                 string
 	MaxInflight           int
@@ -142,6 +145,9 @@ type LLMConfig struct {
 // default: it costs an LLM call on every request that asks for it,
 // including requests with zero detector findings.
 type DeepScanConfig struct {
+	// SourceLiterals offers exact escaped source values by ID. Off by default.
+	SourceLiterals bool
+
 	Enabled bool
 	// WindowTokens is the token budget for ONE window of added lines.
 	// Deliberately smaller than llm.context_budget.input_tokens: the
@@ -294,6 +300,7 @@ func setDefaults() {
 	viper.SetDefault("llm.deep_scan.window_tokens", 4000)
 	viper.SetDefault("llm.deep_scan.max_windows", 48)
 	viper.SetDefault("llm.deep_scan.max_candidates", 50)
+	viper.SetDefault("llm.deep_scan.source_literals", false)
 	viper.SetDefault("llm.deep_scan.profile", "gemma4_deep")
 	viper.SetDefault("llm.deep_scan.require_findings", false)
 	viper.SetDefault("llm.deep_scan.max_added_lines", 0)
@@ -398,6 +405,7 @@ func readLLMConfig() LLMConfig {
 		Profiles: map[string]LLMProfile{},
 		UseTools: viper.GetBool("llm.use_tools"),
 		DeepScan: DeepScanConfig{
+			SourceLiterals:  viper.GetBool("llm.deep_scan.source_literals"),
 			Enabled:         viper.GetBool("llm.deep_scan.enabled"),
 			WindowTokens:    viper.GetInt("llm.deep_scan.window_tokens"),
 			MaxWindows:      viper.GetInt("llm.deep_scan.max_windows"),
@@ -408,6 +416,11 @@ func readLLMConfig() LLMConfig {
 			SampleRate:      viper.GetFloat64("llm.deep_scan.sample_rate"),
 			AdmissionWait:   viper.GetDuration("llm.deep_scan.admission_wait"),
 		},
+	}
+
+	if viper.IsSet("llm.enable_thinking") {
+		enabled := viper.GetBool("llm.enable_thinking")
+		c.EnableThinking = &enabled
 	}
 
 	raw := viper.GetStringMap("llm.profiles")

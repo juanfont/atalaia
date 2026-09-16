@@ -1,0 +1,15 @@
+{
+  "description": "Frozen round-four contrast: quoted_function. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "negative"
+  ],
+  "pair": "unseen4_quoted_function",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

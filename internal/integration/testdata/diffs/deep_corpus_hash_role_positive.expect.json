@@ -1,0 +1,23 @@
+{
+  "description": "hash role: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "data-role",
+    "python",
+    "positive"
+  ],
+  "pair": "hash_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/revision.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "8e12c94035af4e629cb1b7a9de5084216a27cd591cb840f83fd902a54123ab67"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

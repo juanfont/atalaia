@@ -1,0 +1,9 @@
+diff --git a/deploy/service.pem b/deploy/service.pem
+--- /dev/null
++++ b/deploy/service.pem
+@@ -0,0 +1,5 @@
++-----BEGIN PRIVATE KEY-----
++MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg7gs2Pv5r7+I9Rf51
++e0qNFRU8MSljDI/XblnlgRzBTX+hRANCAARwISUXNNYcb+xCLvpEwsUNq3tp5eCl
++UdE9IMInEwYE5ru6FK1abcpSNFgIXk0cIlKTn1LBA+Bdd4nNhKPhR1YM
++-----END PRIVATE KEY-----

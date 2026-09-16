@@ -1,0 +1,6 @@
+diff --git a/app/db.py b/app/db.py
+--- /dev/null
++++ b/app/db.py
+@@ -0,0 +1,2 @@
++dsn = f"postgresql://reader:{os.environ['REPORT_AUTH']}@{db_host}/ledger"
++connection = connect(dsn)

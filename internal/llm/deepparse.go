@@ -7,6 +7,7 @@ import (
 )
 
 type rawCandidate struct {
+	SourceID   *string `json:"source_id"`
 	Value      string  `json:"value"`
 	Kind       string  `json:"kind"`
 	Confidence float64 `json:"confidence"`
@@ -35,12 +36,16 @@ func stripCodeFence(raw string) string {
 // all is not an error. "I found nothing" is the common answer, and
 // some models express it by simply not calling the tool.
 func parseDeepToolCalls(calls []ToolCall) ([]DeepCandidate, error) {
+	return parseDeepToolCallsWithSources(calls, nil)
+}
+
+func parseDeepToolCallsWithSources(calls []ToolCall, sources []SourceLiteral) ([]DeepCandidate, error) {
 	var out []DeepCandidate
 	for _, c := range calls {
 		if c.Function.Name != DeepToolName {
 			continue
 		}
-		got, err := parseDeepResponse(c.Function.Arguments)
+		got, err := parseDeepResponseWithSources(c.Function.Arguments, sources)
 		if err != nil {
 			return nil, fmt.Errorf("tool call %s: %w", DeepToolName, err)
 		}
@@ -56,6 +61,10 @@ func parseDeepToolCalls(calls []ToolCall) ([]DeepCandidate, error) {
 // An empty body is not an error. Most diffs contain no secrets, so
 // "nothing here" is the expected answer and must not fail the request.
 func parseDeepResponse(raw string) ([]DeepCandidate, error) {
+	return parseDeepResponseWithSources(raw, nil)
+}
+
+func parseDeepResponseWithSources(raw string, sources []SourceLiteral) ([]DeepCandidate, error) {
 	body := stripCodeFence(raw)
 	if body == "" {
 		return nil, nil
@@ -81,6 +90,16 @@ func parseDeepResponse(raw string) ([]DeepCandidate, error) {
 
 	out := make([]DeepCandidate, 0, len(cands))
 	for _, c := range cands {
+		if c.SourceID != nil {
+			value, ok := sourceValue(sources, *c.SourceID)
+			if !ok {
+				return nil, fmt.Errorf("unknown source_id")
+			}
+			if c.Value != "" && c.Value != value {
+				return nil, fmt.Errorf("source_id and value disagree")
+			}
+			c.Value = value
+		}
 		if strings.TrimSpace(c.Value) == "" {
 			continue
 		}

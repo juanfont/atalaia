@@ -1,0 +1,20 @@
+{
+  "decided_at": "2026-09-16T15:08:19.707856+00:00",
+  "decision": "recommend opt-in gemma4_source and gemma4_source_deep with thinking and source_literals enabled",
+  "reason": "Fresh repeated comparison improves recall against both baselines and preserves the round-three candidate clean-negative result: 32/32 credential expectations and 32/32 clean negatives; all 32 cases pass both runs.",
+  "defaults_changed": false,
+  "deployed": false,
+  "committed": false,
+  "packaged_template_sha256": {
+    "prompts/gemma4_source_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "prompts/gemma4_source_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "prompts/gemma4_source_deep_system.tmpl": "1539aa84a4f4f4f7eb1522a8bbbf1f9fed905799b8d6a75c4c8e6fd8a9b52658",
+    "prompts/gemma4_source_deep_user.tmpl": "1e11d628d2dbdee5f5575091d6b8a3aa559ee6f070b81e3ebe9f39d1741662c2"
+  },
+  "remaining_development_failures": [
+    "deep_corpus_aspnet_factory_negative",
+    "deep_corpus_nock_interceptor_positive",
+    "holdout_webmock_ruby_negative"
+  ],
+  "stability_caveat": "fresh_mock_scope_positive failed once in the earlier targeted repeat, then passed in the complete development run."
+}

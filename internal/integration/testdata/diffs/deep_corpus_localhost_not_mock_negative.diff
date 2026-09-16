@@ -1,0 +1,7 @@
+diff --git a/tests/test_database.py b/tests/test_database.py
+--- /dev/null
++++ b/tests/test_database.py
+@@ -0,0 +1,3 @@
++def test_database():
++    database = InMemoryDatabase(password="BirchHarbor62")
++    assert database.authenticate("BirchHarbor62")

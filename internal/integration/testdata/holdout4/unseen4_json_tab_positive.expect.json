@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: json_tab. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_json_tab",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "settings/cache.json",
+      "line": 1,
+      "kind": "credential",
+      "value": "Glacier\\tLantern46"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

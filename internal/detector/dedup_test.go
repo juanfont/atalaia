@@ -1,6 +1,9 @@
 package detector
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestFindingID_Stable(t *testing.T) {
 	f := Finding{File: "a.py", Line: 7, Match: "AKIAIOSFODNN7EXAMPLE"}
@@ -58,4 +61,38 @@ func TestDedup_EmptyInput(t *testing.T) {
 	if got := Dedup(nil); len(got) != 0 {
 		t.Errorf("Dedup(nil) = %v, want empty", got)
 	}
+}
+
+func TestDedup_IndependentOfScannerCompletionOrder(t *testing.T) {
+	findings := []Finding{
+		{DetectorType: "gitleaks", DetectorName: "local", Rule: "z-rule", File: "a", Line: 1, Match: "first"},
+		{DetectorType: "gitleaks", DetectorName: "local", Rule: "a-rule", File: "a", Line: 1, Match: "first"},
+		{DetectorType: "gitleaks", DetectorName: "local", Rule: "a-rule", File: "a", Line: 1, Match: "first", Verified: true},
+		{DetectorType: "trufflehog", DetectorName: "remote", Rule: "key", File: "a", Line: 1, Match: "first"},
+		{DetectorType: "gitleaks", DetectorName: "local", Rule: "generic", File: "a", Line: 1, Match: "second"},
+		{DetectorType: "gitleaks", DetectorName: "local", Rule: "generic", File: "b", Line: 2, Match: "third"},
+	}
+	expected := Dedup(findings)
+	if len(expected) != 3 || len(expected[0].Detections) != 4 || !expected[0].AnyVerified || expected[1].AnyVerified {
+		t.Fatalf("lost provenance or verification: %+v", expected)
+	}
+	var visit func(int)
+	visit = func(start int) {
+		if start == len(findings) {
+			before := append([]Finding(nil), findings...)
+			if got := Dedup(findings); !reflect.DeepEqual(got, expected) {
+				t.Fatalf("scanner order changed canonical findings: %+v", got)
+			}
+			if !reflect.DeepEqual(before, findings) {
+				t.Fatal("mutated scanner results")
+			}
+			return
+		}
+		for i := start; i < len(findings); i++ {
+			findings[start], findings[i] = findings[i], findings[start]
+			visit(start + 1)
+			findings[start], findings[i] = findings[i], findings[start]
+		}
+	}
+	visit(0) // all 720 possible scanner completion orders
 }

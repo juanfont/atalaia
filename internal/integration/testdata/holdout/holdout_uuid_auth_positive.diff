@@ -1,0 +1,5 @@
+diff --git a/app/client.py b/app/client.py
+--- /dev/null
++++ b/app/client.py
+@@ -0,0 +1,1 @@
++client.authenticate(api_key="9baf673e-436d-4a2d-99cb-17e08b69042d")

@@ -1,0 +1,15 @@
+{
+  "description": "Round-three frozen synthetic holdout. Hex bytes used as the signing key versus public digest output.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "negative"
+  ],
+  "pair": "fresh_hmac_role",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

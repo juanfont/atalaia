@@ -1,0 +1,6 @@
+diff --git a/docs/client_example.py b/docs/client_example.py
+--- /dev/null
++++ b/docs/client_example.py
+@@ -0,0 +1,2 @@
++# Illustration only. This credential is invented and no service accepts it.
++client = ApiClient(token="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")

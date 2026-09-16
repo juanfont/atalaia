@@ -1,0 +1,9 @@
+diff --git a/src/test/java/ClientTest.java b/src/test/java/ClientTest.java
+--- /dev/null
++++ b/src/test/java/ClientTest.java
+@@ -0,0 +1,5 @@
++MockWebServer server = new MockWebServer();
++server.enqueue(new MockResponse().setResponseCode(200));
++server.start();
++var request = new Request.Builder().url(server.url("/private")).header("Authorization", "Bearer qe088935e49041e0ccd492dd16e060").build();
++assertEquals(200, new OkHttpClient().newCall(request).execute().code());

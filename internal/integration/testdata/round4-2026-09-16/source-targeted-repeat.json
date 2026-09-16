@@ -1,0 +1,176 @@
+{
+  "cases": 20,
+  "cases_passed_all_runs": 19,
+  "requests": 40,
+  "model_calls": 40,
+  "calls_with_reasoning": 40,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 3369.5,
+    "p95": 5243,
+    "max": 8041
+  },
+  "model_call_latency_ms": {
+    "median": 3369.0,
+    "p95": 5242,
+    "max": 8040
+  },
+  "usage": {
+    "prompt_tokens": 109262,
+    "completion_tokens": 21919,
+    "total_tokens": 131181
+  },
+  "finish_reasons": {
+    "stop": 40
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "fresh_mock_scope_positive"
+  ],
+  "runs_per_case": {
+    "fresh_javascript_fetch_negative": 2,
+    "fresh_javascript_fetch_positive": 2,
+    "fresh_json_backslashes_negative": 2,
+    "fresh_json_backslashes_positive": 2,
+    "fresh_json_source_bytes_negative": 2,
+    "fresh_json_source_bytes_positive": 2,
+    "fresh_mixed_clients_negative": 2,
+    "fresh_mixed_clients_positive": 2,
+    "fresh_mock_scope_negative": 2,
+    "fresh_mock_scope_positive": 2,
+    "fresh_python_transport_negative": 2,
+    "fresh_python_transport_positive": 2,
+    "fresh_python_unrelated_mock_negative": 2,
+    "fresh_python_unrelated_mock_positive": 2,
+    "fresh_ruby_local_method_negative": 2,
+    "fresh_ruby_local_method_positive": 2,
+    "fresh_token_username_negative": 2,
+    "fresh_token_username_positive": 2,
+    "fresh_url_component_negative": 2,
+    "fresh_url_component_positive": 2
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:6e1ab740d653"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:46cdb0349561"
+  ],
+  "fixture_hashes": {
+    "fresh_javascript_fetch_negative": {
+      "diff": "d28d3a3b99cf0bf2db401a91160789be6665aae3a518e2ea3640be9abf7947a7",
+      "expectation": "9c7e4dc18c01baa951a346ce4611fdd8d9a74e29805900a450ffab6004701fa3"
+    },
+    "fresh_javascript_fetch_positive": {
+      "diff": "35cd4739c4c1644ba9183957eb083c943e5796a47b7121e00ec2d076471016c2",
+      "expectation": "a16d455eeba7f25d68933035a7e2746066fb6cd24204e57311d1557d47cf6a01"
+    },
+    "fresh_json_backslashes_negative": {
+      "diff": "dc622f902caba416120260a7b06aa73cc4dfe9a2903c6d72104af6a314d11f44",
+      "expectation": "6c60ea9a560395c776fee1eb55c7f2cfae6ed046a54f10e19821adcc0874bca3"
+    },
+    "fresh_json_backslashes_positive": {
+      "diff": "d44acb13b642f36342f12b5fb489f32ffe536f10b8ba808980f91ca0c191afff",
+      "expectation": "df2d769e972c17a16921a39d037e8c6ec1eadc443912e375a7a21f255ba5677d"
+    },
+    "fresh_json_source_bytes_negative": {
+      "diff": "99408b8b197e743ebb7be7f0c9c7dd1052d115f53dea1741293f822ecd15a652",
+      "expectation": "0be513877d9c8823d620c6037c2940f873db4f7473584cfdbe75cbaf564633b6"
+    },
+    "fresh_json_source_bytes_positive": {
+      "diff": "e9409a9b2ea1db8bbb65527bc81478f0a328a42ec26cbfa563a8d51cf67fd56c",
+      "expectation": "58746fda4463c68e69961ff5c9d245c23cbf607da5ec1f5953f67920c6189410"
+    },
+    "fresh_mixed_clients_negative": {
+      "diff": "56f174825f2f42fc0ca510731b3fa204a0046bc86babc9b50f339bdd1e845f05",
+      "expectation": "90849627b1daca2160d195588978992e1d5038642dee25575d31406c40468e62"
+    },
+    "fresh_mixed_clients_positive": {
+      "diff": "2cc3360cb9395d231c284f3aec4113a0089db09b5d6509931a6daa062010dcda",
+      "expectation": "eef33562ab52ae03348de9d388f9997c48867fbe354aa0c5e316e9dde6ddbfa4"
+    },
+    "fresh_mock_scope_negative": {
+      "diff": "c454ca7ffe21abce2692e384ee2d2eab3a15734b77e2ee64033081296905cd0a",
+      "expectation": "8b2e08592e9dfe47b4039cee5a3fe692ddd4b8f76bbb57937103031d8ac2f720"
+    },
+    "fresh_mock_scope_positive": {
+      "diff": "01e13de246cc2d50b36738afdee26fe670af81f4b9e48b31a8a1f00becb0ac13",
+      "expectation": "f2be24ca0fe9197d3e7038bcb1ccca1db4688e14850c93da75848943945ffc99"
+    },
+    "fresh_python_transport_negative": {
+      "diff": "03b77dfa296aa58ba9ad08d2c17b380e83d6b083c738610e72526dfe7666bb81",
+      "expectation": "b537899ed0fb1dde38a581b7d6049945fb1723423ef102e881cdcb5a920f9b05"
+    },
+    "fresh_python_transport_positive": {
+      "diff": "f2dbfd1ab17d9d202556f6f8c4f63b7c279f58414b9b237e53ac9042f3a042a5",
+      "expectation": "c9931a19e2f209c1f553081b622ce86844cef5460f332cc8659595b885b7d52d"
+    },
+    "fresh_python_unrelated_mock_negative": {
+      "diff": "6d4d32dd277629a45a78bdfb42a54a0df4d193f63743b552e3f6afbc66dca69c",
+      "expectation": "8e08e12d82cffa43e09e3074715a9af401475880bdd96033feb3040d06e01d1a"
+    },
+    "fresh_python_unrelated_mock_positive": {
+      "diff": "d7fb53fe486bed723fc68abdce49d62091c56b19b510feb0b635358798ccc8d2",
+      "expectation": "68953240acd9ca47ec8f81b267a1d3eca7f0cadb5a8056b16e2110045671ff2a"
+    },
+    "fresh_ruby_local_method_negative": {
+      "diff": "bf4f9d7b9d2a9fa38070a4cd2dea6c53d0d1f2dcb7c06d8fe04155abcc2d5070",
+      "expectation": "9f64dbd55d7c12aa34c9aaabc3afd7de283548c35ef3dc0d924ee16ec59aab89"
+    },
+    "fresh_ruby_local_method_positive": {
+      "diff": "18ac1718cff3ac00068cdcd5edaa51ce13a40216203b53b5d5a67125f2567f0f",
+      "expectation": "45d36616d2a1dc62599dd1109d96476b8f5f16b99502af9b91976a80c53240f0"
+    },
+    "fresh_token_username_negative": {
+      "diff": "f94513a580738cd50b035e58879bf0a520da2b3146c0b336ec06af11983ee3e3",
+      "expectation": "af528005f1393aea877d55551dcdd9a6b3c47167274ed3bffd57fc47ac4a6550"
+    },
+    "fresh_token_username_positive": {
+      "diff": "9a0c0880cc5027453006f1826f3ff705bceb5c39492f18a4df50313e5f42261a",
+      "expectation": "c28396fde01cd811c8ae875b1b782b36af65fc408ef0a882dbb61ab472a3c7d2"
+    },
+    "fresh_url_component_negative": {
+      "diff": "b4fb31a19077684d9b67ea15de7248a4ed2eebb94e8bf6b93405b087bbc31eed",
+      "expectation": "014a918fa018c69e4037cc6dfffcd6f3f6845235cba7b4ce71dbf954365b2a45"
+    },
+    "fresh_url_component_positive": {
+      "diff": "059ba3656715bb636382104cb26a245beb61a30e7cfc4529b96f1fb9b25874a3",
+      "expectation": "57dd024827de6ab2b24a4a964f6931ebf44d677fde60c70039e52be2e6cc4dcc"
+    }
+  },
+  "stages": {
+    "deep": {
+      "calls": 40,
+      "latency_ms": {
+        "median": 3369.0,
+        "p95": 5242,
+        "max": 8040
+      },
+      "usage": {
+        "prompt_tokens": 109262,
+        "completion_tokens": 21919,
+        "total_tokens": 131181
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 40
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 19,
+    "total": 20
+  },
+  "clean_scans": {
+    "passed": 20,
+    "total": 20
+  },
+  "records_sha256": "9468cfed87ed88aca938a47bb0b632438a52597225eed6a76ee7cd5bb4fe74e7",
+  "log_sha256": "0561e3beacb08ea68bb060cd0b1beeab58fd7e8528451975e8b31a67affd26c1"
+}

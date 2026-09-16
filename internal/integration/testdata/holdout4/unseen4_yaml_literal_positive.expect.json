@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: yaml_literal. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_yaml_literal",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "config/worker.yaml",
+      "line": 1,
+      "kind": "credential",
+      "value": "Basalt\\\\Pier37"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

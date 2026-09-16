@@ -1,0 +1,178 @@
+{
+  "cases": 17,
+  "cases_passed_all_runs": 16,
+  "requests": 340,
+  "model_calls": 500,
+  "calls_with_reasoning": 0,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 1176.5,
+    "p95": 2324,
+    "max": 2364
+  },
+  "model_call_latency_ms": {
+    "median": 997.5,
+    "p95": 1304,
+    "max": 1886
+  },
+  "usage": {
+    "prompt_tokens": 901160,
+    "completion_tokens": 35151,
+    "total_tokens": 936311
+  },
+  "finish_reasons": {
+    "stop": 500
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "deep_corpus_multiline_assignment_positive"
+  ],
+  "runs_per_case": {
+    "deep_corpus_auth_username_negative": 20,
+    "deep_corpus_auth_username_positive": 20,
+    "deep_corpus_documented_sample_negative": 20,
+    "deep_corpus_documented_sample_positive": 20,
+    "deep_corpus_key_ed25519_negative": 20,
+    "deep_corpus_key_ed25519_positive": 20,
+    "deep_corpus_mixed_interpolation_negative": 20,
+    "deep_corpus_mixed_interpolation_positive": 20,
+    "deep_corpus_multiline_assignment_negative": 20,
+    "deep_corpus_multiline_assignment_positive": 20,
+    "deep_corpus_percent_encoded_url_negative": 20,
+    "deep_corpus_percent_encoded_url_positive": 20,
+    "deep_corpus_python_responses_negative": 20,
+    "deep_corpus_python_responses_positive": 20,
+    "deep_test_client_opaque": 20,
+    "deep_test_client_token": 20,
+    "deep_test_external_password": 20
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "off"
+  ],
+  "prompt": [
+    "gemma4:ce4f03272bfb"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:036049944ddc"
+  ],
+  "fixture_hashes": {
+    "deep_corpus_auth_username_negative": {
+      "diff": "41565afe9b34ee070ee63b764c83d159dc74b771f075fc408993099091d77d49",
+      "expectation": "8bb0aba514527bc3ac4d09881df971d60b73bc0e900a9994d31a3ec0c0feb23f"
+    },
+    "deep_corpus_auth_username_positive": {
+      "diff": "ab09dea326d83bc78b6961a1d1b07d5c2db3b40d906eb51d327c850971d26fc7",
+      "expectation": "650c1d0721c5c14ddd30d3cfc040f37ed402874a8213592302ddae5371df690a"
+    },
+    "deep_corpus_documented_sample_negative": {
+      "diff": "06a9a0fd38acdbe80655fd4e662cf9bc914052574f5a944ec7bc7a79a445a37d",
+      "expectation": "83f1c63bb2aecec975258bbc6df9078bf744ca4204e48ff01c0226ade7663c44"
+    },
+    "deep_corpus_documented_sample_positive": {
+      "diff": "944c2cb546efec59ada2e247b6b6e80acbe2dd3442d7b5952afc5bf900f27c27",
+      "expectation": "b8f702e9cc8766fff30aadbb8bf3158521387bba02cd3eaa0ce64e38d8a7bfec"
+    },
+    "deep_corpus_key_ed25519_negative": {
+      "diff": "3bfbd5a14cafa858162cdad8d2d8b3ecd884bd4f1c6201dcb0bf9e07f4612936",
+      "expectation": "1746f028491e2ae18a2f869a997aac15e3d1c4e7e8b26af65c03d9d497e4a4c0"
+    },
+    "deep_corpus_key_ed25519_positive": {
+      "diff": "1be3f9eca1036d31753f139d2d4454671979fcbdce3260f651fa25ea51e0c4e9",
+      "expectation": "c0af6399141811b57b68940c53344133f580559f574bdc08d8b4914adb065fb9"
+    },
+    "deep_corpus_mixed_interpolation_negative": {
+      "diff": "3de6203201b20107df133e8b69549df56e9b57f488eb907515e988116ed7d67f",
+      "expectation": "726968cc7b4440cdc4aae436e8b0bb868aabd0ba56a9f0cb31a02d793b5e6528"
+    },
+    "deep_corpus_mixed_interpolation_positive": {
+      "diff": "f032df8aa1a8302d0cf07de35811a85d8c76d25f1164c59aa4d75d05a581a633",
+      "expectation": "5fe085ee17d6c2d7f9ec79767a28d6c782dbe871211c133a2ba10eaa9c98ba44"
+    },
+    "deep_corpus_multiline_assignment_negative": {
+      "diff": "3786b6e6ca801a8dde4b45497443696616fb77a5226518848e04f12c4a596f1d",
+      "expectation": "16247c9caeae614d33c3813db185a9c4971e044ae33dae63d8f1ec58146e0a1f"
+    },
+    "deep_corpus_multiline_assignment_positive": {
+      "diff": "0b9168d226649d03c96803b6025977993a7893a5c0ad73b3afd51a2252c09199",
+      "expectation": "af8e0eb66de14d5b7eb8257b18e7bb051e55f6a710381c0ed2a30b319932b746"
+    },
+    "deep_corpus_percent_encoded_url_negative": {
+      "diff": "aa0dd41144388088fd5b56b69d52fa245aae52e6d99a8ec941d743b30bca1909",
+      "expectation": "7166ad6c4b49a55536a645f0e423032ae3fc6dfb64976d8c565a182181e6a0c2"
+    },
+    "deep_corpus_percent_encoded_url_positive": {
+      "diff": "02754670d7cd5560ff6b97a46059f360c5f639e08d258cd62b5aeb1496befa15",
+      "expectation": "293fcd9bdd08eef83e9aae1520853108331ad7f8be2ed9dcc97f36ffe62f368d"
+    },
+    "deep_corpus_python_responses_negative": {
+      "diff": "8ac076941369330a29ffac8aa7dd971bf4a61acb7ce5e67d283bbad8288a1a9a",
+      "expectation": "0b5388e17fe88490a0c158b995b3de62fa783c2312bdc790097d14ba8bfd58e9"
+    },
+    "deep_corpus_python_responses_positive": {
+      "diff": "75eeea1b91299266c18f67b2ca689c2693451ad0ff0c49a00280924d9c15be35",
+      "expectation": "1699e5d12c8ffeb5c9e378d7f8e1360ced34df741730c6548583409ffb569086"
+    },
+    "deep_test_client_opaque": {
+      "diff": "53ad2e72adb210202355f06fb2d0a34764d89820bc4dbde1542b1e8daa5ee4e3",
+      "expectation": "8000650ec5e113eebd3d0ba1cd4ffbdb62987200df2129d9618f7dae6b92d7d7"
+    },
+    "deep_test_client_token": {
+      "diff": "ff0afd85219c1bc788d804778a67290e0e1235fd804aa00c010762c0572eb3ba",
+      "expectation": "a98c6c30f7e37298a34abe7530177f81aac6acf055f33fef0dbf194723cb7e07"
+    },
+    "deep_test_external_password": {
+      "diff": "40d13f1648ca2cc9d2ca143449c6e9b06683af5ff69028a23214bb874f311ba0",
+      "expectation": "b1c3ff913722dd5da095ef9f79df1e26dd3c328605b18d25fe77d4f1772e3dcc"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 160,
+      "latency_ms": {
+        "median": 992.5,
+        "p95": 1251,
+        "max": 1275
+      },
+      "usage": {
+        "prompt_tokens": 236480,
+        "completion_tokens": 11576,
+        "total_tokens": 248056
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 160
+      }
+    },
+    "deep": {
+      "calls": 340,
+      "latency_ms": {
+        "median": 998.0,
+        "p95": 1845,
+        "max": 1886
+      },
+      "usage": {
+        "prompt_tokens": 664680,
+        "completion_tokens": 23575,
+        "total_tokens": 688255
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 340
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 140,
+    "total": 140
+  },
+  "clean_scans": {
+    "passed": 140,
+    "total": 140
+  },
+  "records_sha256": "446e1c08967fe8f60f8878611b1fbf601761e1d41923ba3716540de6fee24735",
+  "log_sha256": "1b7e57452cc0d4f3558be5887ca33ad8a188080897f50bba84009d58556123c5"
+}

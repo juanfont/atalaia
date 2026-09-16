@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: axios_adapter, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "typescript",
+    "positive"
+  ],
+  "pair": "holdout_axios_adapter",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/client.spec.ts",
+      "line": 1,
+      "kind": "credential",
+      "value": "q0175df85344a85e76ca7e8b9dd7b0"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

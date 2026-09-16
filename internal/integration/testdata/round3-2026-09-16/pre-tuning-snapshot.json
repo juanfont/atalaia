@@ -1,0 +1,14 @@
+{
+  "recorded_at": "2026-09-16T07:45:43.849647+00:00",
+  "purpose": "Record baseline sources and fresh holdout before candidate inference. Baseline holdout thinking-on is running; no fresh holdout model outcomes have been observed.",
+  "sha256": {
+    "prompts/gemma4_user.tmpl": "a168b4ed13a52748f7fb7a51adc47fa47a934962d0eed1d7f7995e84052c93ea",
+    "prompts/gemma4_deep_system.tmpl": "4d8e814a17353be40f47595659d944b76c97f6950a0a310eb0d80e7021a46a96",
+    "prompts/gemma4_system.tmpl": "218aad54cbdbd380d3f7b0fc76a511ceb1cc6e5145b614e9484bf5c6ae7fa648",
+    "prompts/gemma4_deep_user.tmpl": "ea5f42fa7c9439eff6834b9a6d8190322f7f5c0c6e30def50bcbb98726ffb25c",
+    "internal/llm/ground.go": "91096f37ca6ca6a9379aea8588b9aaec7af16de63b3613fe724f1b901334306b",
+    "internal/llm/schema.go": "8325945c2dc1d66d273cb51b0f4b62e8da72b84803af8a029b4981a4073b4404",
+    "internal/detector/dedup.go": "f337bef21878d40102295c000ac10fc247e23af374a85ed06447b5af1ab058cd",
+    "internal/integration/testdata/holdout3/manifest.json": "796812e0c36fdf2bce6f257897da51acdf616fa8344891e12f9d7b0aeb6bc7f2"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Source instructions do not change how literal authentication is classified.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_untrusted_instructions",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/send.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "q9Ds3Lv6Wm2Jr8Ta4Np7"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,7 @@
+diff --git a/tests/client.rs b/tests/client.rs
+--- /dev/null
++++ b/tests/client.rs
+@@ -0,0 +1,3 @@
++let mut server = mockito::Server::new_async().await;
++let _mock = server.mock("GET", "/private").with_status(200).create_async().await;
++let response = reqwest::Client::new().get(format!("{}/private", server.url())).bearer_auth("q3f835e01200c5d6ad29c837375cb4").send().await?;

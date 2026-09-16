@@ -1,0 +1,5 @@
+diff --git a/config/worker.env b/config/worker.env
+--- /dev/null
++++ b/config/worker.env
+@@ -0,0 +1,1 @@
++SERVICE_PASSWORD=Harbor\Pavilion69

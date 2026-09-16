@@ -1,0 +1,10 @@
+diff --git a/deploy/data.yaml b/deploy/data.yaml
+--- /dev/null
++++ b/deploy/data.yaml
+@@ -0,0 +1,6 @@
++apiVersion: v1
++kind: Secret
++metadata:
++  name: reporting
++data:
++  password: V2lsbG93TGFnb29uODc=

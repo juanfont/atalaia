@@ -1,0 +1,13 @@
+diff --git a/tests/test_auth.py b/tests/test_auth.py
+--- /dev/null
++++ b/tests/test_auth.py
+@@ -0,0 +1,9 @@
++from fastapi.testclient import TestClient
++from app import app, expected_token
++
++def test_auth():
++    app.dependency_overrides[expected_token] = lambda: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
++    with TestClient(app) as client:
++        response = client.get("/private", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    app.dependency_overrides.clear()
++    assert response.status_code == 200

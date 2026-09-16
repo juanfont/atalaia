@@ -75,6 +75,90 @@ docker run --rm -p 8080:8080 \
   ghcr.io/juanfont/atalaia:latest
 ```
 
+## Model thinking mode
+
+For the evaluated Gemma 4 E4B deployment, enable thinking explicitly:
+
+```yaml
+llm:
+  enable_thinking: true
+```
+
+This requires a backend supporting `chat_template_kwargs.enable_thinking`.
+`false` disables thinking; omitting the option preserves the backend's default.
+The environment override is `ATALAIA_LLM_ENABLE_THINKING`. This applies to both
+adjudication and deep scan. Configuring a reasoning parser on the model server
+alone does not select thinking mode.
+
+The [quality comparison](../internal/integration/testdata/ROUND3.md) found
+thinking on improved the existing 80-case challenge set from 65/80 to 72/80
+with the retained prompts. Expected credential locations found improved from
+37/40 to 38/40; clean negatives improved from 29/40 to 34/40. Both modes passed
+175/176 original cases, with different failures. Latency did not select the mode.
+
+The round-four source-selection profile improves that result. It passed all
+32 fresh cases in both runs, while the retained and round-three profiles passed
+24/32 and 25/32 cases in both runs. These are synthetic challenges, not production
+precision or recall estimates. See [the comparison](../internal/integration/testdata/ROUND4-CONTINUATION.md).
+
+Thinking uses the same configured output-token budget and per-call deadline.
+Size caller and proxy timeouts for the selected mode and your own diffs.
+Omitting the option still leaves the production default unchanged; apply the
+explicit override when adopting this recommendation.
+
+
+### Opt-in source-literal selection
+
+For the evaluated Gemma deployment, the recommended opt-in pair is
+`gemma4_source` and `gemma4_source_deep`, with thinking and source selection
+enabled. This requires Atalaia v0.8.0 or later. Install the matching templates
+from `prompts/` and merge these settings
+into your existing config. The profile definitions are also in `config.example.yaml`.
+
+```yaml
+llm:
+  profile: gemma4_source
+  enable_thinking: true
+  use_tools: true
+  request_timeout: 120s
+  context_budget:
+    input_tokens: 24000
+    output_tokens: 4096
+  deep_scan:
+    enabled: true
+    profile: gemma4_source_deep
+    source_literals: true
+    window_tokens: 4000
+    max_windows: 48
+  profiles:
+    gemma4_source:
+      system_template: /etc/atalaia/prompts/gemma4_source_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_source_user.tmpl
+      response_format: json_schema
+    gemma4_source_deep:
+      system_template: /etc/atalaia/prompts/gemma4_source_deep_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_source_deep_user.tmpl
+      response_format: json_schema
+```
+
+Source selection lets the model choose IDs for escaped literals already present
+in the current window. IDs resolve to unchanged source bytes before the existing
+grounding and redaction checks. Unknown IDs and conflicting values fail. Catalog
+membership does not make a value a credential; the model still classifies its role.
+
+Catalogs are bounded and local to each window. If the enhanced prompt and tool
+schema exceed the configured input estimate, the catalog is omitted and the full
+original window remains available. `source_literals` defaults to `false`, and
+the original `gemma4` profiles remain the defaults. Source IDs are internal;
+the public HTTP response is unchanged.
+
+The fresh comparison passed 64/64 requests, including all 32 credential expectations
+and all 32 negative scans. The development corpus still has three failures and
+an earlier targeted repeat exposed an unstable mock-scope judgment. Treat this as
+a measured improvement, not a guarantee. The deployment itself has not been changed.
+See [the design](superpowers/specs/2026-09-16-source-literal-selection.md) for bounds
+and failure handling.
+
 ## Network posture
 
 ### Reverse proxy + TLS (recommended default)
@@ -437,7 +521,7 @@ func notify(projectID int, sha string, v verdict) {
 - **Deduplicate alerts.** Watcher receives every commit. Alert per-commit and you spam on rebases. Key dedup on `(project_id, finding_id)`. Atalaia's `finding_id` is stable across re-runs (`sha256(file:line:match)[:12]`).
 - **Pick the right LLM context.** For typical commits (< 32K tokens) defaults are fine. For monorepo merges touching hundreds of files, see `llm.max_findings_per_request` and `llm.context_budget.input_tokens`. Response carries `stats.truncated: true` when the cap kicks in.
 - **Treat 503 as "retry", never "clean".** Atalaia returns `503` when it can't adjudicate: the LLM queue is full, or a scan was inconclusive (a detector crashed/timed out and produced nothing). The commit was *not* scanned. Retry with backoff; if it still fails, raise an incident — do not let an un-adjudicated commit pass as clean. A `200` with a non-empty `stats.detector_errors[]` is a *partial* scan: the verdicts are real, but coverage was incomplete, so flag it.
-- **Deep scans need their own timeout.** A deep request (`?deep=1`) makes one sequential LLM call per window (one window per file, capped at `llm.deep_scan.max_windows`), and at `--max-num-seqs 1` they do not overlap. Do not size the timeout from the sub-second latency a normal `/check` shows. Do not size it from the absolute worst case either: `max_windows x llm.request_timeout` is 48 x 90s, over an hour, and `request_timeout` is a per-call guard against a hung backend rather than an expected duration. Measure your own diffs instead. Observed on Gemma 4 E4B: a call runs about 200 ms, a 21-file 261 KB diff produces 22 windows, and a 1600-line single-file diff took 1.6 s end to end. A few minutes is a sane starting point; watch `stats.deep_scan.latency_ms` and adjust. Raise the sketch's client timeout before you set `deep=true`, or the watcher will abandon requests the server is still working on.
+- **Deep scans need their own timeout.** A deep request (`?deep=1`) makes one sequential LLM call per window (one window per file, capped at `llm.deep_scan.max_windows`), and at `--max-num-seqs 1` they do not overlap. Do not size the timeout from a short single-call `/check`. Do not size it from the absolute worst case either: `max_windows x llm.request_timeout` is 48 x 90s, over an hour, and `request_timeout` is a per-call guard against a hung backend rather than an expected duration. Measure your own diffs instead. Prompt size, findings, windows and thinking mode all affect latency. See the [current evaluation measurements](../internal/integration/testdata/ROUND3.md); small synthetic fixtures do not establish a safe timeout for large diffs. A few minutes is a sane starting point; watch `stats.deep_scan.latency_ms` and adjust. Raise the sketch's client timeout before you set `deep=true`, or the watcher will abandon requests the server is still working on.
 - **The deep read cannot 503 your scan.** It never joins the LLM queue. It takes the slot only when one is free and nobody is waiting for it, one window at a time, and steps aside the moment an adjudication queues up. Under load it comes back `deferred` or `partial`; the detector-driven verdicts still return as a `200`. `llm.queue_max` is adjudication's alone. Watch `atalaia_deep_scan_total{result="deferred"}` and `{result="partial"}`: both climbing means the backend is saturated and deep coverage is being shed to protect the scan that matters.
 - **Treat `deferred`, `partial` and `skipped` as valid scans.** They are not incomplete. Mark a scan incomplete only on a non-2xx, `detector_errors[]`, or `unreviewed > 0`. A watcher that flags every deferred deep read as "clean result not trustworthy" turns load shedding into lost trust for no reason: the shallow scan it is discarding ran in full. Re-request `deep` later if you want the coverage; do not re-scan.
 - **Shed deep load with `sample_rate` or `max_added_lines`, not `require_findings`.** The deep read exists to find secrets in diffs the detectors missed, and most of those diffs have *zero* detector findings. `require_findings: true` restricts it to diffs the detectors already flagged, which throws away precisely that coverage; it is a precision knob for a deployment where cold recall proves too noisy, not a load lever. To shed load while keeping the coverage you turned deep on for: `sample_rate` runs the deep read on a fraction of eligible pushes, uniformly, so every kind of diff is still sampled; `max_added_lines` skips the biggest diffs, which cost the most windows and are the likeliest to truncate anyway. All three report `status: skipped` with the rule named, so the watcher can tell policy from load. The watcher can also simply not send `deep=true` for pushes it does not care about; it is per-request.

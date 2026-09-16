@@ -1,0 +1,5 @@
+diff --git a/app/import.py b/app/import.py
+--- /dev/null
++++ b/app/import.py
+@@ -0,0 +1,1 @@
++conn = connect(f"postgres://reader:Holly%3AReed%4086@{db_host}/orders")

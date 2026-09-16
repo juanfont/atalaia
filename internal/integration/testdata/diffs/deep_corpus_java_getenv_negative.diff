@@ -1,0 +1,6 @@
+diff --git a/src/ClientConfig.java b/src/ClientConfig.java
+--- /dev/null
++++ b/src/ClientConfig.java
+@@ -0,0 +1,2 @@
++var token = System.getenv("SERVICE_TOKEN");
++var client = new ApiClient(token);

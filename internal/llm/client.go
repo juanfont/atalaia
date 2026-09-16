@@ -15,9 +15,11 @@ import (
 // Message is one chat turn in an OpenAI-style request. ToolCalls is
 // populated on response messages when the backend invokes a tool.
 type Message struct {
-	Role      string     `json:"role"`
-	Content   string     `json:"content,omitempty"`
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+	Reasoning        string     `json:"reasoning,omitempty"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"`
+	Role             string     `json:"role"`
+	Content          string     `json:"content,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
 }
 
 // Tool is an OpenAI tool definition; only "function" type is used here.
@@ -46,23 +48,36 @@ type ToolCallFunction struct {
 }
 
 // ChatRequest is the trimmed shape Atalaia sends. Unset optional fields
-// are omitted so the backend applies its own defaults.
+// are omitted so the backend applies its own defaults. Temperature is
+// always sent: zero requests greedy decoding, not the backend default.
 type ChatRequest struct {
-	Model          string         `json:"model"`
-	Messages       []Message      `json:"messages"`
-	MaxTokens      int            `json:"max_tokens,omitempty"`
-	Temperature    float64        `json:"temperature,omitempty"`
-	ResponseFormat map[string]any `json:"response_format,omitempty"`
-	Tools          []Tool         `json:"tools,omitempty"`
-	ToolChoice     any            `json:"tool_choice,omitempty"`
+	ChatTemplateKwargs map[string]any `json:"chat_template_kwargs,omitempty"`
+	Model              string         `json:"model"`
+	Messages           []Message      `json:"messages"`
+	MaxTokens          int            `json:"max_tokens,omitempty"`
+	Temperature        float64        `json:"temperature"`
+	ResponseFormat     map[string]any `json:"response_format,omitempty"`
+	Tools              []Tool         `json:"tools,omitempty"`
+	ToolChoice         any            `json:"tool_choice,omitempty"`
 }
 
-// ChatResponse captures only the fields we read. The full OpenAI
-// response is much richer; ignoring unknown fields keeps us
-// forward-compatible with backend variants.
+// TokenUsage contains backend accounting, including reasoning tokens when exposed.
+type TokenUsage struct {
+	PromptTokens            int `json:"prompt_tokens"`
+	CompletionTokens        int `json:"completion_tokens"`
+	TotalTokens             int `json:"total_tokens"`
+	CompletionTokensDetails struct {
+		ReasoningTokens int `json:"reasoning_tokens"`
+	} `json:"completion_tokens_details,omitempty"`
+}
+
+// ChatResponse captures only the fields we read. Unknown fields are ignored
+// for compatibility with backend variants.
 type ChatResponse struct {
+	Usage   TokenUsage `json:"usage"`
 	Choices []struct {
-		Message Message `json:"message"`
+		Message      Message `json:"message"`
+		FinishReason string  `json:"finish_reason"`
 	} `json:"choices"`
 }
 
@@ -115,13 +130,14 @@ func (c *Client) Complete(ctx context.Context, req ChatRequest) (ChatResponse, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode/100 != 2 {
-		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return ChatResponse{}, fmt.Errorf("llm status %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		return ChatResponse{}, fmt.Errorf("llm status %d", resp.StatusCode)
 	}
 
 	var out ChatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return ChatResponse{}, fmt.Errorf("decode: %w", err)
+		// Decoder type errors can include values from the backend response.
+		return ChatResponse{}, errors.New("decode: invalid llm response")
 	}
 	if len(out.Choices) == 0 {
 		return ChatResponse{}, errors.New("llm returned no choices")
@@ -139,4 +155,13 @@ func (c *Client) Probe(ctx context.Context) error {
 		MaxTokens: 1,
 	})
 	return err
+}
+
+// thinkingParameters leaves generic backends untouched unless the operator
+// explicitly opts into a supported chat-template parameter.
+func thinkingParameters(enabled *bool) map[string]any {
+	if enabled == nil {
+		return nil
+	}
+	return map[string]any{"enable_thinking": *enabled}
 }

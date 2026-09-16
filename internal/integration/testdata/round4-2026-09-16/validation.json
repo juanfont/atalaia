@@ -1,0 +1,74 @@
+{
+  "reference_fixture_hashes_match": true,
+  "repeat_requests_identical": true,
+  "cases": 20,
+  "requests": 40,
+  "expected_source_values_checked": 20,
+  "public_echoes": [],
+  "escape_results": [
+    {
+      "case": "fresh_json_backslashes_positive",
+      "run": 1,
+      "source_backslashes": 2,
+      "candidate_backslashes": [
+        1
+      ],
+      "candidate_matches_source": [
+        false
+      ],
+      "grounding_outcomes": [
+        "not_found"
+      ]
+    },
+    {
+      "case": "fresh_json_backslashes_positive",
+      "run": 2,
+      "source_backslashes": 2,
+      "candidate_backslashes": [
+        1
+      ],
+      "candidate_matches_source": [
+        false
+      ],
+      "grounding_outcomes": [
+        "not_found"
+      ]
+    },
+    {
+      "case": "fresh_json_source_bytes_positive",
+      "run": 1,
+      "source_backslashes": 1,
+      "candidate_backslashes": [
+        1
+      ],
+      "candidate_matches_source": [
+        true
+      ],
+      "grounding_outcomes": [
+        "discovered"
+      ]
+    },
+    {
+      "case": "fresh_json_source_bytes_positive",
+      "run": 2,
+      "source_backslashes": 1,
+      "candidate_backslashes": [
+        0
+      ],
+      "candidate_matches_source": [
+        false
+      ],
+      "grounding_outcomes": [
+        "not_found"
+      ]
+    }
+  ],
+  "source_hashes": {
+    "internal/integration/testdata/round4-2026-09-16/targeted-prompts/gemma4_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "internal/integration/testdata/round4-2026-09-16/targeted-prompts/gemma4_deep_system.tmpl": "1539aa84a4f4f4f7eb1522a8bbbf1f9fed905799b8d6a75c4c8e6fd8a9b52658",
+    "internal/integration/testdata/round4-2026-09-16/targeted-prompts/gemma4_system.tmpl": "ccf395b6512d9a522ebaf066e8294234372b1c1b3f1b53eb5a596823893c2578",
+    "internal/integration/testdata/round4-2026-09-16/targeted-prompts/gemma4_deep_user.tmpl": "7aadcf2c5c2567ececd9e3f176eae870f7926fe01ab5c66526512b181d136b96",
+    "internal/integration/testdata/round4-2026-09-16/targeted-eval.yaml": "00de6a533f9f736065f575792412df12b8a82da3495ca38b748a5734ee3235e9",
+    "internal/llm/deepparse_test.go": "c48f5f49e2b4dc3c91578fa08dba0ed6c59ff87e5ff0f94afcecfada2bbe54fc"
+  }
+}

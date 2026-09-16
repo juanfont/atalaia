@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: digest_auth, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "data-role",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_digest_auth",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/sign.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "2af82fa16752dfe3fa37a64b8c8a3ee7fc8f63e21af9118845a6ae0c1c328748"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

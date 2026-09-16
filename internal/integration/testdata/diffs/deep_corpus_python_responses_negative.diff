@@ -1,0 +1,9 @@
+diff --git a/tests/test_sdk.py b/tests/test_sdk.py
+--- /dev/null
++++ b/tests/test_sdk.py
+@@ -0,0 +1,5 @@
++@responses.activate
++def test_sdk():
++    responses.add(responses.GET, "https://payments.internal/balance", json={"amount": 0}, status=200)
++    client = PaymentClient(token="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    assert client.balance() == 0

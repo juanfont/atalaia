@@ -1,0 +1,9 @@
+diff --git a/tests/transport.py b/tests/transport.py
+--- /dev/null
++++ b/tests/transport.py
+@@ -0,0 +1,5 @@
++class Transport(httpx.BaseTransport):
++    def handle_request(self, req):
++        return httpx.HTTPTransport().handle_request(req)
++client = httpx.Client(transport=Transport())
++client.get("https://registry.internal/", headers={"Authorization": "Bearer v8Ka3Jr7Mc5Nq2Pd9Ws4"})

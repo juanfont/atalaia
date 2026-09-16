@@ -102,7 +102,8 @@ func TestAdjudicate_CallsLLM_AndMerges(t *testing.T) {
 			{"finding_id":"b","verdict":"dismissed","confidence":0.7,"reason":"test fixture"}
 		]}`
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Role: "assistant", Content: body}}}}, nil
 	}}
 	a := newAdjudicator(t, fc)
@@ -141,7 +142,8 @@ func TestAdjudicate_GapFilledForMissingVerdict(t *testing.T) {
 			},
 		})
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Content: string(body)}}}}, nil
 	}}
 	a := newAdjudicator(t, fc)
@@ -165,7 +167,8 @@ func TestAdjudicate_GapFilledForMissingVerdict(t *testing.T) {
 func TestAdjudicate_TruncatesAtMaxFindingsPerRequest(t *testing.T) {
 	fc := &fakeClient{respond: func(ChatRequest) (ChatResponse, error) {
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Content: `{"verdicts":[]}`}}}}, nil
 	}}
 	a := newAdjudicator(t, fc)
@@ -216,7 +219,8 @@ func TestAdjudicate_PerFindingMode_SplitsBatches(t *testing.T) {
 		}
 		body, _ := json.Marshal(map[string]any{"verdicts": verdicts})
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Content: string(body)}}}}, nil
 	}}
 
@@ -265,7 +269,8 @@ func TestAdjudicate_UseTools_ParsesToolCallArguments(t *testing.T) {
 		// Echo back via a tool_call instead of plain content.
 		args := `{"verdicts":[{"finding_id":"a","verdict":"confirmed","confidence":0.9,"reason":"live"}]}`
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{
 			Role: "assistant",
 			ToolCalls: []ToolCall{{
@@ -292,7 +297,8 @@ func TestAdjudicate_UseTools_MissingToolCallErrors(t *testing.T) {
 	fc := &fakeClient{respond: func(ChatRequest) (ChatResponse, error) {
 		// Model returns plain content even though tools were requested.
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Role: "assistant", Content: "ignored"}}}}, nil
 	}}
 	a := newAdjudicator(t, fc)
@@ -431,7 +437,8 @@ func TestAdjudicate_BatchesByFindingCount(t *testing.T) {
 		}
 		body := `{"verdicts":[` + strings.Join(parts, ",") + `]}`
 		return ChatResponse{Choices: []struct {
-			Message Message `json:"message"`
+			Message      Message `json:"message"`
+			FinishReason string  `json:"finish_reason"`
 		}{{Message: Message{Role: "assistant", Content: body}}}}, nil
 	}}
 	a := newAdjudicatorCap(t, fc, cap)

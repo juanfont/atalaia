@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Variable host with literal password versus runtime password.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_url_component",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/import.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "Holly%3AReed%4086"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

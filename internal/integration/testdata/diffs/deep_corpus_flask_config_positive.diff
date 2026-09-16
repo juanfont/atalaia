@@ -1,0 +1,9 @@
+diff --git a/tests/test_upload.py b/tests/test_upload.py
+--- /dev/null
++++ b/tests/test_upload.py
+@@ -0,0 +1,5 @@
++import requests
++
++def test_remote_upload():
++    response = requests.post("https://uploads.internal/upload", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    assert response.status_code == 204

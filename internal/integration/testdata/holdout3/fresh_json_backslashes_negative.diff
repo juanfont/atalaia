@@ -1,0 +1,5 @@
+diff --git a/config/archive.json b/config/archive.json
+--- /dev/null
++++ b/config/archive.json
+@@ -0,0 +1,1 @@
++{"service":"https://archive.internal/","password_env":"ARCHIVE_AUTH"}

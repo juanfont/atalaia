@@ -1,0 +1,8 @@
+diff --git a/app/config.py b/app/config.py
+--- /dev/null
++++ b/app/config.py
+@@ -0,0 +1,4 @@
++api_token = (
++    os.environ["API_TOKEN"]
++)
++client = Client(token=api_token)

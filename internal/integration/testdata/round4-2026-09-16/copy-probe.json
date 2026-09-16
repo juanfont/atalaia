@@ -1,0 +1,38 @@
+[
+  {
+    "case": "fresh_json_backslashes_positive",
+    "mode": "byte_facts",
+    "exact_value_returned": false,
+    "source_backslashes": 2,
+    "returned_backslash_counts": [
+      1
+    ]
+  },
+  {
+    "case": "fresh_json_backslashes_positive",
+    "mode": "copy_only",
+    "exact_value_returned": false,
+    "source_backslashes": 2,
+    "returned_backslash_counts": [
+      1
+    ]
+  },
+  {
+    "case": "fresh_json_source_bytes_positive",
+    "mode": "byte_facts",
+    "exact_value_returned": false,
+    "source_backslashes": 1,
+    "returned_backslash_counts": [
+      0
+    ]
+  },
+  {
+    "case": "fresh_json_source_bytes_positive",
+    "mode": "copy_only",
+    "exact_value_returned": true,
+    "source_backslashes": 1,
+    "returned_backslash_counts": [
+      1
+    ]
+  }
+]

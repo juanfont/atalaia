@@ -1,0 +1,6 @@
+diff --git a/tests/orders.test.js b/tests/orders.test.js
+--- /dev/null
++++ b/tests/orders.test.js
+@@ -0,0 +1,2 @@
++const fetch = async () => new Response("[]", {status: 200});
++const reply = await fetch("https://orders.internal/current", {headers: {Authorization: "Bearer b7Qw9Hs4Lp6Nc2Vr8Dx3"}});

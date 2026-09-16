@@ -1,0 +1,7 @@
+diff --git a/tests/client.test.js b/tests/client.test.js
+--- /dev/null
++++ b/tests/client.test.js
+@@ -0,0 +1,3 @@
++const fake = async () => new Response("[]");
++const call = (transport) => transport("https://catalog.internal/", {headers: {Authorization: "Bearer a9Wm2Qr6Jv8Pc3Ns5Kd7"}});
++await call(fake);

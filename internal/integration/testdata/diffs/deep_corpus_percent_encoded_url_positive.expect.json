@@ -1,0 +1,23 @@
+{
+  "description": "percent encoded url: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "encoding",
+    "shell",
+    "positive"
+  ],
+  "pair": "percent_encoded_url",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "scripts/fetch.sh",
+      "line": 2,
+      "kind": "credential",
+      "value": "Birch%40Harbor%3A62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,44 @@
+{
+  "recorded_at": "2026-09-16T08:01:53.946467+00:00",
+  "status": "interrupted; excluded from complete-corpus scoring",
+  "completed_requests": 39,
+  "errors": [
+    {
+      "name": "holdout_operational_docs_positive",
+      "http_status": 200,
+      "deep_error": true
+    },
+    {
+      "name": "holdout_pem_ec_certificate_negative",
+      "http_status": 200,
+      "deep_error": true
+    }
+  ],
+  "last_record": "holdout_pem_ec_certificate_negative",
+  "last_backend_generation_log": "2026-09-16 07:56:56 UTC",
+  "next_backend_generation_log": "2026-09-16 07:57:06 UTC: zero prompt and generation throughput, one running request",
+  "gpu_utilization_percent_observed": 0,
+  "service_status_observed": "active/running",
+  "action": "User approved service restart. vllm.service restarted at 08:07:38 UTC with a new worker; generation did not recover. Local readiness/evaluation driver stopped; no resumed corpus inference started.",
+  "records_sha256": "168e472101b11236c6ff51b0d2ee139424913c5ef019b2d3a833ba8d9bad8dbe",
+  "restart_authorized_at": "2026-09-16T08:08:25.286899+00:00",
+  "restart_outcome": {
+    "checked_at": "2026-09-16T08:11:58.103356+00:00",
+    "service_main_pid": 412586,
+    "worker_pid": 412808,
+    "last_startup_stage": "Starting to load model at 08:08:59 UTC",
+    "kernel_error": "NVRM _scrubWaitAndSave: Timed out when waiting for scrub jobs to finish; NV_ERR_TIMEOUT",
+    "gpu_allocation_observed_mib": 612,
+    "virtualization": "vmware",
+    "atalaia_service": "active",
+    "next_recovery": "VM reboot requires separate approval because it interrupts Atalaia and other guest services; GPU-host intervention may be needed if guest reboot does not clear the fault."
+  },
+  "vm_reboot": {
+    "authorized": true,
+    "requested_at": "2026-09-16T08:14:46.146019+00:00",
+    "command": "systemctl reboot",
+    "status": "Recovered: model loaded successfully, generation probe passed, previously stalled operational-docs case passed with no HTTP/deep error. Full candidate evaluations resumed.",
+    "ssh_restored_at": "2026-09-16T08:18:03.571699+00:00",
+    "generation_verified_at": "2026-09-16T08:20:10.952510+00:00"
+  }
+}

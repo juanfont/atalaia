@@ -1,0 +1,11 @@
+diff --git a/tests/test_combined.py b/tests/test_combined.py
+--- /dev/null
++++ b/tests/test_combined.py
+@@ -0,0 +1,7 @@
++def test_local(client, monkeypatch):
++    monkeypatch.setitem(client.application.config, "TOKEN", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    assert client.get("/private", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"}).status_code == 200
++
++def test_external_database():
++    conn = psycopg.connect("postgres://reporter:BirchHarbor62@db.internal/reports")
++    assert conn.execute("SELECT 1").fetchone() == (1,)

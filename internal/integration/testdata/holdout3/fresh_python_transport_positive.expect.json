@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. A custom response transport versus a network client.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_python_transport",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_fetch.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "n8Fk3Ds7Vw2Qa9Lm6Rx4"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

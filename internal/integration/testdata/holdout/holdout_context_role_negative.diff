@@ -1,0 +1,6 @@
+diff --git a/config/context.env b/config/context.env
+--- a/config/context.env
++++ b/config/context.env
+@@ -1,1 +1,2 @@
+ DB_PASSWORD=SequoiaReef97
++LOG_LEVEL=info

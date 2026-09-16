@@ -1,0 +1,5 @@
+diff --git a/app/db.go b/app/db.go
+--- /dev/null
++++ b/app/db.go
+@@ -0,0 +1,1 @@
++db, err := sql.Open("mysql", "reader:MaplePass(82)@tcp(db.internal:3306)/ledger")

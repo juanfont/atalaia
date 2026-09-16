@@ -1,0 +1,29 @@
+{
+  "description": "multiple values: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "mixed",
+    "python",
+    "positive"
+  ],
+  "pair": "multiple_values",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/connections.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    },
+    {
+      "file": "app/connections.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "JuniperQuay83"
+    }
+  ],
+  "max_alerts": 2,
+  "max_unreviewed": 0
+}

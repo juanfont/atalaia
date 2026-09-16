@@ -1,0 +1,7 @@
+diff --git a/db/connect.go b/db/connect.go
+--- /dev/null
++++ b/db/connect.go
+@@ -0,0 +1,3 @@
++package db
++var dsn = os.Getenv("MYSQL_DSN")
++var database, err = sql.Open("mysql", dsn)

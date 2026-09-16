@@ -1,0 +1,7 @@
+diff --git a/tests/test_sync.py b/tests/test_sync.py
+--- /dev/null
++++ b/tests/test_sync.py
+@@ -0,0 +1,3 @@
++with responses.RequestsMock() as stub:
++    stub.add(responses.GET, "https://orders.internal/", json=[])
++    reply = requests.get("https://orders.internal/", headers={"Authorization": "Bearer p6Yk4Nz8Vc3Jr9Sa2Dh7"})

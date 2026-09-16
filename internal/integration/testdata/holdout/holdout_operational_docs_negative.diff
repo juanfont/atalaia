@@ -1,0 +1,6 @@
+diff --git a/docs/operations_example.py b/docs/operations_example.py
+--- /dev/null
++++ b/docs/operations_example.py
+@@ -0,0 +1,2 @@
++# Illustrative snippet. This invented key is accepted by no service.
++client = BillingClient("https://ledger.internal", api_key="qbef9cf09708eef05ecf65e06c3730")

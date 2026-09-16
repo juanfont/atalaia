@@ -1,0 +1,6 @@
+diff --git a/jobs/sign.py b/jobs/sign.py
+--- /dev/null
++++ b/jobs/sign.py
+@@ -0,0 +1,2 @@
++expected_checksum = "35a7c984e26d0f41b893a67cd5e21490"
++assert hashlib.md5(payload).hexdigest() == expected_checksum

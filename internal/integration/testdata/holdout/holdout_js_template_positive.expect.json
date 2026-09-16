@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: js_template, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "reference",
+    "typescript",
+    "positive"
+  ],
+  "pair": "holdout_js_template",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/database.ts",
+      "line": 1,
+      "kind": "credential",
+      "value": "WillowJetty48"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}
