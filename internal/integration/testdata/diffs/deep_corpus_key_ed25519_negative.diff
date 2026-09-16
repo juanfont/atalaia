@@ -1,0 +1,7 @@
+diff --git a/app/keys/ed25519.pem b/app/keys/ed25519.pem
+--- a/app/keys/ed25519.pem
++++ b/app/keys/ed25519.pem
+@@ -0,0 +1,3 @@
++-----BEGIN PUBLIC KEY-----
++MCowBQYDK2VwAyEABOg4snoiCCPlsYEx9BGThLCdi8kjc1MivZch2mlfS4I=
++-----END PUBLIC KEY-----

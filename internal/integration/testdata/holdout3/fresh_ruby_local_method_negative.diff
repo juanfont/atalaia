@@ -1,0 +1,6 @@
+diff --git a/spec/orders_spec.rb b/spec/orders_spec.rb
+--- /dev/null
++++ b/spec/orders_spec.rb
+@@ -0,0 +1,2 @@
++allow(Net::HTTP).to receive(:get_response).and_return(double(code: "200"))
++reply = Net::HTTP.get_response(URI("https://reader:w2Cf9Jn6Px4La8Qr3Vk7@orders.internal/"))

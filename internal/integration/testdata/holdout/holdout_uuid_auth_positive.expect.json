@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: uuid_auth, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "data-role",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_uuid_auth",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/client.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "9baf673e-436d-4a2d-99cb-17e08b69042d"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

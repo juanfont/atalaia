@@ -1,0 +1,74 @@
+{
+  "selected_thinking": "off",
+  "selection_basis": "Fixed-prompt full comparison: off passed 175/176 with 1.1615s median; on passed 174/176 with 9.878s median.",
+  "holdout_unseen_at_selection": true,
+  "requested_model": "google/gemma-4-E4B-it",
+  "temperature": 0,
+  "output_tokens": 4096,
+  "context_input_tokens": 24000,
+  "deep_window_tokens": 4000,
+  "request_timeout_seconds": 120,
+  "detectors": [
+    "gitleaks"
+  ],
+  "git_head": "e3240373fc638cb3f299b9af6e68638c9b1dabdd",
+  "working_tree_modified": true,
+  "go_version": "go1.26.3",
+  "selected_source_sha256": {
+    "internal/integration/testdata/eval.yaml": "e93f6cab3e9192b411db3188ed24f403af2f4d73f98c98b6ab1ba67ad2188d22",
+    "gitleaks-aggressive.toml": "5f7b0760f7c4c590fb8efaa73193bc89b0b3a7287389345a88cc858f5f46a7a2",
+    "prompts/gemma4_deep_system.tmpl": "4d8e814a17353be40f47595659d944b76c97f6950a0a310eb0d80e7021a46a96",
+    "prompts/gemma4_deep_user.tmpl": "ea5f42fa7c9439eff6834b9a6d8190322f7f5c0c6e30def50bcbb98726ffb25c",
+    "prompts/gemma4_system.tmpl": "218aad54cbdbd380d3f7b0fc76a511ceb1cc6e5145b614e9484bf5c6ae7fa648",
+    "prompts/gemma4_user.tmpl": "a168b4ed13a52748f7fb7a51adc47fa47a934962d0eed1d7f7995e84052c93ea",
+    "internal/llm/adjudicate.go": "37498cb2e1df570d2bfc89d004c2b693ea7c7d435aac419a376b5af8f0ab233e",
+    "internal/llm/client.go": "7a39add5cab4f3f815f6f3e5d25d67c76172292cbd43f95a9a7edd4ee31488cf",
+    "internal/llm/context.go": "a8766a0f48106af2c0fc93a8f825870676cd669932b0dddc9f20e5c4570af7f6",
+    "internal/llm/deep.go": "50d98cc53fb684acd0db324bc60f2fdf344407993054b8935d1ace5d648b53ab",
+    "internal/llm/deepparse.go": "7ad329f3e92c80bfec7c55f40f1f7fe12d83d31ad291940fa3e0f2e2ae70ca09",
+    "internal/llm/deepwindow.go": "97f5b17021e83a52164e3862bd18889d8ae213310f5c14ea081e0cc110025e87",
+    "internal/llm/ground.go": "91096f37ca6ca6a9379aea8588b9aaec7af16de63b3613fe724f1b901334306b",
+    "internal/llm/health.go": "e1027fe07f3b834109eb25ce26baaac578c0913f2a14a6094e9d7ef57b8e15af",
+    "internal/llm/prompt.go": "f9a4a5751b3db03b47594ce3df7ba3c5a97ae68064ed8332bd53b29b58b18061",
+    "internal/llm/recovery.go": "de9feee7ce7bbacc239b8c0a9e4009c5f848ff0dedc17701bf794d9190545b4a",
+    "internal/llm/schema.go": "8325945c2dc1d66d273cb51b0f4b62e8da72b84803af8a029b4981a4073b4404",
+    "internal/llm/semaphore.go": "7a43c30155c6d75f45fbf0262f4a181910d73b225432dc3b880758a2ba3c1dbd",
+    "internal/llm/shortcircuit.go": "673472a0e16422cb24044897faea3e696548296843db85b461922c5588b20cb0",
+    "internal/llm/types.go": "8b99c43b3d09d576aaa39a71bcfd6ff823f85062a7b27ed8c3ab83f7fd54e8c2",
+    "internal/api/app.go": "2a445dd5bea3ce8e24d2bce7b749636f826ac17b9a0e5aca2ddce08f04a1a8a0",
+    "internal/api/auth.go": "09271e438bfad5182e46e23dff2cd0cc6d613191f9efc0dedc2d19a6da001109",
+    "internal/api/handlers.go": "20311916e1e543c429e80800f2a4410dfd7cec2af424771cb8aa96fdeae837be",
+    "internal/detector/build.go": "56903483370e8f96dfc04ef94e274fb44245fcef6cfdae022c1d82241b99af28",
+    "internal/detector/dedup.go": "9c4dff966aabd8fd264480432284edf549f02eb4dd06474118ca9bb68ed53680",
+    "internal/detector/detector.go": "749832e0a17f6dc1ecc8adff90e1faaa28a89476485cf1b3e52aed4fdbcc8cd9",
+    "internal/detector/diff.go": "8e8799d4fbb201265bbbbb053c09f6ad179bacf97368a12e3e381dd578206459",
+    "internal/detector/gitleaks.go": "903478701111347747e044eecda3f0b79e01d0e0ea90dcfc317c76596d410db9",
+    "internal/detector/kingfisher.go": "fedb936b9315780fe338a14b92e3cc86d6214aa9a39a54a8db6d289b9b096abe",
+    "internal/detector/runner.go": "b7286c7aa72b8da28d92b5a596873dcda12b526c348b3c0f97a723eb2917ec47",
+    "internal/detector/trufflehog.go": "a0ed9e197e3bf776f80dcd00c08a2c30a55260bfd7f6484515aad188e5ad4a45",
+    "internal/types/config.go": "7513e6be3f7e7aa847f2e09a6b7e8e2449daf870681e20bbe2e52483dec60e95"
+  },
+  "holdout_manifest_sha256": "f5f372785d55ad19528a57835c8b7d494da0929d20ece09b5fb049383682678b",
+  "validation": [
+    {
+      "name": "full-off-1",
+      "cases": 176,
+      "runs_per_case": 1
+    },
+    {
+      "name": "full-off-repeat2",
+      "cases": 176,
+      "runs_per_case": 2
+    },
+    {
+      "name": "target-off-repeat20",
+      "cases": 17,
+      "runs_per_case": 20
+    },
+    {
+      "name": "holdout-off-1",
+      "cases": 80,
+      "runs_per_case": 1
+    }
+  ]
+}

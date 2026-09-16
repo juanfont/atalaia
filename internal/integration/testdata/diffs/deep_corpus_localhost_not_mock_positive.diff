@@ -1,0 +1,7 @@
+diff --git a/tests/test_database.py b/tests/test_database.py
+--- /dev/null
++++ b/tests/test_database.py
+@@ -0,0 +1,3 @@
++def test_database():
++    connection = psycopg.connect("postgres://reporter:BirchHarbor62@127.0.0.1:5432/reports")
++    assert connection.execute("SELECT 1").fetchone() == (1,)

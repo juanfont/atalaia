@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: distinct_client. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_distinct_client",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_accounts.py",
+      "line": 3,
+      "kind": "credential",
+      "value": "w3Mf9Nz5Js7Kq2Da8Lp4"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,5 @@
+diff --git a/app/store.js b/app/store.js
+--- /dev/null
++++ b/app/store.js
+@@ -0,0 +1,1 @@
++const client = new MongoClient(process.env.MONGO_DSN);

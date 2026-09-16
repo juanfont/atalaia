@@ -1,0 +1,6 @@
+diff --git a/scripts/fetch.sh b/scripts/fetch.sh
+--- /dev/null
++++ b/scripts/fetch.sh
+@@ -0,0 +1,2 @@
++#!/bin/sh
++curl --fail "https://reporter:Birch%40Harbor%3A62@reports.internal/export"

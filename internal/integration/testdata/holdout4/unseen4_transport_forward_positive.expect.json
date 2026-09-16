@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: transport_forward. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_transport_forward",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/transport.py",
+      "line": 5,
+      "kind": "credential",
+      "value": "v8Ka3Jr7Mc5Nq2Pd9Ws4"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

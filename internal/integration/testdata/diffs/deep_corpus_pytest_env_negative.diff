@@ -1,0 +1,9 @@
+diff --git a/tests/test_service.py b/tests/test_service.py
+--- /dev/null
++++ b/tests/test_service.py
+@@ -0,0 +1,5 @@
++def test_service(monkeypatch):
++    monkeypatch.setenv("SERVICE_TOKEN", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    app = create_app()
++    response = app.test_client().get("/private", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    assert response.status_code == 200

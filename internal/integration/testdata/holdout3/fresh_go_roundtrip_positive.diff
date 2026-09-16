@@ -1,0 +1,8 @@
+diff --git a/tests/orders_test.go b/tests/orders_test.go
+--- /dev/null
++++ b/tests/orders_test.go
+@@ -0,0 +1,4 @@
++client := &http.Client{}
++req, _ := http.NewRequest("GET", "https://orders.internal/current", nil)
++req.Header.Set("Authorization", "Bearer g5Dz2Kp8Sr4Jm7Wx9Ba6")
++reply, err := client.Do(req)

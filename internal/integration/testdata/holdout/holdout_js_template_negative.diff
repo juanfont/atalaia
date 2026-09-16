@@ -1,0 +1,6 @@
+diff --git a/app/database.ts b/app/database.ts
+--- /dev/null
++++ b/app/database.ts
+@@ -0,0 +1,2 @@
++const dsn = `postgresql://reader:${process.env.REPORT_AUTH}@${dbHost}/ledger`;
++const db = new Client(dsn);

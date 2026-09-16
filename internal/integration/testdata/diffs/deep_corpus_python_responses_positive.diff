@@ -1,0 +1,7 @@
+diff --git a/tests/test_sdk.py b/tests/test_sdk.py
+--- /dev/null
++++ b/tests/test_sdk.py
+@@ -0,0 +1,3 @@
++def test_deployed_sdk():
++    client = PaymentClient(base_url="https://payments.internal", token="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    assert client.balance() >= 0

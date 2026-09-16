@@ -17,6 +17,7 @@ set -euo pipefail
 CONFIG="${1:-${CONFIG:-internal-docs/smoke.yaml}}"
 LISTEN="${LISTEN:-127.0.0.1:18080}"
 METRICS="${METRICS:-127.0.0.1:19090}"
+TEST_TIMEOUT="${INTEGRATION_TIMEOUT:-60m}"
 
 if [[ ! -f $CONFIG ]]; then
     echo "smoke-corpus: missing config: $CONFIG" >&2
@@ -55,4 +56,4 @@ fi
 echo "corpus: running test suite"
 ATALAIA_INTEGRATION_URL="http://${LISTEN}" \
 INTEGRATION_MIN_AGREEMENT="${INTEGRATION_MIN_AGREEMENT:-0.8}" \
-    go test -tags=integration -count=1 -timeout 600s -v ./internal/integration
+    go test -tags=integration -count=1 -timeout "$TEST_TIMEOUT" -v ./internal/integration

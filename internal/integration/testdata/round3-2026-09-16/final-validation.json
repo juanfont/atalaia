@@ -1,0 +1,314 @@
+{
+  "selection_sha256": "895574039c205a3f750b40006cd319b345648d4effdfba299ba3fc9895f7bbec",
+  "stability": {
+    "baseline_fresh": {
+      "cases": 48,
+      "pass_1": 39,
+      "pass_2": 39,
+      "pass_both": 39,
+      "failed_both": [
+        "fresh_dsn_call_shape_positive",
+        "fresh_fetch_factory_negative",
+        "fresh_javascript_fetch_negative",
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_negative",
+        "fresh_python_transport_negative",
+        "fresh_python_unrelated_mock_negative",
+        "fresh_ruby_local_method_negative"
+      ],
+      "changed_pass_fail": [],
+      "failed_either": [
+        "fresh_dsn_call_shape_positive",
+        "fresh_fetch_factory_negative",
+        "fresh_javascript_fetch_negative",
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_negative",
+        "fresh_python_transport_negative",
+        "fresh_python_unrelated_mock_negative",
+        "fresh_ruby_local_method_negative"
+      ]
+    },
+    "original": {
+      "cases": 176,
+      "pass_1": 174,
+      "pass_2": 174,
+      "pass_both": 174,
+      "failed_both": [
+        "deep_corpus_multiple_files_negative",
+        "deep_corpus_nock_interceptor_positive"
+      ],
+      "changed_pass_fail": [],
+      "failed_either": [
+        "deep_corpus_multiple_files_negative",
+        "deep_corpus_nock_interceptor_positive"
+      ]
+    },
+    "revealed": {
+      "cases": 80,
+      "pass_1": 79,
+      "pass_2": 80,
+      "pass_both": 79,
+      "failed_both": [],
+      "changed_pass_fail": [
+        "holdout_axios_adapter_negative"
+      ],
+      "failed_either": [
+        "holdout_axios_adapter_negative"
+      ]
+    },
+    "fresh": {
+      "cases": 48,
+      "pass_1": 42,
+      "pass_2": 42,
+      "pass_both": 42,
+      "failed_both": [
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_positive",
+        "fresh_python_unrelated_mock_positive",
+        "fresh_ruby_local_method_negative",
+        "fresh_token_username_positive"
+      ],
+      "changed_pass_fail": [],
+      "failed_either": [
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_positive",
+        "fresh_python_unrelated_mock_positive",
+        "fresh_ruby_local_method_negative",
+        "fresh_token_username_positive"
+      ]
+    }
+  },
+  "runs": {
+    "baseline-on-fresh-2": {
+      "cases": 48,
+      "cases_passed_all_runs": 39,
+      "credentials_found": {
+        "passed": 21,
+        "total": 24
+      },
+      "clean_scans": {
+        "passed": 18,
+        "total": 24
+      },
+      "failed_cases": [
+        "fresh_dsn_call_shape_positive",
+        "fresh_fetch_factory_negative",
+        "fresh_javascript_fetch_negative",
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_negative",
+        "fresh_python_transport_negative",
+        "fresh_python_unrelated_mock_negative",
+        "fresh_ruby_local_method_negative"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3502.5,
+        "p95": 6833,
+        "max": 7153
+      },
+      "model_calls": 59,
+      "calls_with_reasoning": 59
+    },
+    "baseline-on-fresh": {
+      "cases": 48,
+      "cases_passed_all_runs": 39,
+      "credentials_found": {
+        "passed": 21,
+        "total": 24
+      },
+      "clean_scans": {
+        "passed": 18,
+        "total": 24
+      },
+      "failed_cases": [
+        "fresh_dsn_call_shape_positive",
+        "fresh_fetch_factory_negative",
+        "fresh_javascript_fetch_negative",
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_negative",
+        "fresh_python_transport_negative",
+        "fresh_python_unrelated_mock_negative",
+        "fresh_ruby_local_method_negative"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3505.5,
+        "p95": 6849,
+        "max": 7180
+      },
+      "model_calls": 59,
+      "calls_with_reasoning": 59
+    },
+    "selected-on-fresh-1": {
+      "cases": 48,
+      "cases_passed_all_runs": 42,
+      "credentials_found": {
+        "passed": 19,
+        "total": 24
+      },
+      "clean_scans": {
+        "passed": 23,
+        "total": 24
+      },
+      "failed_cases": [
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_positive",
+        "fresh_python_unrelated_mock_positive",
+        "fresh_ruby_local_method_negative",
+        "fresh_token_username_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3729.0,
+        "p95": 6097,
+        "max": 7869
+      },
+      "model_calls": 59,
+      "calls_with_reasoning": 59
+    },
+    "trial4-on-full": {
+      "cases": 176,
+      "cases_passed_all_runs": 174,
+      "credentials_found": {
+        "passed": 75,
+        "total": 76
+      },
+      "clean_scans": {
+        "passed": 74,
+        "total": 75
+      },
+      "failed_cases": [
+        "deep_corpus_multiple_files_negative",
+        "deep_corpus_nock_interceptor_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 5048.0,
+        "p95": 12306,
+        "max": 59699
+      },
+      "model_calls": 272,
+      "calls_with_reasoning": 272
+    },
+    "selected-on-full-2": {
+      "cases": 176,
+      "cases_passed_all_runs": 174,
+      "credentials_found": {
+        "passed": 75,
+        "total": 76
+      },
+      "clean_scans": {
+        "passed": 74,
+        "total": 75
+      },
+      "failed_cases": [
+        "deep_corpus_multiple_files_negative",
+        "deep_corpus_nock_interceptor_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 4936.0,
+        "p95": 12321,
+        "max": 60564
+      },
+      "model_calls": 272,
+      "calls_with_reasoning": 272
+    },
+    "trial4-on-holdout": {
+      "cases": 80,
+      "cases_passed_all_runs": 79,
+      "credentials_found": {
+        "passed": 40,
+        "total": 40
+      },
+      "clean_scans": {
+        "passed": 39,
+        "total": 40
+      },
+      "failed_cases": [
+        "holdout_axios_adapter_negative"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3911.0,
+        "p95": 8470,
+        "max": 10149
+      },
+      "model_calls": 108,
+      "calls_with_reasoning": 108
+    },
+    "selected-on-holdout-2": {
+      "cases": 80,
+      "cases_passed_all_runs": 80,
+      "credentials_found": {
+        "passed": 40,
+        "total": 40
+      },
+      "clean_scans": {
+        "passed": 40,
+        "total": 40
+      },
+      "failed_cases": [],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3830.5,
+        "p95": 8021,
+        "max": 11262
+      },
+      "model_calls": 108,
+      "calls_with_reasoning": 108
+    },
+    "selected-on-fresh-2": {
+      "cases": 48,
+      "cases_passed_all_runs": 42,
+      "credentials_found": {
+        "passed": 19,
+        "total": 24
+      },
+      "clean_scans": {
+        "passed": 23,
+        "total": 24
+      },
+      "failed_cases": [
+        "fresh_json_backslashes_positive",
+        "fresh_json_source_bytes_positive",
+        "fresh_mock_scope_positive",
+        "fresh_python_unrelated_mock_positive",
+        "fresh_ruby_local_method_negative",
+        "fresh_token_username_positive"
+      ],
+      "http_errors": 0,
+      "deep_errors": 0,
+      "recovery_calls": 0,
+      "request_latency_ms": {
+        "median": 3730.0,
+        "p95": 6095,
+        "max": 7861
+      },
+      "model_calls": 59,
+      "calls_with_reasoning": 59
+    }
+  },
+  "checks": "Selected source and prompt hashes unchanged; repeated fixture hashes and prompt identifiers match."
+}

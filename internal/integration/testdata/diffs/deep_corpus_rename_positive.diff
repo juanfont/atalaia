@@ -1,0 +1,9 @@
+diff --git a/legacy/db.py b/app/db.py
+similarity index 75%
+rename from legacy/db.py
+rename to app/db.py
+--- a/legacy/db.py
++++ b/app/db.py
+@@ -7,1 +7,2 @@
+ host = "db.internal"
++password = "BirchHarbor62"

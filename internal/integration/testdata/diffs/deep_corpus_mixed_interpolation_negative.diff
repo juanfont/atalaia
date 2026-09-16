@@ -1,0 +1,6 @@
+diff --git a/app/connect.py b/app/connect.py
+--- /dev/null
++++ b/app/connect.py
+@@ -0,0 +1,2 @@
++dsn = f"postgres://reporter:{os.environ['DB_PASSWORD']}@{db_host}/reports"
++connection = connect(dsn)

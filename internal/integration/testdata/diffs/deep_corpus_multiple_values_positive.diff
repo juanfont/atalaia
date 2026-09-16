@@ -1,0 +1,6 @@
+diff --git a/app/connections.py b/app/connections.py
+--- /dev/null
++++ b/app/connections.py
+@@ -0,0 +1,2 @@
++database = connect("postgres://reporter:BirchHarbor62@db.internal/reports")
++cache = Redis.from_url("redis://cache:JuniperQuay83@cache.internal/0")

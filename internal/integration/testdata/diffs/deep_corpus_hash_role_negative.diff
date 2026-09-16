@@ -1,0 +1,6 @@
+diff --git a/app/revision.py b/app/revision.py
+--- /dev/null
++++ b/app/revision.py
+@@ -0,0 +1,2 @@
++revision_sha256 = "8e12c94035af4e629cb1b7a9de5084216a27cd591cb840f83fd902a54123ab67"
++print(revision_sha256)

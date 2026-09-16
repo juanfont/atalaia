@@ -1,0 +1,5 @@
+diff --git a/settings/cache.json b/settings/cache.json
+--- /dev/null
++++ b/settings/cache.json
+@@ -0,0 +1,1 @@
++{"expected_screen_text":"Glacier\tLantern46"}

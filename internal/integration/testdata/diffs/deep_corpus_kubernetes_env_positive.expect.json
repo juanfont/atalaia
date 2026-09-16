@@ -1,0 +1,23 @@
+{
+  "description": "kubernetes env: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "reference",
+    "yaml",
+    "positive"
+  ],
+  "pair": "kubernetes_env",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "deploy/app.yaml",
+      "line": 13,
+      "kind": "credential",
+      "value": "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,10 @@
+diff --git a/tests/test_export.py b/tests/test_export.py
+--- /dev/null
++++ b/tests/test_export.py
+@@ -0,0 +1,6 @@
++from django.test import override_settings
++
++@override_settings(EXPORT_TOKEN="d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++def test_export(client):
++    result = client.get("/export", HTTP_AUTHORIZATION="Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    assert result.status_code == 200

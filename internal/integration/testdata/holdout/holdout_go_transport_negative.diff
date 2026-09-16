@@ -1,0 +1,8 @@
+diff --git a/tests/client_test.go b/tests/client_test.go
+--- /dev/null
++++ b/tests/client_test.go
+@@ -0,0 +1,4 @@
++client := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return &http.Response{StatusCode: 200}, nil })}
++req, _ := http.NewRequest("GET", "https://ledger.internal/private", nil)
++req.Header.Set("Authorization", "Bearer q5a32e2258163be7550a9cca3b8b93")
++resp, err := client.Do(req)

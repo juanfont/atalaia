@@ -1,0 +1,8 @@
+diff --git a/test/client.test.js b/test/client.test.js
+--- /dev/null
++++ b/test/client.test.js
+@@ -0,0 +1,4 @@
++it("reads the deployed balance", async () => {
++  const client = new PaymentClient({ baseURL: "https://payments.internal", token: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" });
++  expect(await client.balance()).toBeGreaterThanOrEqual(0);
++});

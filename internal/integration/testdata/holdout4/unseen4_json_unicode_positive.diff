@@ -1,0 +1,5 @@
+diff --git a/settings/ledger.json b/settings/ledger.json
+--- /dev/null
++++ b/settings/ledger.json
+@@ -0,0 +1,1 @@
++{"auth":{"password":"Saffron\u003aCove58"}}

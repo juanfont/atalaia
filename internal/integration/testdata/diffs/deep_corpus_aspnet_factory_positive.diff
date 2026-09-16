@@ -1,0 +1,10 @@
+diff --git a/tests/ApiTests.cs b/tests/ApiTests.cs
+--- /dev/null
++++ b/tests/ApiTests.cs
+@@ -0,0 +1,6 @@
++[Fact]
++public async Task RemoteAuthentication() {
++    using var client = new HttpClient();
++    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf");
++    Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("https://gateway.internal/private")).StatusCode);
++}

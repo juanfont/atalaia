@@ -1,0 +1,9 @@
+diff --git a/src/test/java/ClientTest.java b/src/test/java/ClientTest.java
+--- /dev/null
++++ b/src/test/java/ClientTest.java
+@@ -0,0 +1,5 @@
++@Test void mockedBalance() {
++  wireMockServer.stubFor(get(urlEqualTo("/balance")).willReturn(okJson("{\"amount\":0}")));
++  var client = new PaymentClient(wireMockServer.baseUrl(), "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf");
++  assertEquals(0, client.balance());
++}

@@ -1,0 +1,8 @@
+diff --git a/app/credentials.rb b/app/credentials.rb
+--- /dev/null
++++ b/app/credentials.rb
+@@ -0,0 +1,4 @@
++password = (
++  "ElmInlet28"
++)
++connection.login("reader", password)

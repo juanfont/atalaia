@@ -1,0 +1,11 @@
+diff --git a/test/client.test.js b/test/client.test.js
+--- /dev/null
++++ b/test/client.test.js
+@@ -0,0 +1,7 @@
++it("decodes a mocked response", async () => {
++  nock.disableNetConnect();
++  nock("https://payments.internal").get("/balance").reply(200, { amount: 0 });
++  const client = new PaymentClient({ token: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" });
++  expect(await client.balance()).toEqual(0);
++  nock.cleanAll();
++});

@@ -224,3 +224,50 @@ func TestValidateConfig_DeepScanDisabledSkipsProfileCheck(t *testing.T) {
 		t.Errorf("disabled deep scan must not validate its profile, got %v", err)
 	}
 }
+
+func TestConfig_OptionalThinkingOverride(t *testing.T) {
+	for _, value := range []string{"", "true", "false"} {
+		t.Run(value, func(t *testing.T) {
+			resetViper()
+			t.Setenv("ATALAIA_LLM_ENABLE_THINKING", value)
+			if err := ReadViperConfig("testdata/minimal.yaml", true); err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := GetConfig()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if value == "" {
+				if cfg.LLM.EnableThinking != nil {
+					t.Fatal("unset override must preserve backend default")
+				}
+				return
+			}
+			if cfg.LLM.EnableThinking == nil || *cfg.LLM.EnableThinking != (value == "true") {
+				t.Fatalf("override=%v, want %s", cfg.LLM.EnableThinking, value)
+			}
+		})
+	}
+}
+
+func TestSourceLiteralsConfigOptIn(t *testing.T) {
+	resetViper()
+	if err := ReadViperConfig("testdata/minimal.yaml", true); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LLM.DeepScan.SourceLiterals {
+		t.Fatal("source literals must default off")
+	}
+	t.Setenv("ATALAIA_LLM_DEEP_SCAN_SOURCE_LITERALS", "true")
+	cfg, err = GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.LLM.DeepScan.SourceLiterals {
+		t.Fatal("source-literal env override ignored")
+	}
+}

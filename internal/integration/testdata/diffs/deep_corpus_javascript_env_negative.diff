@@ -1,0 +1,6 @@
+diff --git a/src/api.js b/src/api.js
+--- /dev/null
++++ b/src/api.js
+@@ -0,0 +1,2 @@
++const apiToken = process.env.API_TOKEN;
++const client = new Client({ apiToken });

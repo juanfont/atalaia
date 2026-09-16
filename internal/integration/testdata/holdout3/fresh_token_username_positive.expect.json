@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Opaque authentication token in userinfo versus an ordinary account name.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_token_username",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "jobs/clone.sh",
+      "line": 1,
+      "kind": "credential",
+      "value": "m8Tx2Ds7Jp4Wc9Ra6Kn3"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

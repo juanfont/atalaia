@@ -1,0 +1,259 @@
+{
+  "cases": 32,
+  "cases_passed_all_runs": 25,
+  "requests": 64,
+  "model_calls": 72,
+  "calls_with_reasoning": 72,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 3034.5,
+    "p95": 6397,
+    "max": 8077
+  },
+  "model_call_latency_ms": {
+    "median": 2761.5,
+    "p95": 5319,
+    "max": 6237
+  },
+  "usage": {
+    "prompt_tokens": 152064,
+    "completion_tokens": 33607,
+    "total_tokens": 185671
+  },
+  "finish_reasons": {
+    "stop": 72
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "unseen4_fetch_restore_positive",
+    "unseen4_git_userinfo_positive",
+    "unseen4_json_pair_positive",
+    "unseen4_json_tab_positive",
+    "unseen4_json_unicode_positive",
+    "unseen4_nested_scope_positive",
+    "unseen4_stopped_mock_positive"
+  ],
+  "runs_per_case": {
+    "unseen4_distinct_client_negative": 2,
+    "unseen4_distinct_client_positive": 2,
+    "unseen4_env_backslash_negative": 2,
+    "unseen4_env_backslash_positive": 2,
+    "unseen4_fetch_injection_negative": 2,
+    "unseen4_fetch_injection_positive": 2,
+    "unseen4_fetch_restore_negative": 2,
+    "unseen4_fetch_restore_positive": 2,
+    "unseen4_git_userinfo_negative": 2,
+    "unseen4_git_userinfo_positive": 2,
+    "unseen4_json_pair_negative": 2,
+    "unseen4_json_pair_positive": 2,
+    "unseen4_json_tab_negative": 2,
+    "unseen4_json_tab_positive": 2,
+    "unseen4_json_unicode_negative": 2,
+    "unseen4_json_unicode_positive": 2,
+    "unseen4_nested_scope_negative": 2,
+    "unseen4_nested_scope_positive": 2,
+    "unseen4_operational_note_negative": 2,
+    "unseen4_operational_note_positive": 2,
+    "unseen4_python_raw_negative": 2,
+    "unseen4_python_raw_positive": 2,
+    "unseen4_quoted_function_negative": 2,
+    "unseen4_quoted_function_positive": 2,
+    "unseen4_signing_role_negative": 2,
+    "unseen4_signing_role_positive": 2,
+    "unseen4_stopped_mock_negative": 2,
+    "unseen4_stopped_mock_positive": 2,
+    "unseen4_transport_forward_negative": 2,
+    "unseen4_transport_forward_positive": 2,
+    "unseen4_yaml_literal_negative": 2,
+    "unseen4_yaml_literal_positive": 2
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:6e1ab740d653"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:d257f1b1b729"
+  ],
+  "fixture_hashes": {
+    "unseen4_distinct_client_negative": {
+      "diff": "8a1a474a4382157e6f230182a272905b019218bb68705031e79212a0f61b657f",
+      "expectation": "eb3a431b3d849fabbb1819b96ea1bb55fdcce28cefcbc421bc63a6ee35b05c5f"
+    },
+    "unseen4_distinct_client_positive": {
+      "diff": "e8d6541c7b7ad0426ea59c6d71b83ab502bb0d99f0fb9b79492f4e3b13daae87",
+      "expectation": "4c31fd1416cc8dc01f0c889b312b3c9a80dd4c4d9f375ddda71ed8661eef6c6e"
+    },
+    "unseen4_env_backslash_negative": {
+      "diff": "05b3e960084f424c31bf79f308f78727d437c5498f663ac97cb48398d2dd6b1f",
+      "expectation": "a015d734fce0e40a9328927f188558a7329b2e74dc230929a60e338ae55d8e25"
+    },
+    "unseen4_env_backslash_positive": {
+      "diff": "8e4e79f74f5e6378442b5bff607b2811a465f79855881eed186241634ce6d70a",
+      "expectation": "7a3b8c11c6e06254505ae7825d0173dff17aa357d20dedc4453eaac85dc17e78"
+    },
+    "unseen4_fetch_injection_negative": {
+      "diff": "a64c35be902b225337ff507243ce04bca2cbbaff25f590f60ccd2d9c5177e2a2",
+      "expectation": "4cf8466bbedc30d3a255add60b88c69dc6754e8d9b48b8eab797a546e13cadcd"
+    },
+    "unseen4_fetch_injection_positive": {
+      "diff": "6b70a53d17252a516524cfafc951ef128227a61e766bfd2fe00ee20ad0c81208",
+      "expectation": "32d66335a32108b1d9c7a91c79ae9afff4d3d49826db8f70ae2a43ead279a1db"
+    },
+    "unseen4_fetch_restore_negative": {
+      "diff": "1e55e97c4a314783e2cf08ffc47d43db8267d99c0083fdd7ac13f98a00156226",
+      "expectation": "8ecfe5516aef05b32a5b5bcd4595cfb6344af5a6bcf4dd8c044252e94a3b8c57"
+    },
+    "unseen4_fetch_restore_positive": {
+      "diff": "fccf1aae8d4559411019ef4b6f3063153e855309084282494007a8c541aa63ac",
+      "expectation": "d1cadb12aa7c8b07460181f216bfe32cec7d12e41c6ff063f4a23db9d80bbe81"
+    },
+    "unseen4_git_userinfo_negative": {
+      "diff": "ce79a0517e068af0b7b0baa73bf6936f747fcfd75153d6a9f2f5c0e28c2ec585",
+      "expectation": "28317b8cad670e9e0d5f60aa72e8a1420a22a2bb31e142e735f1733e04baa39c"
+    },
+    "unseen4_git_userinfo_positive": {
+      "diff": "b35fd737a43edd9e42d10fdfb133f06adb65a10fe9f28f8a63c58bc48ac11d76",
+      "expectation": "6238db45754473e694d0122f6b93f7a6343ec8757e084299b8f7d1bcab3aa899"
+    },
+    "unseen4_json_pair_negative": {
+      "diff": "d3641b2c1d80100251f67fc50efda68fd91106caf6a0253c3b95d63911f617a4",
+      "expectation": "9498a14a2ae5e57c47f55e2638d69289e5ea9e1a0c5ac5d12afb14a7692bab9d"
+    },
+    "unseen4_json_pair_positive": {
+      "diff": "e542dfa33a39a661379cac789b35b7c744a3566a004d631973e69aabf1cf7a3c",
+      "expectation": "49d9654c6f7c67697865ec475b2c127bd1bf0554386ac1cd1d0ad2809bdba50a"
+    },
+    "unseen4_json_tab_negative": {
+      "diff": "782698b8783255ff84875f405dc6f2f0510f2cbdd7a7d4c98b99178a7c5f87d0",
+      "expectation": "54388cbc496d66df3511974b102f5b6ed43513b6891b65452e217d6592854ff3"
+    },
+    "unseen4_json_tab_positive": {
+      "diff": "2973e1237431a726f44c704e4ef9e5f94c3cc58f9c1e1bf0e42563d78218f691",
+      "expectation": "c40cb173c0f6f8a77d208578e9173d2a426abfff0288a7b33690fde10f4fbb56"
+    },
+    "unseen4_json_unicode_negative": {
+      "diff": "71e1afc9fa5ed9a3dfedde169b25dbd26549d18aadc9f8cc9bf5714380309c54",
+      "expectation": "15cb0fa51f41313f3a2e09116bfc42497398b653329ca05947c4446bafd252c2"
+    },
+    "unseen4_json_unicode_positive": {
+      "diff": "ca3f84ca5736d1d77056a2cafff601e48272cac1c08a01b3e3c4bf7df4b56847",
+      "expectation": "d1646c43fc9e6f1e35972c10a3fb3a595f57220194819d904eedb413c5c7fa1c"
+    },
+    "unseen4_nested_scope_negative": {
+      "diff": "00aceb0dd23f3e0fa7a230e5a01d71f59e22094e388eecc030e2534c45df4045",
+      "expectation": "a2b6eb9e7214790502a0583ceb013e76018abf7aa2321b12f14a5dc94f227f52"
+    },
+    "unseen4_nested_scope_positive": {
+      "diff": "1c3837ff764c06d13b07fdb55069dc0be87544d00d760fe0b3ee2aae737a5603",
+      "expectation": "14ab31ea963b9ce66a0aa92466f692823d7bd847a7febff05de83443206fea85"
+    },
+    "unseen4_operational_note_negative": {
+      "diff": "d28b515adc739fba4fc57c541d8166c767ce0ca0803c7ebf5acb777e8f381f2e",
+      "expectation": "889e342e14a83bb6e6a3b2d7d55b12d390099355fa3df3658863b267d81f695f"
+    },
+    "unseen4_operational_note_positive": {
+      "diff": "e895ca1bd31571084d423f8e329e8080ce161506c29f5dc7010643c15a2f8a12",
+      "expectation": "1e7e943dc65091e5ac6a0888f6af6acee4aedcaffa2458835e770e96f7872700"
+    },
+    "unseen4_python_raw_negative": {
+      "diff": "0bcbc016e982612c443168ad84046e2210919dd063f890a63f258cf8750e2be2",
+      "expectation": "78eded27351a7bdfc0238e4810a090a6b25f7a5e617a0e5ec25cc21e688384fb"
+    },
+    "unseen4_python_raw_positive": {
+      "diff": "49e436c90f03cdf54745d9a30ebfdfa8c4d9b675f2f580bceb71e2cd05432208",
+      "expectation": "28060207196775e85513fa11eed2018104f1cf7f37681dc21b5cb7c21dd5f71d"
+    },
+    "unseen4_quoted_function_negative": {
+      "diff": "92ae726090bf6be99c6548e8fe163e65d556dda4a37c67bdba7ee6a54f3f4047",
+      "expectation": "56af11e5c2f80494ab1e22ee96688ac08c65763fb3c26de679a6dea14ddcab19"
+    },
+    "unseen4_quoted_function_positive": {
+      "diff": "73ade40517eaf5551b0ce2937cc960a9007806356ebfe05b0a01a238bb7ef47c",
+      "expectation": "4b7a5e303d6388e3477480adc88c780efc9c92099c5dd240d12d44f425b60eb5"
+    },
+    "unseen4_signing_role_negative": {
+      "diff": "718bbe1e654296dace65ca7d42057556babafc485a0cd6fc543146952499ef5e",
+      "expectation": "5af63ce6679ebc019c84d3fe4b3a6648d6b2383d8f770ecb5241269d65d0ad0f"
+    },
+    "unseen4_signing_role_positive": {
+      "diff": "4f5597a48b4837489d1025739ac8b4d0a78373c2e96729611c83a5401810e711",
+      "expectation": "0eb379623eae6a1aa59d09121089612cbf73e07b895f5a9b02dff3949428ee2e"
+    },
+    "unseen4_stopped_mock_negative": {
+      "diff": "e97e9bd7d6a95190a1627edfcf037190fcaec5ad5515f3c648ee987f22d98fde",
+      "expectation": "cc9752b016fb22d49c2c104ffe1d057eb701aad057824b57e1ab1ae8699012cc"
+    },
+    "unseen4_stopped_mock_positive": {
+      "diff": "82f45f96010f428089bf8f75ad6503df8990be603f64f7cc76f95f9dadc0c394",
+      "expectation": "6f33208ab654b20bfeb7b4fa266a90ac262a28279b33e44b11dda83cd05f9fdc"
+    },
+    "unseen4_transport_forward_negative": {
+      "diff": "a45cdf1be13287e80115dfce130f67a76a1a12a51231a8fe8e1393fbe0e278b8",
+      "expectation": "62bc173aec10de1f888833651eb95b08ddceb12dff385c03afd614d4b3954b00"
+    },
+    "unseen4_transport_forward_positive": {
+      "diff": "a2bad7643dd3ae49f76081af494e982ef44cd487e30992e46bcb782bcf16531e",
+      "expectation": "b48ccb7e8dc7fc1c000a0738371ea02e606f04ff55d45a59741859714d98607d"
+    },
+    "unseen4_yaml_literal_negative": {
+      "diff": "d27f22acc1bcd5c1732873151efb5ad57936d0581b648a074130602e6b404a61",
+      "expectation": "e3418b5f05a7c1683e6d773548c091d26a178bc476614bdc030067311f123422"
+    },
+    "unseen4_yaml_literal_positive": {
+      "diff": "4bce9cc4cfe5de2eef79faa65c6d214a29374d9a94553700dd75b32a42ce9bf5",
+      "expectation": "2851e24b0d2a15cc217b536304f3100fd27f7b5bb70fbf16e1ffeeed12ad79d3"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 8,
+      "latency_ms": {
+        "median": 3758.0,
+        "p95": 5940,
+        "max": 5940
+      },
+      "usage": {
+        "prompt_tokens": 14600,
+        "completion_tokens": 4997,
+        "total_tokens": 19597
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 8
+      }
+    },
+    "deep": {
+      "calls": 64,
+      "latency_ms": {
+        "median": 2583.0,
+        "p95": 4989,
+        "max": 6237
+      },
+      "usage": {
+        "prompt_tokens": 137464,
+        "completion_tokens": 28610,
+        "total_tokens": 166074
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 64
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 19,
+    "total": 32
+  },
+  "clean_scans": {
+    "passed": 32,
+    "total": 32
+  },
+  "records_sha256": "18e56e5d645f00c2a7bacc59fa4522b77bbd32ef49aaad48795b25d4de4b9fc9",
+  "log_sha256": "5b46edb7854bd50567465c8646ccdae17d0a385e5d8c817c7a183b7cbec8f744"
+}

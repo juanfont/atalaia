@@ -1,0 +1,23 @@
+{
+  "description": "generated bundle: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "syntax",
+    "javascript",
+    "positive"
+  ],
+  "pair": "generated_bundle",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "vendor/client.min.js",
+      "line": 1,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

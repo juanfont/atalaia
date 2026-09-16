@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. JSON source escapes must be preserved, never decoded.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_json_source_bytes",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "config/orders.json",
+      "line": 1,
+      "kind": "credential",
+      "value": "Silver\\u0021Meadow63"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

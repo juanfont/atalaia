@@ -1,0 +1,6 @@
+diff --git a/db/connect.go b/db/connect.go
+--- /dev/null
++++ b/db/connect.go
+@@ -0,0 +1,2 @@
++package db
++var database, err = sql.Open("mysql", "reporter:BirchHarbor62@tcp(db.internal:3306)/metrics")

@@ -1,0 +1,44 @@
+[
+  {
+    "run": "trial4-on-full",
+    "requests": 176,
+    "expected_values_checked": 76,
+    "echoes": [],
+    "records_sha256": "568e5f1bf3d9ce262ca872084c4a07b0b4226a79eabea1c78d470f702db79a02"
+  },
+  {
+    "run": "selected-on-full-2",
+    "requests": 176,
+    "expected_values_checked": 76,
+    "echoes": [],
+    "records_sha256": "b0383ab89768d3c43922d3ad0230c5151726ff431231d57d5ba9ffd8bbf1b908"
+  },
+  {
+    "run": "trial4-on-holdout",
+    "requests": 80,
+    "expected_values_checked": 40,
+    "echoes": [],
+    "records_sha256": "8187eaed6c7c5889492b00e5cd9cc7b6f7c6904730c85c839dbba792069ab1de"
+  },
+  {
+    "run": "selected-on-holdout-2",
+    "requests": 80,
+    "expected_values_checked": 40,
+    "echoes": [],
+    "records_sha256": "4e09840a65bc55e4ad151b276a03ba49977498beddfd57aee07c1320faab936a"
+  },
+  {
+    "run": "selected-on-fresh-1",
+    "requests": 48,
+    "expected_values_checked": 24,
+    "echoes": [],
+    "records_sha256": "6478d1cc69e2bb298d44c0e169049f8a3f531e25aee59c1edb9ab521fe2e39e3"
+  },
+  {
+    "run": "selected-on-fresh-2",
+    "requests": 48,
+    "expected_values_checked": 24,
+    "echoes": [],
+    "records_sha256": "d517afd335c6275880394093c491b0656b15268b3441b4f17b77deec2653db9e"
+  }
+]

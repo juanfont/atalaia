@@ -1,0 +1,5 @@
+diff --git a/config/service.json b/config/service.json
+--- /dev/null
++++ b/config/service.json
+@@ -0,0 +1,1 @@
++{"endpoint":"https://ledger.internal","password":"Aspen\u0040Cove74"}

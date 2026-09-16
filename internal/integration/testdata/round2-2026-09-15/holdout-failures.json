@@ -1,0 +1,197 @@
+[
+  {
+    "fixture": "holdout_axios_adapter_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/client.spec.ts",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_csharp_handler_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/ClientTests.cs",
+        "line": 4,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_digest_auth_positive",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [],
+    "grounding_outcomes": []
+  },
+  {
+    "fixture": "holdout_fixture_directory_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "fixtures/check_live.py",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_go_transport_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/client_test.go",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_java_mockserver_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "src/test/java/ClientTest.java",
+        "line": 4,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_json_escape_positive",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [],
+    "grounding_outcomes": [
+      "not_found"
+    ]
+  },
+  {
+    "fixture": "holdout_kotlin_engine_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "src/test/ClientTest.kt",
+        "line": 2,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_mysql_parentheses_positive",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [],
+    "grounding_outcomes": [
+      "invalid_or_reference"
+    ]
+  },
+  {
+    "fixture": "holdout_php_handler_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/ClientTest.php",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_python_multiline_positive",
+    "confirmed_verdict_locations": [
+      {
+        "file": "app/credential.py",
+        "line": 4
+      }
+    ],
+    "discovery_locations": [
+      {
+        "file": "app/credential.py",
+        "line": 2,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_python_session_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/test_publish.py",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_runbook_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "docs/recovery.md",
+        "line": 4,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_rust_mockito_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "tests/client.rs",
+        "line": 3,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  },
+  {
+    "fixture": "holdout_webmock_ruby_negative",
+    "confirmed_verdict_locations": [],
+    "discovery_locations": [
+      {
+        "file": "spec/client_spec.rb",
+        "line": 2,
+        "kind": "credential"
+      }
+    ],
+    "grounding_outcomes": [
+      "discovered"
+    ]
+  }
+]

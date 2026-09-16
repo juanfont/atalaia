@@ -1,0 +1,5 @@
+diff --git a/jobs/fetch.sh b/jobs/fetch.sh
+--- /dev/null
++++ b/jobs/fetch.sh
+@@ -0,0 +1,1 @@
++wget "https://reader:Cypress%40Marsh%3A58@ledger.internal/export"

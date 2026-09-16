@@ -1,0 +1,5 @@
+diff --git a/MongoStore.java b/MongoStore.java
+--- /dev/null
++++ b/MongoStore.java
+@@ -0,0 +1,1 @@
++var client = MongoClients.create(System.getenv("MONGODB_URI"));

@@ -193,9 +193,17 @@ the line**.
 Separate from `VerdictSchema`:
 
 ```json
-{"candidates":[{"value":"…","kind":"credential|private_key",
+{"candidates":[{"value":"…","kind":"credential|private_key|test_data",
                 "confidence":0.0,"reason":"…"}]}
 ```
+
+`test_data` is an internal rejection classification for credentials a
+test creates in its local app or mock and then uses through its test
+client. The model can omit such values or label them `test_data`.
+Grounding drops that classification before locating values. It never
+appears in `discoveries[]`; public discovery kinds remain `credential`
+and `private_key`. A test filename alone is not sufficient: a test can
+still leak credentials for an existing service.
 
 Tool name `submit_candidates`, reusing the existing `use_tools`
 machinery and parser conventions. The model supplies no file, no line,
@@ -206,7 +214,9 @@ hallucinate one.
 
 Per candidate, in order:
 
-1. Cheap rejects: empty, shorter than 6 characters, or reference-shaped
+1. Drop candidates classified as `test_data`. They count as candidates,
+   but not as ungrounded values or discoveries. Then cheap rejects:
+   empty, shorter than 6 characters, or reference-shaped
    (`$VAR`, `${VAR}`).
 2. `detector.LocateInDiff(diff, value)` → `(path, line)`. On a miss,
    normalize once (trim whitespace, strip matching surrounding quotes
@@ -241,9 +251,12 @@ established pattern in this codebase, not a new invention.
 
 A PEM block spans dozens of lines, `LocateInDiff` searches line by line,
 and no 4B model reproduces a 40-line key body verbatim. For
-`kind: private_key`, grounding uses the first non-empty line of the
-returned value — in practice the `-----BEGIN … PRIVATE KEY-----` header
-— and the preview derives from that header rather than the key bytes.
+`kind: private_key`, grounding requires a recognized private-key BEGIN
+header (PKCS#8, encrypted PKCS#8, RSA, EC, DSA, or OpenSSH). Public-key,
+certificate and certificate-request headers are rejected, including when
+labelled `credential`. Closing delimiters alone are never credentials.
+The preview derives from the private-key header
+rather than the key bytes.
 Recall on what matters, with no dependence on the model transcribing key
 material.
 
@@ -517,3 +530,31 @@ residual is documented rather than engineered around.
 repo's working tree, the deep read found `$ODI_PASS = 'Hogsback';` at
 line 50: a hardcoded low-entropy database password that no detector
 flagged.
+
+### Reference grounding
+
+Basic-auth pairs with a runtime-only password are references even when the
+username is literal. Function-reference checks require a call-shaped
+expression, not merely parentheses, so MySQL DSNs containing `tcp(...)`
+remain eligible for grounding.
+
+
+### Quoted function-shaped passwords
+
+A function-shaped candidate can be literal password text. Grounding accepts it
+when its first added occurrence is a complete closed quoted string or the
+`:password@` component of a quoted connection string. Interpolation and escaped
+strings do not qualify for this exception. Unquoted calls remain references.
+The model still decides credential role; source evidence only prevents the
+reference guard from rejecting literal punctuation.
+
+
+### Experimental source-literal selection (2026-09-16)
+
+The opt-in `llm.deep_scan.source_literals` extension allows a candidate to select
+an escaped source value by a current-window catalog ID. IDs do not identify file
+positions. Resolution produces unchanged source bytes before the existing Ground
+pipeline; unknown IDs fail and no decoded guesses are accepted. The default
+model schema remains values-only. See [the extension design](2026-09-16-source-literal-selection.md)
+for bounds, response recovery and evaluation requirements. Public API shapes are
+unchanged. The option remains off by default.

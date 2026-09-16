@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Custom authentication header versus a nonsecret correlation header.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_custom_header",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/send.js",
+      "line": 1,
+      "kind": "credential",
+      "value": "z4Rm8Pa2Ns6Vq9Jt3Dc7"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

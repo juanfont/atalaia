@@ -1,0 +1,6 @@
+diff --git a/ClientConfig.cs b/ClientConfig.cs
+--- /dev/null
++++ b/ClientConfig.cs
+@@ -0,0 +1,2 @@
++var token = "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf";
++var client = new ApiClient(token);

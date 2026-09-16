@@ -1,0 +1,5 @@
+diff --git a/jobs/clone.sh b/jobs/clone.sh
+--- /dev/null
++++ b/jobs/clone.sh
+@@ -0,0 +1,1 @@
++git clone https://build-reader@git.internal/team/orders.git

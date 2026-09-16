@@ -1,0 +1,13 @@
+{
+  "description": "The test-client regression with an opaque synthetic token instead of a placeholder word. The setup and use establish that the test creates the credential; string shape must not decide it.",
+  "deep": true,
+  "min_after_dedup": 1,
+  "max_confirmed": 0,
+  "expectations": [
+    {
+      "match": "R7mK2vQ9xB4nT8zP6cF3wH5j",
+      "verdict": "dismissed"
+    }
+  ],
+  "max_discoveries": 0
+}

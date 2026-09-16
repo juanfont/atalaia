@@ -1,0 +1,23 @@
+{
+  "description": "gitlab variables: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "reference",
+    "yaml",
+    "positive"
+  ],
+  "pair": "gitlab_variables",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": ".gitlab-ci.yml",
+      "line": 3,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

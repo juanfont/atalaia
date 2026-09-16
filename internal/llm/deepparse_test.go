@@ -1,6 +1,9 @@
 package llm
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestParseDeepResponse_Envelope(t *testing.T) {
 	got, err := parseDeepResponse(`{"candidates":[
@@ -112,5 +115,63 @@ func TestParseDeepToolCalls_NoCallsIsClean(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Errorf("want no candidates, got %d", len(got))
+	}
+}
+
+// The backend's arguments field is itself JSON inside the HTTP JSON envelope.
+// Decode each transport layer once, preserving source escapes in the candidate.
+// A model that evaluates the source literal must fail exact grounding.
+func TestDeepEscapesThroughResponseAndGrounding(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		source    string
+		jsonValue string
+		want      string
+		grounded  bool
+	}{
+		{"literal Unicode escape", `Aspen\u003fBrook72`, `"Aspen\\u003fBrook72"`, `Aspen\u003fBrook72`, true},
+		{"two source backslashes", `Cedar\\Trail85`, `"Cedar\\\\Trail85"`, `Cedar\\Trail85`, true},
+		{"decoded Unicode rejected", `Aspen\u003fBrook72`, `"Aspen\u003fBrook72"`, `Aspen?Brook72`, false},
+		{"collapsed backslash rejected", `Cedar\\Trail85`, `"Cedar\\Trail85"`, `Cedar\Trail85`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			arguments := `{"candidates":[{"value":` + tc.jsonValue + `,"kind":"credential","confidence":1,"reason":"Configuration password"}]}`
+			for _, tool := range []bool{false, true} {
+				msg := Message{Role: "assistant", Content: arguments}
+				if tool {
+					msg.Content = ""
+					msg.ToolCalls = []ToolCall{{Type: "function", Function: ToolCallFunction{Name: DeepToolName, Arguments: arguments}}}
+				}
+				wire, err := json.Marshal(map[string]any{"choices": []any{map[string]any{"message": msg}}})
+				if err != nil {
+					t.Fatal(err)
+				}
+				var response ChatResponse
+				if err := json.Unmarshal(wire, &response); err != nil {
+					t.Fatal(err)
+				}
+				received := response.Choices[0].Message
+				var candidates []DeepCandidate
+				if tool {
+					candidates, err = parseDeepToolCalls(received.ToolCalls)
+				} else {
+					candidates, err = parseDeepResponse(received.Content)
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(candidates) != 1 || candidates[0].Value != tc.want {
+					t.Fatalf("tool=%v: candidates = %#v, want exact value %q", tool, candidates, tc.want)
+				}
+				diff := []byte("diff --git a/config.json b/config.json\n--- /dev/null\n+++ b/config.json\n@@ -0,0 +1 @@\n+{\"password\":\"" + tc.source + "\"}\n")
+				discoveries, _ := Ground(diff, candidates, nil)
+				if (len(discoveries) == 1) != tc.grounded {
+					t.Fatalf("tool=%v: grounded=%d, want grounded=%v", tool, len(discoveries), tc.grounded)
+				}
+				if tc.grounded && discoveries[0].Match != tc.source {
+					t.Fatal("grounding changed source bytes")
+				}
+			}
+		})
 	}
 }

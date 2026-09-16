@@ -1,0 +1,9 @@
+diff --git a/docs/recovery.md b/docs/recovery.md
+--- /dev/null
++++ b/docs/recovery.md
+@@ -0,0 +1,5 @@
++# Emergency database access
++This command connects to the deployed reporting database.
++```sh
++psql "postgresql://reader:CobaltMarsh84@db.internal/reports"
++```

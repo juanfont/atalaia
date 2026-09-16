@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: mysql_parentheses, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "connection",
+    "go",
+    "positive"
+  ],
+  "pair": "holdout_mysql_parentheses",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/db.go",
+      "line": 1,
+      "kind": "credential",
+      "value": "MaplePass(82)"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

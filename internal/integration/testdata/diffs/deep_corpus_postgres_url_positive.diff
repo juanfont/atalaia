@@ -1,0 +1,5 @@
+diff --git a/app/db.py b/app/db.py
+--- /dev/null
++++ b/app/db.py
+@@ -0,0 +1,1 @@
++engine = create_engine("postgresql://reporter:BirchHarbor62@db.internal/metrics")

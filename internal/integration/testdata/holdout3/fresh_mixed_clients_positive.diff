@@ -1,0 +1,8 @@
+diff --git a/tests/test_two.py b/tests/test_two.py
+--- /dev/null
++++ b/tests/test_two.py
+@@ -0,0 +1,4 @@
++local = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200)))
++local.get("https://orders.internal/", headers={"Authorization": "Bearer invented-local"})
++live = httpx.Client()
++live.get("https://archive.internal/", headers={"Authorization": "Bearer u6La8Nr3Qp9Vs2Jm7Dx4"})

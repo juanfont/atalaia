@@ -1,0 +1,54 @@
+[
+  {
+    "case": "fresh_json_backslashes_positive",
+    "stage": "deep",
+    "grounding_outcomes": [
+      "not_found"
+    ],
+    "verdict_count": 0,
+    "discovery_count": 0
+  },
+  {
+    "case": "fresh_json_source_bytes_positive",
+    "stage": "deep",
+    "grounding_outcomes": [
+      "not_found"
+    ],
+    "verdict_count": 0,
+    "discovery_count": 0
+  },
+  {
+    "case": "fresh_mock_scope_positive",
+    "stage": "deep",
+    "grounding_outcomes": [
+      "test_data"
+    ],
+    "verdict_count": 0,
+    "discovery_count": 0
+  },
+  {
+    "case": "fresh_python_unrelated_mock_positive",
+    "stage": "deep",
+    "grounding_outcomes": [
+      "test_data"
+    ],
+    "verdict_count": 0,
+    "discovery_count": 0
+  },
+  {
+    "case": "fresh_ruby_local_method_negative",
+    "stage": "deep",
+    "grounding_outcomes": [
+      "discovered"
+    ],
+    "verdict_count": 0,
+    "discovery_count": 1
+  },
+  {
+    "case": "fresh_token_username_positive",
+    "stage": "deep",
+    "grounding_outcomes": [],
+    "verdict_count": 0,
+    "discovery_count": 0
+  }
+]

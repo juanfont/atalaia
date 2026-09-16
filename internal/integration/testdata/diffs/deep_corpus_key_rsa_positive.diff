@@ -1,0 +1,32 @@
+diff --git a/app/keys/rsa.pem b/app/keys/rsa.pem
+--- a/app/keys/rsa.pem
++++ b/app/keys/rsa.pem
+@@ -0,0 +1,28 @@
++-----BEGIN PRIVATE KEY-----
++MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCaQYiOgR/inqXN
++1sBn+4LuOSig9oUI9bNlo4Z5oe7p5I2gJOjkIeawQFbzq967irN3IhreG4OjcU4h
++42DLRK0NK3xsP7a8PZTFwa6f4YB1aXhAqoeDgWHWA8DQYvEZt2wRxKnixeel49gp
++XIinjeQUoVAtjzwBZJxgmxCo51M1qQIEZv0uRA2zY5DJWZUmK5ABbTPfv9P0PzYb
++BYfzoJq0/1Wypcazdxme2ZNA36bCVrZYSTIRlE4zSodqH6wwcIgklD/Wmt6ppDRN
++ypMJ1v4grpssx8pnpUmWvpdmoaKmkrnK04Vts5mGJ5B7HRN/mHoDdZJSeiCbOZlT
++5p05t/K9AgMBAAECggEAMZVjGbtzzlqEnVesXUBBY+XHo4XaWXjxA3i+3xYoP9KR
++m6qBmeMzze/Ag275l3sMGP1DeaWKeN0Q6l+2W2Bl59fUlM8eI///dFm/kfDgY91V
++JCQsjx7lne9y6QkEyulkuYlnulc3EOHeN91gp8s6R09bAGoMNb5rbboqbsB8xMBg
++opw2DV+lQc71lKEjfJSORicmLlTMo4cPpkm8KqznyCi4R6Aj5Z/yxrOUf3UFgzaE
++pApYabs+8ya8k3gv4S4cNQ++m9x6p/BZfUP0YmF6T90avYsJrhFn31/GUZKbio7t
++1ctKe3ut+3EcZEnhgQMUwvUn+S9rqVjv8pNKYA67WQKBgQDWM7It8QOURyhygo3P
++0NMLiiKJZOiXN6XNZAtUpCKo/1kuRSGO5g12KghHwJ6G2G/HB3WWoibA1PgqxKwD
++67TR5Zyx/zWzva8uRFE7H3ekBda4vSfWthmZaO7hKFOacgOcY5vCxb7d2FivMr1O
++4XHpSppOl1AKDPEv9Z/1V1VQTwKBgQC4W0fYF1ckjtBOn5Ji5z7doX3MdsUeWh7s
++jPZUmlANNZtCntNJWmfDHgWJANTWBmL8s2TYgv9MZcNCimp0KsznFXrNf/VcQUEB
++sPBwp0slflQ4Jn68rcogmjbKkea5XxYY/sqtmVKaljgrXs3MHfYUmSPZ2zSHXkYo
++6yFWNGAdMwKBgEwlwJf4cC9MRKLAqq1QLVaS2shBKTZov/aONED4wKGXdRqv1Mg6
++HFr/gkYPwctqMgJtMm5EYsZ2b2q00/no1zUvDU9xzKODMT2fZ8k+3Idg0/6EsB7y
++SZNx7En6zg2/rmzwNDU/myS+fnh57zaViqtGrCh4Pin0g+FqzlynmVqdAoGAErQo
++GNNdYvceSSvFVUVyyleNBMZz/z1Tb9ppT3IMdxqeMuccNo/2gQQ1uY2dCk3BkzO8
++In8/2YdlhQW4ASsqeLNkLx8xTHfOWZaS/krqw9YKQ1wcdZYIMMCUmH6u8tWjz0ti
++UrSAffCJqFTI+lF72uEikwK7VJSK97HLQwyzR6MCgYAqJFq7mvaZzoHsyMQbTP8G
++0/oRnp/rMiTF99V0/thfVJM9vaY3ivaqi1LbHO+mA9gljleEZ9kUqPJuPVEvb0Yb
++JZbnaA+IE8Ydlwlus01yUhZvfMn3DHIAe0qID/c5wXGspzFAH/Tj0YeyykwG0LG6
++Vhrw3nrVhgMADE1Lpwkopw==
++-----END PRIVATE KEY-----

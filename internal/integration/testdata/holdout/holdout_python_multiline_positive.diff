@@ -1,0 +1,8 @@
+diff --git a/app/credential.py b/app/credential.py
+--- /dev/null
++++ b/app/credential.py
+@@ -0,0 +1,4 @@
++auth_key = (
++    "qe2f6b04e99769b15308b2ce6f3923"
++)
++client = Client(api_key=auth_key)

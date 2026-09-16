@@ -1,0 +1,7 @@
+diff --git a/tests/fixtures/bootstrap.py b/tests/fixtures/bootstrap.py
+--- /dev/null
++++ b/tests/fixtures/bootstrap.py
+@@ -0,0 +1,3 @@
++import requests
++response = requests.get("https://accounts.internal/users", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++response.raise_for_status()

@@ -1,0 +1,6 @@
+diff --git a/config/warehouse.py b/config/warehouse.py
+--- /dev/null
++++ b/config/warehouse.py
+@@ -0,0 +1,2 @@
++password = JuniperQuay(64)
++client.connect("warehouse.internal", password=password)

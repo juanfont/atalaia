@@ -1,0 +1,8 @@
+diff --git a/tests/test_batch.py b/tests/test_batch.py
+--- /dev/null
++++ b/tests/test_batch.py
+@@ -0,0 +1,4 @@
++def test_batch():
++    with responses.RequestsMock() as routes:
++        routes.add(responses.POST, "https://batch.internal/run", json={})
++        requests.post("https://batch.internal/run", headers={"Authorization": "Bearer d7Qr3Ka9Vm2Ls8Yp5Nc6"})

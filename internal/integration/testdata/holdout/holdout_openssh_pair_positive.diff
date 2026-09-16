@@ -1,0 +1,11 @@
+diff --git a/deploy/service.key b/deploy/service.key
+--- /dev/null
++++ b/deploy/service.key
+@@ -0,0 +1,7 @@
++-----BEGIN OPENSSH PRIVATE KEY-----
++b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
++QyNTUxOQAAACD0/Nva1wdhWrN61hNNYgm3LCBV/RBARM94BqCd4VhnYgAAAJhfEpJWXxKS
++VgAAAAtzc2gtZWQyNTUxOQAAACD0/Nva1wdhWrN61hNNYgm3LCBV/RBARM94BqCd4VhnYg
++AAAEBjmLFsr+15x+TJbRk0jhk3pNnlADMEWS+TDS1BBCObbvT829rXB2Fas3rWE01iCbcs
++IFX9EEBEz3gGoJ3hWGdiAAAAEXN5bnRoZXRpYy1ob2xkb3V0AQIDBA==
++-----END OPENSSH PRIVATE KEY-----

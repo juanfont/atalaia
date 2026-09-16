@@ -1,0 +1,5 @@
+diff --git a/jobs/import.py b/jobs/import.py
+--- /dev/null
++++ b/jobs/import.py
+@@ -0,0 +1,1 @@
++client.login("operator", r"Cobalt\Bridge51")

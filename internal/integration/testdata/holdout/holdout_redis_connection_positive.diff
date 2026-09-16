@@ -1,0 +1,5 @@
+diff --git a/app/cache.py b/app/cache.py
+--- /dev/null
++++ b/app/cache.py
+@@ -0,0 +1,1 @@
++cache = redis.from_url("redis://:PoplarBasin72@cache.internal:6379/0")

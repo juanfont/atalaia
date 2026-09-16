@@ -1,0 +1,9 @@
+diff --git a/docs/rotate.md b/docs/rotate.md
+--- /dev/null
++++ b/docs/rotate.md
+@@ -0,0 +1,5 @@
++# Training exercise
++This token is invented for this document and is not issued by any service. Replace it with your own:
++```sh
++curl -H 'Authorization: Bearer v4Kn8Tc3Qm9Wp6Ds2La7' https://orders.internal/current
++```

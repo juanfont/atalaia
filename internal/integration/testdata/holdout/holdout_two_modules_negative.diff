@@ -1,0 +1,12 @@
+diff --git a/app/worker.py b/app/worker.py
+--- /dev/null
++++ b/app/worker.py
+@@ -0,0 +1,3 @@
++# A fake client is injected; no network transport is constructed.
++client = FakeQueueClient(api_key="q3aae21cd55346959fb9109afe2164")
++client.consume()
+diff --git a/app/constants.py b/app/constants.py
+--- /dev/null
++++ b/app/constants.py
+@@ -0,0 +1,1 @@
++QUEUE_NAME = "audit-events"

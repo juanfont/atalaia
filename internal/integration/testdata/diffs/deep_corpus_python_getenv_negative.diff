@@ -1,0 +1,6 @@
+diff --git a/clients/api.py b/clients/api.py
+--- /dev/null
++++ b/clients/api.py
+@@ -0,0 +1,2 @@
++API_TOKEN = os.getenv("API_TOKEN")
++client = Client(token=API_TOKEN)

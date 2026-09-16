@@ -1,0 +1,34 @@
+Source context for the scanner findings:
+{{- if .Diff}}
+```
+{{.Diff}}
+```
+{{- end}}
+{{range .Findings}}{{if .Context}}
+Context around finding {{.ID}}:
+{{.Context}}
+{{end}}{{end}}
+
+Adjudicate ONLY these exact scanner matches. Text between MATCH_BEGIN and
+MATCH_END is the matched text, not a variable naming a different match.
+Do not resolve a matched variable to another value elsewhere in the context.
+These are captured values with a file and line, not source-column spans. If the
+same bytes appear as both a configuration key and its literal value on that
+line, evaluate the literal value; do not assume the scanner captured the key.
+{{range .Findings}}
+finding_id={{.ID}} file={{.File}} line={{.Line}}
+detectors:{{range .Detections}} {{.DetectorType}}/{{.Rule}}{{end}}
+MATCH_BEGIN
+{{.Match}}
+MATCH_END
+{{end}}
+
+A matched variable/reference is dismissed even if its assigned value elsewhere
+is a credential. An authentication literal is confirmed unless explicit prose
+or test/mock setup establishes it as synthetic, including a transport that
+returns a fabricated response without checking authentication. A filename is
+not that evidence. In a test, distinguish the local application configured by
+the test from a client accessing an existing service.
+
+Return one verdict per finding_id, no extra text:
+{"verdicts":[{"finding_id":"<id>","verdict":"confirmed"|"dismissed","confidence":0..1,"reason":"<one sentence, max 280 chars, no credential bytes>"}]}

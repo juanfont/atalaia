@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: fixture_directory, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "context",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_fixture_directory",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "fixtures/check_live.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "q068008d4f6d0793f2cd0865e77bbd"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

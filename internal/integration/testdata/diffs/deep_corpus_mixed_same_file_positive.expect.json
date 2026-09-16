@@ -1,0 +1,23 @@
+{
+  "description": "mixed same file: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "mixed",
+    "python",
+    "positive"
+  ],
+  "pair": "mixed_same_file",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_combined.py",
+      "line": 6,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

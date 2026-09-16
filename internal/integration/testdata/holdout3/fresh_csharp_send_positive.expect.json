@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. A handler bypasses network I/O even though the URL looks deployed.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_csharp_send",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/OrdersTests.cs",
+      "line": 2,
+      "kind": "credential",
+      "value": "h3Vb7Rm2Ta9Qx6Ls4Wp8"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

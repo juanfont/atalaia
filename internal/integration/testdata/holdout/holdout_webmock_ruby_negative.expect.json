@@ -1,0 +1,19 @@
+{
+  "description": "Frozen round-two holdout: webmock_ruby, negative. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "ruby",
+    "negative"
+  ],
+  "pair": "holdout_webmock_ruby",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

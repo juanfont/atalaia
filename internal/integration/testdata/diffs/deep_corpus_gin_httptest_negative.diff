@@ -1,0 +1,13 @@
+diff --git a/api/auth_test.go b/api/auth_test.go
+--- /dev/null
++++ b/api/auth_test.go
+@@ -0,0 +1,9 @@
++package api
++func TestAuth(t *testing.T) {
++    router := NewRouter(Config{Token: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    req := httptest.NewRequest("GET", "/private", nil)
++    req.Header.Set("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    recorder := httptest.NewRecorder()
++    router.ServeHTTP(recorder, req)
++    if recorder.Code != 200 { t.Fatal(recorder.Code) }
++}

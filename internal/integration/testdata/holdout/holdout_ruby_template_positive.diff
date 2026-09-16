@@ -1,0 +1,6 @@
+diff --git a/app/database.rb b/app/database.rb
+--- /dev/null
++++ b/app/database.rb
+@@ -0,0 +1,2 @@
++dsn = "postgresql://reader:CedarEstuary59@#{db_host}/ledger"
++connection = PG.connect(dsn)

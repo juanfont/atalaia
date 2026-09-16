@@ -1,0 +1,23 @@
+{
+  "description": "axum oneshot: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "test-auth",
+    "rust",
+    "positive"
+  ],
+  "pair": "axum_oneshot",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/auth.rs",
+      "line": 4,
+      "kind": "credential",
+      "value": "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

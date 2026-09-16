@@ -9,24 +9,15 @@
 //	ATALAIA_INTEGRATION_URL=http://127.0.0.1:8080 \
 //	  go test -tags=integration -count=1 ./internal/integration
 //
-// Each fixture pairs a unified-diff file with an `.expect.json` that
-// names per-match expected verdicts. The test POSTs the diff, matches
-// the response verdicts back to expectations by raw match (via the
-// `finding_id`, which is sha256(file:line:match)[:12]), and reports
-// agreement.
+// Fixtures pair a unified diff with expected verdicts, discoveries, or
+// credentials accepted in either channel. Expanded cases require exact
+// added-line locations, cap total alerts and unreviewed findings, and
+// reject incomplete coverage. See testdata/README.md for authoring rules,
+// tags, contrast pairs, and the distinction between recall and clean scans.
 //
-// Hard fails:
-//   - non-2xx from /check
-//   - response has fewer dedup'd findings than min_after_dedup
-//   - any expected match is missing from the response
-//
-// Soft fails (per-fixture log, summary failure at end): the verdict
-// for a given match disagrees with expectations, or atalaia gap-fills
-// because the model returned no verdict for that finding_id. The
-// suite fails if overall agreement drops below INTEGRATION_MIN_AGREEMENT
-// (default 0.8). Observed on Gemma 4 E4B (FP8, tool calling): 6/6 hits
-// consistently across runs, ~650 ms median /check latency. Smaller
-// models warrant a lower floor via env override.
+// Legacy verdict agreement is scored against INTEGRATION_MIN_AGREEMENT
+// (default 0.8). Missing expanded credentials and excess alerts are hard
+// failures independently of that aggregate floor.
 package integration
 
 import (
@@ -46,89 +37,6 @@ import (
 	"testing"
 	"time"
 )
-
-type expectation struct {
-	Match   string `json:"match"`
-	Verdict string `json:"verdict"`
-}
-
-type fixture struct {
-	Description   string        `json:"description"`
-	MinAfterDedup int           `json:"min_after_dedup"`
-	Expectations  []expectation `json:"expectations"`
-	// MaxConfirmed, when set, asserts stats.confirmed <= this on every
-	// run. Used by large-finding-count fixtures to guard the batching
-	// fix: without per-call batching the model drops the tail of a big
-	// finding set, which gap-fills to "confirmed" and inflates this.
-	MaxConfirmed *int `json:"max_confirmed,omitempty"`
-	// Deep sends ?deep=1 and enables the discovery assertions below.
-	Deep bool `json:"deep,omitempty"`
-	// ExpectDiscoveries names values that must appear in discoveries[]:
-	// secrets no detector flags, which only the deep read can surface.
-	ExpectDiscoveries []discoveryExpectation `json:"expect_discoveries,omitempty"`
-	// MaxDiscoveries caps discoveries[] length. Zero with Deep set
-	// means "expect none": the false-alarm gate that decides whether
-	// the channel is worth reading at all.
-	MaxDiscoveries *int `json:"max_discoveries,omitempty"`
-}
-
-// discoveryExpectation names a secret the deep read must surface.
-//
-// Prefer file+line over match. The model chooses how much of the line
-// to return (a bare password, or the whole URL it sits in), and
-// URL-aware redaction reshapes the preview accordingly, so pinning the
-// exact string asserts the model's phrasing rather than the behaviour
-// that matters: did it find the secret, at the right place. Match stays
-// supported for values whose preview shape is stable.
-type discoveryExpectation struct {
-	Match string `json:"match,omitempty"`
-	Kind  string `json:"kind,omitempty"`
-	File  string `json:"file,omitempty"`
-	Line  int    `json:"line,omitempty"`
-}
-
-type verdict struct {
-	ID           string  `json:"id"`
-	File         string  `json:"file"`
-	Line         int     `json:"line"`
-	MatchPreview string  `json:"match_preview"`
-	Verdict      string  `json:"verdict"`
-	Confidence   float64 `json:"confidence"`
-	Reason       string  `json:"reason"`
-}
-
-type discovery struct {
-	ID           string  `json:"id"`
-	File         string  `json:"file"`
-	Line         int     `json:"line"`
-	MatchPreview string  `json:"match_preview"`
-	Kind         string  `json:"kind"`
-	Confidence   float64 `json:"confidence"`
-	Reason       string  `json:"reason"`
-}
-
-type checkResponse struct {
-	RequestID   string      `json:"request_id"`
-	Verdicts    []verdict   `json:"verdicts"`
-	Discoveries []discovery `json:"discoveries"`
-	Stats       struct {
-		AfterDedup int  `json:"after_dedup"`
-		Confirmed  int  `json:"confirmed"`
-		Dismissed  int  `json:"dismissed"`
-		LLMInvoked bool `json:"llm_invoked"`
-		DeepScan   *struct {
-			Status     string `json:"status"`
-			Reason     string `json:"reason"`
-			Ran        bool   `json:"ran"`
-			Windows    int    `json:"windows"`
-			Candidates int    `json:"candidates"`
-			Discovered int    `json:"discovered"`
-			Ungrounded int    `json:"ungrounded"`
-			Truncated  bool   `json:"truncated"`
-			Error      string `json:"error"`
-		} `json:"deep_scan"`
-	} `json:"stats"`
-}
 
 func findingID(file string, line int, match string) string {
 	h := sha256.Sum256([]byte(fmt.Sprintf("%s:%d:%s", file, line, match)))
@@ -159,7 +67,11 @@ func TestIntegrationCorpus(t *testing.T) {
 	floor := minAgreement(t)
 	fixtureFloor := minFixtureAgreement(t)
 
-	entries, err := filepath.Glob("testdata/diffs/*.diff")
+	dir := os.Getenv("INTEGRATION_FIXTURES")
+	if dir == "" {
+		dir = "testdata/diffs"
+	}
+	entries, err := filepath.Glob(filepath.Join(dir, "*.diff"))
 	if err != nil {
 		t.Fatalf("glob: %v", err)
 	}
@@ -167,7 +79,9 @@ func TestIntegrationCorpus(t *testing.T) {
 		t.Fatalf("no fixtures under testdata/diffs/")
 	}
 
-	var hits, total int
+	var hits, total, selected int
+	var secretHits, secretTotal, cleanHits, cleanTotal int
+	tagHits, tagTotals := map[string]int{}, map[string]int{}
 	for _, diffPath := range entries {
 		diffPath := diffPath
 		name := strings.TrimSuffix(filepath.Base(diffPath), ".diff")
@@ -188,6 +102,10 @@ func TestIntegrationCorpus(t *testing.T) {
 			if err := json.Unmarshal(raw, &fx); err != nil {
 				t.Fatalf("parse expect: %v", err)
 			}
+			if tag := os.Getenv("INTEGRATION_TAG"); tag != "" && !hasTag(fx, tag) {
+				t.Skipf("INTEGRATION_TAG=%s", tag)
+			}
+			selected++
 			t.Logf("fixture: %s", fx.Description)
 
 			// Each fixture is scanned `repeat` times. A single sample
@@ -201,6 +119,43 @@ func TestIntegrationCorpus(t *testing.T) {
 				resp, err := postCheck(base, token, diff, fx.Deep)
 				if err != nil {
 					t.Fatalf("run %d: POST /check: %v", i+1, err)
+				}
+				if hasTag(fx, "expanded") && (resp.Stats.Truncated || len(resp.Stats.DetectorErrors) > 0) {
+					t.Errorf("run %d: incomplete detector coverage: truncated=%v failed_detectors=%d", i+1, resp.Stats.Truncated, len(resp.Stats.DetectorErrors))
+				}
+				for _, limit := range []struct {
+					name string
+					max  *int
+					got  int
+				}{
+					{"alerts", fx.MaxAlerts, alertCount(resp)},
+					{"unreviewed", fx.MaxUnreviewed, resp.Stats.Unreviewed},
+				} {
+					if limit.max == nil {
+						continue
+					}
+					fTotal++
+					if limit.got <= *limit.max {
+						fHits++
+					} else {
+						t.Errorf("run %d: %s=%d exceeds maximum=%d", i+1, limit.name, limit.got, *limit.max)
+					}
+				}
+				if hasTag(fx, "negative") {
+					cleanTotal++
+					if alertCount(resp) == 0 && resp.Stats.Unreviewed == 0 && completeCoverage(resp) {
+						cleanHits++
+					}
+				}
+				for _, want := range fx.ExpectSecrets {
+					fTotal++
+					secretTotal++
+					if foundSecret(resp, want) {
+						fHits++
+						secretHits++
+					} else {
+						t.Errorf("run %d: missing credential at %s:%d in confirmed verdicts or discoveries", i+1, want.File, want.Line)
+					}
 				}
 				if resp.Stats.AfterDedup < fx.MinAfterDedup {
 					t.Fatalf("run %d: stats.after_dedup=%d, want >= %d (detectors saw fewer findings than the fixture promises)",
@@ -257,6 +212,10 @@ func TestIntegrationCorpus(t *testing.T) {
 
 			hits += fHits
 			total += fTotal
+			for _, tag := range fx.Tags {
+				tagHits[tag] += fHits
+				tagTotals[tag] += fTotal
+			}
 			if fTotal == 0 {
 				return
 			}
@@ -277,12 +236,29 @@ func TestIntegrationCorpus(t *testing.T) {
 
 	// Aggregate gate. Catches regressions where the prompt gets broadly
 	// worse without any single fixture tripping its own threshold.
+	if selected == 0 {
+		t.Fatal("no fixtures selected; check INTEGRATION_ONLY and INTEGRATION_TAG")
+	}
+	if secretTotal > 0 {
+		t.Logf("expanded secret recall: %d/%d", secretHits, secretTotal)
+	}
+	if cleanTotal > 0 {
+		t.Logf("expanded clean scans: %d/%d", cleanHits, cleanTotal)
+	}
+	var tags []string
+	for tag := range tagTotals {
+		tags = append(tags, tag)
+	}
+	sort.Strings(tags)
+	for _, tag := range tags {
+		t.Logf("tag %s: %d/%d assertions passed", tag, tagHits[tag], tagTotals[tag])
+	}
 	if total == 0 {
 		return
 	}
 	agreement := float64(hits) / float64(total)
 	t.Logf("corpus: %d/%d agree (%.0f%%) across %d fixtures x %d run(s), floor %.0f%%",
-		hits, total, agreement*100, len(entries), repeat, floor*100)
+		hits, total, agreement*100, selected, repeat, floor*100)
 	if agreement < floor {
 		t.Errorf("corpus agreement %.2f below floor %.2f", agreement, floor)
 	}
@@ -349,7 +325,7 @@ func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) (h
 		t.Errorf("run %d: deep scan failed: %s", run, ds.Error)
 		return 0, 0
 	}
-	if !ds.Ran {
+	if !ds.Ran || ds.Status != "complete" {
 		// The corpus runs against an idle server, so a deferred or
 		// partial read here is a bug, not load.
 		t.Errorf("run %d: deep scan did not complete: status=%s reason=%q (is llm.deep_scan.enabled set in the config?)",
@@ -357,7 +333,7 @@ func gradeDiscoveries(t *testing.T, run int, fx fixture, resp *checkResponse) (h
 		return 0, 0
 	}
 	if ds.Truncated {
-		t.Logf("run %d: WARNING deep coverage truncated at %d windows", run, ds.Windows)
+		t.Errorf("run %d: deep coverage truncated at %d windows", run, ds.Windows)
 	}
 	t.Logf("run %d: deep windows=%d candidates=%d discovered=%d ungrounded=%d",
 		run, ds.Windows, ds.Candidates, ds.Discovered, ds.Ungrounded)

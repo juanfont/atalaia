@@ -5,6 +5,8 @@ package redact
 
 import (
 	"net/url"
+	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -19,6 +21,9 @@ func Preview(match string) string {
 	}
 	if r := previewURL(match); r != "" {
 		return r
+	}
+	if parts := mysqlDSN.FindStringSubmatch(match); parts != nil {
+		return mask + ":" + mask + "@" + parts[3]
 	}
 	return previewGeneric(match)
 }
@@ -40,22 +45,51 @@ func previewURL(match string) string {
 	return u.Scheme + "://" + mask + ":" + mask + "@" + tail
 }
 
-// Scrub replaces any verbatim occurrence of secret in text with the
-// redacted Preview(secret). The LLM's free-text reason sometimes quotes
-// the matched value in full ("the value 'sOqY...Zx9y' is a literal API
-// key"); this keeps the raw secret out of the reason the same way
-// Preview keeps it out of match previews. A blank secret, or a text
-// that doesn't contain it, is returned unchanged.
-//
-// This catches verbatim quoting, which is the observed leak vector. It
-// does not catch a secret the model reformatted (re-cased, partially
-// quoted); the prompt also instructs the model not to quote values, and
-// the match preview remains the only value ever surfaced deliberately.
+// Scrub masks the complete match and credential components of known connection
+// strings. A model may quote just a URL password in its reason even when its
+// candidate is the whole URL. Both encoded source spelling and decoded userinfo
+// are scrubbed. This does not change grounding or permit decoded candidates.
 func Scrub(text, secret string) string {
-	if secret == "" || !strings.Contains(text, secret) {
+	if secret == "" {
 		return text
 	}
-	return strings.ReplaceAll(text, secret, Preview(secret))
+	text = strings.ReplaceAll(text, secret, Preview(secret))
+	parts := credentialParts(secret)
+	sort.Slice(parts, func(i, j int) bool { return len(parts[i]) > len(parts[j]) })
+	for _, part := range parts {
+		if part != "" {
+			text = strings.ReplaceAll(text, part, mask)
+		}
+	}
+	return text
+}
+
+// mysqlDSN is the user:password@tcp(...) or user:password@unix(...) form.
+// Greedy password matching preserves embedded @ characters.
+var mysqlDSN = regexp.MustCompile(`^([^:@/]*):(.*)@((?:tcp|unix)\(.*)$`)
+
+func credentialParts(secret string) []string {
+	if u, err := url.Parse(secret); err == nil && u.Scheme != "" && u.Host != "" && u.User != nil {
+		password, _ := u.User.Password()
+		parts := []string{u.User.Username(), password}
+		// Userinfo.String() may normalize percent escapes. Extract the
+		// original authority too so source spellings are scrubbed exactly.
+		_, authority, ok := strings.Cut(secret, "://")
+		if ok {
+			if end := strings.IndexAny(authority, "/?#"); end >= 0 {
+				authority = authority[:end]
+			}
+			if at := strings.LastIndexByte(authority, '@'); at >= 0 {
+				username, rawPassword, _ := strings.Cut(authority[:at], ":")
+				parts = append(parts, username, rawPassword)
+			}
+		}
+		return parts
+	}
+	if parts := mysqlDSN.FindStringSubmatch(secret); parts != nil {
+		return parts[1:3]
+	}
+	return nil
 }
 
 func previewGeneric(match string) string {

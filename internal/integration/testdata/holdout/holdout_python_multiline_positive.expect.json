@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: python_multiline, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "syntax",
+    "python",
+    "positive"
+  ],
+  "pair": "holdout_python_multiline",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/credential.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "qe2f6b04e99769b15308b2ce6f3923"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

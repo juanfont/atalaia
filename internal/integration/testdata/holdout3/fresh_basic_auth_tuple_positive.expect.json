@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Auth tuple literal versus function result.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_basic_auth_tuple",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/session.py",
+      "line": 1,
+      "kind": "credential",
+      "value": "Birch*Branch62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

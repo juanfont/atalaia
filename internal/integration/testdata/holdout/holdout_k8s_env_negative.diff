@@ -1,0 +1,10 @@
+diff --git a/deploy/job.yaml b/deploy/job.yaml
+--- /dev/null
++++ b/deploy/job.yaml
+@@ -0,0 +1,6 @@
++env:
++  - name: REPORT_PASSWORD
++    valueFrom:
++      secretKeyRef:
++        name: reporting
++        key: password

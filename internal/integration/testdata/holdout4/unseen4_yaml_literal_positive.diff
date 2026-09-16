@@ -1,0 +1,5 @@
+diff --git a/config/worker.yaml b/config/worker.yaml
+--- /dev/null
++++ b/config/worker.yaml
+@@ -0,0 +1,1 @@
++password: 'Basalt\\Pier37'

@@ -1,0 +1,15 @@
+{
+  "description": "Round-three frozen synthetic holdout. The client call must occur inside the interception lifetime.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "negative"
+  ],
+  "pair": "fresh_mock_scope",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

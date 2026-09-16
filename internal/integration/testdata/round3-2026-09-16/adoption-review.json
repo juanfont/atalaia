@@ -1,0 +1,50 @@
+{
+  "recorded_at": "2026-09-16T09:27:50.210825+00:00",
+  "decision": "retain baseline production prompts",
+  "reason": "Fresh candidate recall 19/24 versus baseline 21/24 violates recall-first adoption criterion despite fewer false alerts. Finish repeated validation without retuning.",
+  "candidate": "trial4",
+  "candidate_preserved_in": "trial4-prompts",
+  "selected_configuration_frozen": true,
+  "finalized_at": "2026-09-16T09:57:03.178855+00:00",
+  "repeated_baseline_fresh": {
+    "complete": [
+      39,
+      39
+    ],
+    "credentials_found": [
+      21,
+      21
+    ],
+    "clean_negatives": [
+      18,
+      18
+    ],
+    "cases": 48,
+    "positive_cases": 24,
+    "negative_cases": 24
+  },
+  "repeated_candidate_fresh": {
+    "complete": [
+      42,
+      42
+    ],
+    "credentials_found": [
+      19,
+      19
+    ],
+    "clean_negatives": [
+      23,
+      23
+    ],
+    "cases": 48,
+    "positive_cases": 24,
+    "negative_cases": 24
+  },
+  "retained_changes": [
+    "quoted function-shaped password grounding",
+    "connection-string component redaction",
+    "48 fresh fixtures and manifest validation",
+    "explicit thinking-on deployment recommendation"
+  ],
+  "prompt_adoption": "rejected after repeated fresh recall regression"
+}

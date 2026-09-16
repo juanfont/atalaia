@@ -1018,3 +1018,20 @@ func TestCheck_DeepStatusForDisabledAndFailed(t *testing.T) {
 		t.Errorf("failed: %+v", ds)
 	}
 }
+
+func TestCheck_FailedDeepRetainsAttemptAccounting(t *testing.T) {
+	deep := &fakeDeepScanner{err: errors.New("model response truncated after 2 attempts"), result: llm.DeepResult{
+		Calls: 3, Windows: 2, WindowsScanned: 1, Latency: 25 * time.Millisecond,
+		Candidates: []llm.DeepCandidate{{Value: deepURLPassword, Kind: "credential", Confidence: 1, Reason: "literal"}},
+	}}
+	srv := newDeepTestServer(t, deep)
+	defer srv.Close()
+	response, body := postDeepCheck(t, srv, apiDeepDiff, true)
+	stats := body.Stats.DeepScan
+	if response.StatusCode != http.StatusOK || stats.Status != "failed" || stats.Ran || stats.Calls != 3 || stats.WindowsScanned != 1 || stats.LatencyMs != 25 {
+		t.Fatalf("failure accounting: %+v", stats)
+	}
+	if len(body.Discoveries) != 0 {
+		t.Fatal("partial candidates from a failed scan must not appear as complete discoveries")
+	}
+}

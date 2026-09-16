@@ -1,0 +1,7 @@
+diff --git a/tests/ClientTests.cs b/tests/ClientTests.cs
+--- /dev/null
++++ b/tests/ClientTests.cs
+@@ -0,0 +1,3 @@
++using var client = new HttpClient();
++client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "q49ec51ce8d628b44a42bf9b644008");
++Assert.True((await client.GetAsync("https://ledger.internal/private")).IsSuccessStatusCode);

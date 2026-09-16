@@ -1,0 +1,9 @@
+diff --git a/tests/Feature/UploadTest.php b/tests/Feature/UploadTest.php
+--- /dev/null
++++ b/tests/Feature/UploadTest.php
+@@ -0,0 +1,5 @@
++<?php
++public function test_remote_upload(): void {
++    $response = Http::withToken('d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf')->post('https://uploads.internal/upload');
++    $this->assertSame(204, $response->status());
++}

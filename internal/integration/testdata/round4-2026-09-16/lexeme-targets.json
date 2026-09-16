@@ -1,0 +1,107 @@
+{
+  "cases": 6,
+  "cases_passed_all_runs": 4,
+  "requests": 6,
+  "model_calls": 6,
+  "calls_with_reasoning": 6,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 2074.5,
+    "p95": 5072,
+    "max": 5072
+  },
+  "model_call_latency_ms": {
+    "median": 2074.0,
+    "p95": 5071,
+    "max": 5071
+  },
+  "usage": {
+    "prompt_tokens": 16818,
+    "completion_tokens": 2574,
+    "total_tokens": 19392
+  },
+  "finish_reasons": {
+    "stop": 6
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "fresh_json_backslashes_positive",
+    "fresh_json_source_bytes_positive"
+  ],
+  "runs_per_case": {
+    "fresh_json_backslashes_negative": 1,
+    "fresh_json_backslashes_positive": 1,
+    "fresh_json_source_bytes_negative": 1,
+    "fresh_json_source_bytes_positive": 1,
+    "fresh_mock_scope_negative": 1,
+    "fresh_mock_scope_positive": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:6e1ab740d653"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:89ac07473a28"
+  ],
+  "fixture_hashes": {
+    "fresh_json_backslashes_negative": {
+      "diff": "dc622f902caba416120260a7b06aa73cc4dfe9a2903c6d72104af6a314d11f44",
+      "expectation": "6c60ea9a560395c776fee1eb55c7f2cfae6ed046a54f10e19821adcc0874bca3"
+    },
+    "fresh_json_backslashes_positive": {
+      "diff": "d44acb13b642f36342f12b5fb489f32ffe536f10b8ba808980f91ca0c191afff",
+      "expectation": "df2d769e972c17a16921a39d037e8c6ec1eadc443912e375a7a21f255ba5677d"
+    },
+    "fresh_json_source_bytes_negative": {
+      "diff": "99408b8b197e743ebb7be7f0c9c7dd1052d115f53dea1741293f822ecd15a652",
+      "expectation": "0be513877d9c8823d620c6037c2940f873db4f7473584cfdbe75cbaf564633b6"
+    },
+    "fresh_json_source_bytes_positive": {
+      "diff": "e9409a9b2ea1db8bbb65527bc81478f0a328a42ec26cbfa563a8d51cf67fd56c",
+      "expectation": "58746fda4463c68e69961ff5c9d245c23cbf607da5ec1f5953f67920c6189410"
+    },
+    "fresh_mock_scope_negative": {
+      "diff": "c454ca7ffe21abce2692e384ee2d2eab3a15734b77e2ee64033081296905cd0a",
+      "expectation": "8b2e08592e9dfe47b4039cee5a3fe692ddd4b8f76bbb57937103031d8ac2f720"
+    },
+    "fresh_mock_scope_positive": {
+      "diff": "01e13de246cc2d50b36738afdee26fe670af81f4b9e48b31a8a1f00becb0ac13",
+      "expectation": "f2be24ca0fe9197d3e7038bcb1ccca1db4688e14850c93da75848943945ffc99"
+    }
+  },
+  "stages": {
+    "deep": {
+      "calls": 6,
+      "latency_ms": {
+        "median": 2074.0,
+        "p95": 5071,
+        "max": 5071
+      },
+      "usage": {
+        "prompt_tokens": 16818,
+        "completion_tokens": 2574,
+        "total_tokens": 19392
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 6
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 1,
+    "total": 3
+  },
+  "clean_scans": {
+    "passed": 3,
+    "total": 3
+  },
+  "records_sha256": "26030762d9d92c9c0c6a200d22e0c63c380dbd9fce5c378ecb1af4cd2be145d8",
+  "log_sha256": "f51970b874f39eefd81f0a375190db638299fe27fa8a5dd53bf51ab8f71cd873"
+}

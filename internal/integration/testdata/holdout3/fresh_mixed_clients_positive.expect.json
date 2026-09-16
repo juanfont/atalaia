@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Mocking one client must not suppress a separate client that uses the network.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_mixed_clients",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/test_two.py",
+      "line": 4,
+      "kind": "credential",
+      "value": "u6La8Nr3Qp9Vs2Jm7Dx4"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

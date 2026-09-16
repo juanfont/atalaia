@@ -1,0 +1,15 @@
+{
+  "description": "Frozen round-four contrast: stopped_mock. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "negative"
+  ],
+  "pair": "unseen4_stopped_mock",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,13 @@
+diff --git a/src/test/java/AuthTest.java b/src/test/java/AuthTest.java
+--- /dev/null
++++ b/src/test/java/AuthTest.java
+@@ -0,0 +1,9 @@
++@SpringBootTest(properties = "app.api-token=d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++@AutoConfigureMockMvc
++class AuthTest {
++  @Autowired MockMvc mvc;
++  @Test void acceptsConfiguredToken() throws Exception {
++    mvc.perform(get("/private").header("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"))
++       .andExpect(status().isOk());
++  }
++}

@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: git_userinfo. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_git_userinfo",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "jobs/mirror.sh",
+      "line": 1,
+      "kind": "credential",
+      "value": "f7Kv3Jn9Wd2Mq8Ca5Ls6"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

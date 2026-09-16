@@ -1,0 +1,56 @@
+# Synthetic evaluation configuration. Run from the repository root.
+# EVAL_ENDPOINT supplies the model endpoint; audit is disabled by the harness.
+server:
+  listen: "127.0.0.1:8080"
+  max_body_bytes: 1048576
+  read_timeout: 30s
+  write_timeout: 180s
+
+detectors:
+  enabled: [gitleaks]
+  parallel_timeout: 10s
+  gitleaks:
+    config: gitleaks-aggressive.toml
+
+llm:
+  endpoint: "http://127.0.0.1:8000/v1"
+  model: "google/gemma-4-E4B-it"
+  max_inflight: 1
+  queue_max: 16
+  request_timeout: 120s
+  profile: gemma4
+  use_tools: true
+  max_findings_per_request: 200
+  context_budget:
+    input_tokens: 24000
+    output_tokens: 4096
+    finding_context_lines: 30
+  deep_scan:
+    enabled: true
+    window_tokens: 4000
+    max_windows: 48
+    max_candidates: 50
+    profile: gemma4_deep
+    require_findings: false
+    max_added_lines: 0
+    sample_rate: 1.0
+    admission_wait: 1s
+  profiles:
+    gemma4:
+      system_template: internal/integration/testdata/round3-2026-09-16/trial2-prompts/gemma4_system.tmpl
+      user_template: internal/integration/testdata/round3-2026-09-16/trial2-prompts/gemma4_user.tmpl
+      response_format: json_schema
+    gemma4_deep:
+      system_template: internal/integration/testdata/round3-2026-09-16/trial2-prompts/gemma4_deep_system.tmpl
+      user_template: internal/integration/testdata/round3-2026-09-16/trial2-prompts/gemma4_deep_user.tmpl
+      response_format: json_schema
+
+observability:
+  log_level: info
+  metrics_addr: "127.0.0.1:9090"
+  audit:
+    enabled: false
+
+log:
+  level: info
+  format: text

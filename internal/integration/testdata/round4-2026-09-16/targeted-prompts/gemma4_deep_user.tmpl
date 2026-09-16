@@ -1,0 +1,44 @@
+Examples of source spelling, not findings to report:
+Source JSON: {"password":"Oak\\Lane67"}
+Source password characters: O a k BACKSLASH BACKSLASH L a n e 6 7.
+Native tool value: <|"|>Oak\\Lane67<|"|>
+JSON response value: "Oak\\\\Lane67"
+A runtime parser would collapse that pair; this scanner must preserve both.
+
+An ordinary account name in a Git URL is not a secret. For example,
+https://release-bot@git.internal/repo.git contains only an account name.
+Using an account name for Git access does not make it an authentication token.
+An actual opaque access token in that same URL position remains a credential.
+
+Added lines under review:
+```
+{{.Window}}
+```
+
+Classify literal authentication sent to an existing service as "credential".
+Use "test_data" or omit values only when explicit prose declares them invented,
+a local test app is configured to expect them, or this specific request is
+replaced by a fabricated response. First compare the indentation of each request with any enclosing with block.
+A request aligned with with is OUTSIDE it, even when the URL was registered
+inside that block. Then, before dismissing authentication, check the request is inside the active mock
+scope, uses the covered client and destination, and is not passed through.
+A mock need not check authentication to intercept a request. A test filename or assertion alone is not interception.
+Copy source spelling, not the evaluated string. Preserve every backslash.
+For native tool strings, copy those characters literally; the server supplies
+JSON escaping. For a JSON response, escape each source backslash once.
+
+Return a JSON object of this exact shape, no extra text:
+
+{"candidates":[{"value":"<verbatim value from a line above>","kind":"credential"|"private_key"|"test_data","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}
+
+Final source check before submission:
+- For Python, explicitly count the leading spaces on the with line and the
+  network request line. Equal counts mean the request is outside the block.
+- Before returning an escaped credential, explicitly count its SOURCE
+  backslash characters, then count the backslashes in your proposed VALUE.
+  The counts must be equal. Work from visible source characters, not from
+  what a JSON parser or program would produce. A doubled source backslash
+  is TWO characters in the value. Backslash-u followed by four hex digits
+  is SIX characters in the value; do not replace it with a Unicode character.
+  In native tool strings write those exact characters. If writing JSON,
+  its decoding must produce those exact characters and that same count.

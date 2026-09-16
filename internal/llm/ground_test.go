@@ -408,3 +408,172 @@ func TestGround_URLPlaceholderJudgedByPassword(t *testing.T) {
 		t.Errorf("a real password in a URL to an example.* host must still report: %+v", got)
 	}
 }
+
+// A synthetic value can ground perfectly; existence does not make it
+// a live credential. Both tool and text responses must retain the
+// model classification until Ground discards it.
+func TestGround_DiscardsModelClassifiedTestData(t *testing.T) {
+	body := `{"candidates":[{"value":"sk-live-9f8a7b6c5d4e3f2a1b0c","kind":"test_data","confidence":1,"reason":"created by a test"}]}`
+	for _, toolMode := range []bool{false, true} {
+		var candidates []DeepCandidate
+		var err error
+		if toolMode {
+			candidates, err = parseDeepToolCalls([]ToolCall{{Function: ToolCallFunction{Name: DeepToolName, Arguments: body}}})
+		} else {
+			candidates, err = parseDeepResponse(body)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(candidates) != 1 || candidates[0].Kind != KindTestData {
+			t.Fatalf("toolMode=%v: classification was lost: %+v", toolMode, candidates)
+		}
+		got, stats := Ground([]byte(groundDiff), candidates, nil)
+		if len(got) != 0 || stats.Candidates != 1 || stats.Discovered != 0 || stats.Ungrounded != 0 {
+			t.Fatalf("toolMode=%v: test data must be excluded, got %v, stats %+v", toolMode, got, stats)
+		}
+		candidates[0].Kind = KindCredential
+		got, _ = Ground([]byte(groundDiff), candidates, nil)
+		if len(got) != 1 {
+			t.Fatalf("toolMode=%v: a credential with the same bytes must still ground", toolMode)
+		}
+	}
+}
+
+func TestGround_PEMObjectType(t *testing.T) {
+	for _, label := range []string{"PUBLIC KEY", "RSA PUBLIC KEY", "CERTIFICATE", "CERTIFICATE REQUEST", "PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"} {
+		for _, kind := range []string{"private_key", "credential"} {
+			t.Run(label+"/"+kind, func(t *testing.T) {
+				header := "-----BEGIN " + label + "-----"
+				diff := "diff --git a/key.pem b/key.pem\n--- /dev/null\n+++ b/key.pem\n@@ -0,0 +1,1 @@\n+" + header + "\n"
+				got, _ := Ground([]byte(diff), []DeepCandidate{{Value: header, Kind: kind}}, nil)
+				want := 0
+				if strings.HasSuffix(label, "PRIVATE KEY") {
+					want = 1
+				}
+				if len(got) != want {
+					t.Fatalf("discoveries = %d, want %d", len(got), want)
+				}
+			})
+		}
+	}
+}
+
+func TestGround_RejectsEndDelimiterAsCredential(t *testing.T) {
+	for _, label := range []string{"CERTIFICATE", "PUBLIC KEY", "PRIVATE KEY"} {
+		marker := "-----END " + label + "-----"
+		diff := "diff --git a/key.pem b/key.pem\n--- /dev/null\n+++ b/key.pem\n@@ -0,0 +1,1 @@\n+" + marker + "\n"
+		got, _ := Ground([]byte(diff), []DeepCandidate{cand(marker)}, nil)
+		if len(got) != 0 {
+			t.Fatalf("END %s is a delimiter, not a credential", label)
+		}
+	}
+}
+
+func TestGround_TokenInURLUsername(t *testing.T) {
+	value := "https://opaqueAccessToken72@git.internal/project.git"
+	diff := "diff --git a/job.sh b/job.sh\n--- /dev/null\n+++ b/job.sh\n@@ -0,0 +1,1 @@\n+git clone \"" + value + "\"\n"
+	got, _ := Ground([]byte(diff), []DeepCandidate{cand(value)}, nil)
+	if len(got) != 1 {
+		t.Fatal("a token in the URL username must remain eligible for model judgment")
+	}
+}
+
+func TestGround_BasicAuthRuntimePassword(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		want  int
+	}{
+		{"publisher:$PUBLISH_PASSWORD", 0},
+		{"publisher:${PUBLISH_PASSWORD}", 0},
+		{"publisher:Harbor$72", 1},
+		{"publisher:HarborPass72", 1},
+	} {
+		diff := "diff --git a/job.sh b/job.sh\n--- /dev/null\n+++ b/job.sh\n@@ -0,0 +1,1 @@\n+curl -u \"" + tc.value + "\" https://reports.internal/\n"
+		got, _ := Ground([]byte(diff), []DeepCandidate{cand(tc.value)}, nil)
+		if len(got) != tc.want {
+			t.Errorf("%q: discoveries=%d, want %d", tc.value, len(got), tc.want)
+		}
+	}
+}
+
+func TestGround_ParenthesesInLiteralCredential(t *testing.T) {
+	for _, value := range []string{"reporter:ForestPass92@tcp(db.internal:3306)/metrics", "92Forest(Pass)", "Forest(Pass)92"} {
+		diff := "diff --git a/app.cfg b/app.cfg\n--- /dev/null\n+++ b/app.cfg\n@@ -0,0 +1,1 @@\n+password=\"" + value + "\"\n"
+		got, _ := Ground([]byte(diff), []DeepCandidate{cand(value)}, nil)
+		if len(got) != 1 {
+			t.Errorf("literal containing parentheses was discarded: %q", value)
+		}
+	}
+	for _, value := range []string{`os.Getenv("PASSWORD")`, `config.get("password")`, `vault.read("secret")`, `getPassword()`} {
+		if !isReference(value) {
+			t.Errorf("function reference accepted: %q", value)
+		}
+	}
+}
+
+func TestGroundTracePreservesDecisions(t *testing.T) {
+	candidates := []DeepCandidate{cand("sk-live-9f8a7b6c5d4e3f2a1b0c"), cand("sk-live-9f8a7b6c5d4e3f2a1b0c"), cand("not-present-anywhere"), {Value: "synthetic-only", Kind: KindTestData}}
+	plain, stats := Ground([]byte(groundDiff), candidates, nil)
+	traced, tracedStats, decisions := GroundWithTrace([]byte(groundDiff), candidates, nil)
+	if len(plain) != len(traced) || stats != tracedStats || len(decisions) != 4 {
+		t.Fatalf("trace altered grounding: %+v %+v", stats, tracedStats)
+	}
+	for i, want := range []string{"discovered", "duplicate", "not_found", "test_data"} {
+		if decisions[i].Candidate != i || decisions[i].Outcome != want {
+			t.Errorf("decision %d: %+v", i, decisions[i])
+		}
+	}
+	if len(traced) != 1 || plain[0] != traced[0] {
+		t.Fatal("trace changed discovery")
+	}
+}
+
+func TestGround_FunctionShapeNeedsLiteralSourceEvidence(t *testing.T) {
+	for _, tc := range []struct {
+		name, source, value string
+		want                int
+	}{
+		{"quoted password", `password = "ForestPass(27)"`, "ForestPass(27)", 1},
+		{"single quoted password", `password = 'ForestPass(27)'`, "ForestPass(27)", 1},
+		{"mysql password component", `sql.Open("mysql", "reader:ForestPass(27)@tcp(db.internal:3306)/orders")`, "ForestPass(27)", 1},
+		{"url password component", `connect("postgres://reader:ForestPass(27)@db.internal/orders")`, "ForestPass(27)", 1},
+		{"unquoted call", `password = getPassword()`, "getPassword()", 0},
+		{"function with quoted argument", `password = config.get("password")`, `config.get("password")`, 0},
+		{"fstring expression", `password = f"{getPassword()}"`, "getPassword()", 0},
+		{"shell expression", `password = "$(getPassword())"`, "getPassword()", 0},
+		{"unterminated string", `password = "ForestPass(27)`, "ForestPass(27)", 0},
+		{"reference occurs before literal", `password = getPassword(); note = "getPassword()"`, "getPassword()", 0},
+		{"reference contains interpolation", `password = "ForestPass(${NUMBER})"`, "ForestPass(${NUMBER})", 0},
+		{"quoted runtime namespace", `password = "os.environ.get()"`, "os.environ.get()", 0},
+		{"arbitrary containing string", `note = "please call getPassword()"`, "getPassword()", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			diff := "diff --git a/app.conf b/app.conf\n--- /dev/null\n+++ b/app.conf\n@@ -0,0 +1,1 @@\n+" + tc.source + "\n"
+			got, _ := Ground([]byte(diff), []DeepCandidate{cand(tc.value)}, nil)
+			if len(got) != tc.want {
+				t.Fatalf("discoveries=%d, want %d", len(got), tc.want)
+			}
+			if len(got) == 1 && (got[0].Match != tc.value || got[0].Line != 1) {
+				t.Fatal("literal bytes or location changed")
+			}
+		})
+	}
+}
+
+func TestGround_ScrubsPasswordComponentOfConnectionString(t *testing.T) {
+	value := "postgres://reporter:BirchHarbor62@db.internal/reports"
+	diff := "diff --git a/db.py b/db.py\n--- /dev/null\n+++ b/db.py\n@@ -0,0 +1,1 @@\n+connect(\"" + value + "\")\n"
+	candidate := cand(value)
+	candidate.Reason = "The connection string contains password BirchHarbor62."
+	got, _ := Ground([]byte(diff), []DeepCandidate{candidate}, nil)
+	if len(got) != 1 {
+		t.Fatal("credential should still be discovered")
+	}
+	if strings.Contains(got[0].Reason, "BirchHarbor62") || strings.Contains(got[0].MatchPreview, "BirchHarbor62") {
+		t.Fatal("password component leaked")
+	}
+	if got[0].Match != value {
+		t.Fatal("redaction changed audit source bytes")
+	}
+}

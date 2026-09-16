@@ -1,0 +1,8 @@
+diff --git a/app/connect.py b/app/connect.py
+--- /dev/null
++++ b/app/connect.py
+@@ -0,0 +1,4 @@
++api_token = (
++    os.environ["ORDERS_AUTH"]
++)
++client = Orders(api_token=api_token)

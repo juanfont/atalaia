@@ -1,0 +1,8 @@
+diff --git a/infra/provider.tf b/infra/provider.tf
+--- /dev/null
++++ b/infra/provider.tf
+@@ -0,0 +1,4 @@
++provider "service" {
++  endpoint = "https://gateway.internal"
++  api_token = "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"
++}

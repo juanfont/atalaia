@@ -1,0 +1,12 @@
+diff --git a/src/test/java/AuthTest.java b/src/test/java/AuthTest.java
+--- /dev/null
++++ b/src/test/java/AuthTest.java
+@@ -0,0 +1,8 @@
++class AuthTest {
++  @Test void deployedService() throws Exception {
++    var req = HttpRequest.newBuilder(URI.create("https://gateway.internal/private"))
++        .header("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf").build();
++    var result = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
++    assertEquals(200, result.statusCode());
++  }
++}

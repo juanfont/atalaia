@@ -1,0 +1,8 @@
+diff --git a/tests/test_upload.py b/tests/test_upload.py
+--- /dev/null
++++ b/tests/test_upload.py
+@@ -0,0 +1,4 @@
++def test_upload(client, monkeypatch):
++    monkeypatch.setitem(client.application.config, "UPLOAD_TOKEN", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    response = client.post("/upload", headers={"Authorization": "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf"})
++    assert response.status_code == 204

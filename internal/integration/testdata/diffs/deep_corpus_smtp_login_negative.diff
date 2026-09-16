@@ -1,0 +1,6 @@
+diff --git a/mailer.py b/mailer.py
+--- /dev/null
++++ b/mailer.py
+@@ -0,0 +1,2 @@
++smtp = smtplib.SMTP_SSL("mail.internal", 465)
++smtp.login("mailer", os.environ["SMTP_PASSWORD"])

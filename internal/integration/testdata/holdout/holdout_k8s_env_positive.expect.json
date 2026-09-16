@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: k8s_env, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "reference",
+    "yaml",
+    "positive"
+  ],
+  "pair": "holdout_k8s_env",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "deploy/job.yaml",
+      "line": 3,
+      "kind": "credential",
+      "value": "BeechCove37"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

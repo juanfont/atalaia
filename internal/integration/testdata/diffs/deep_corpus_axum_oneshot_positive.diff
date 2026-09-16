@@ -1,0 +1,10 @@
+diff --git a/tests/auth.rs b/tests/auth.rs
+--- /dev/null
++++ b/tests/auth.rs
+@@ -0,0 +1,6 @@
++#[tokio::test]
++async fn remote_auth() {
++    let response = reqwest::Client::new().get("https://gateway.internal/private")
++        .bearer_auth("d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf").send().await.unwrap();
++    assert_eq!(response.status(), StatusCode::OK);
++}

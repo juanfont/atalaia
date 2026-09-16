@@ -1,0 +1,8 @@
+diff --git a/config/renamed.env b/config/renamed.env
+similarity index 90%
+rename from config/old.env
+rename to config/renamed.env
+--- a/config/old.env
++++ b/config/renamed.env
+@@ -0,0 +1,1 @@
++DB_PASSWORD=${REPORT_AUTH}

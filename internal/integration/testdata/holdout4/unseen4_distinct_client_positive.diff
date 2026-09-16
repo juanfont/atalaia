@@ -1,0 +1,7 @@
+diff --git a/tests/test_accounts.py b/tests/test_accounts.py
+--- /dev/null
++++ b/tests/test_accounts.py
+@@ -0,0 +1,3 @@
++mocked = httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json=[])))
++remote = httpx.Client()
++remote.get("https://accounts.internal/", headers={"Authorization": "Bearer w3Mf9Nz5Js7Kq2Da8Lp4"})

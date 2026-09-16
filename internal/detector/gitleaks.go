@@ -3,6 +3,7 @@ package detector
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/juanfont/atalaia/internal/types"
 	"github.com/spf13/viper"
@@ -86,13 +87,34 @@ func (g *Gitleaks) Scan(ctx context.Context, diff []byte) ([]Finding, error) {
 			StartLine: block.StartLine,
 		}
 		for _, f := range g.detector.DetectContext(ctx, detect.Fragment(fragment)) {
+			secret := f.Secret
+			// This rule captures a YAML key/value pair, unlike generic
+			// assignment rules which capture the scalar alone. Normalize
+			// single-line scalars so the same credential deduplicates.
+			if f.RuleID == "kubernetes-secret-yaml" {
+				if _, value, ok := strings.Cut(secret, ":"); ok && !strings.ContainsAny(value, "\r\n") {
+					value = strings.TrimSpace(value)
+					if len(value) >= 2 && (value[0] == '\'' || value[0] == '"') && value[0] == value[len(value)-1] {
+						value = value[1 : len(value)-1]
+					}
+					if value != "" {
+						secret = value
+					}
+				}
+			}
+			// Gitleaks positions the regex match, which can begin several
+			// lines before its secret capture. Report the capture's line.
+			line := f.StartLine
+			if offset := strings.Index(f.Match, secret); offset >= 0 {
+				line += strings.Count(f.Match[:offset], "\n")
+			}
 			out = append(out, Finding{
 				DetectorType: "gitleaks",
 				DetectorName: f.RuleID,
 				Rule:         f.RuleID,
 				File:         f.File,
-				Line:         f.StartLine,
-				Match:        f.Secret,
+				Line:         line,
+				Match:        secret,
 				Verified:     false,
 			})
 		}

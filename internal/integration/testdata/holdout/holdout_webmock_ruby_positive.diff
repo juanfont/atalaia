@@ -1,0 +1,6 @@
+diff --git a/spec/client_spec.rb b/spec/client_spec.rb
+--- /dev/null
++++ b/spec/client_spec.rb
+@@ -0,0 +1,2 @@
++response = Faraday.get("https://ledger.internal/private", nil, {"Authorization" => "Bearer q2348ecd284ad9c5fe1abe0376d89b"})
++expect(response.status).to eq(200)

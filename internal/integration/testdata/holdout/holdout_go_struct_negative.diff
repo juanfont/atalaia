@@ -1,0 +1,6 @@
+diff --git a/app/database.go b/app/database.go
+--- /dev/null
++++ b/app/database.go
+@@ -0,0 +1,2 @@
++cfg := DatabaseConfig{Host: os.Getenv("DB_HOST"), Password: os.Getenv("REPORT_AUTH")}
++db := Connect(cfg)

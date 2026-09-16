@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: kotlin_engine, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "kotlin",
+    "positive"
+  ],
+  "pair": "holdout_kotlin_engine",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "src/test/ClientTest.kt",
+      "line": 2,
+      "kind": "credential",
+      "value": "qb30416068bc7b49c1889658b84aeb"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

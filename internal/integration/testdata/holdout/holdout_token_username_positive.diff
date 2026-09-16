@@ -1,0 +1,5 @@
+diff --git a/jobs/clone.sh b/jobs/clone.sh
+--- /dev/null
++++ b/jobs/clone.sh
+@@ -0,0 +1,1 @@
++git clone "https://glpat-q2a0229276f339450fda394024c8b7@git.internal/division/reports.git"

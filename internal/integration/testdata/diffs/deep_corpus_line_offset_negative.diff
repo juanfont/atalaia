@@ -1,0 +1,5 @@
+diff --git a/app/db.py b/app/db.py
+--- a/app/db.py
++++ b/app/db.py
+@@ -2047,0 +2048,1 @@
++timeout = 20

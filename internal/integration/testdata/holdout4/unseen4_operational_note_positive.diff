@@ -1,0 +1,6 @@
+diff --git a/docs/export.md b/docs/export.md
+--- /dev/null
++++ b/docs/export.md
+@@ -0,0 +1,2 @@
++The running exporter authenticates to https://export.internal with this token:
++`Authorization: Bearer g5Nc8Ys2Kp7Mv3Wa9Jr4`

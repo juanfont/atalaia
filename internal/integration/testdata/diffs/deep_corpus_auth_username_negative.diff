@@ -1,0 +1,7 @@
+diff --git a/app/identity.py b/app/identity.py
+--- /dev/null
++++ b/app/identity.py
+@@ -0,0 +1,3 @@
++user = "service-reporter"
++url = "https://service-reporter@reports.internal/export"
++response = requests.get(url)

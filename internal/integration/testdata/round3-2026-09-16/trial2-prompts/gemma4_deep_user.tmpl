@@ -1,0 +1,15 @@
+Added lines under review:
+```
+{{.Window}}
+```
+
+Classify literal authentication sent to an existing service as "credential".
+Use "test_data" or omit values only when explicit prose declares them invented,
+a local test app is configured to expect them, or this specific request is
+replaced by a fabricated response. A mock need not check authentication to
+intercept a request. A test filename or assertion alone is not interception.
+Preserve exact source bytes, including each backslash; do not decode strings.
+
+Return a JSON object of this exact shape, no extra text:
+
+{"candidates":[{"value":"<verbatim value from a line above>","kind":"credential"|"private_key"|"test_data","confidence":0..1,"reason":"<one sentence, max 280 chars>"}]}

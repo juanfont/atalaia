@@ -1,0 +1,12 @@
+diff --git a/api/auth_test.go b/api/auth_test.go
+--- /dev/null
++++ b/api/auth_test.go
+@@ -0,0 +1,8 @@
++package api
++func TestRemoteAuth(t *testing.T) {
++    req, _ := http.NewRequest("GET", "https://gateway.internal/private", nil)
++    req.Header.Set("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf")
++    response, err := http.DefaultClient.Do(req)
++    if err != nil { t.Fatal(err) }
++    defer response.Body.Close()
++}

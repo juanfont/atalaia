@@ -1,0 +1,24 @@
+diff --git a/tests/web/test_api.py b/tests/web/test_api.py
+--- a/tests/web/test_api.py
++++ b/tests/web/test_api.py
+@@ -446,0 +447,20 @@ class TestUploadEphemeris:
++    def test_upload_without_csrf_token(
++        self,
++        client: FlaskClient,
++        minio: Minio,
++        monkeypatch: pytest.MonkeyPatch,
++    ) -> None:
++        # CSRF protection is disabled for tests by default
++        monkeypatch.setitem(client.application.config, "WTF_CSRF_ENABLED", True)
++        monkeypatch.setitem(
++            client.application.config, "UPLOAD_API_TOKEN", "secrettoken"
++        )
++
++        resp = client.post(
++            "/api/upload-ephemeris",
++            data=dict(file=(BytesIO(b"data"), "foo.txt", "text/plain")),
++            headers={"Authorization": "Bearer secrettoken"},
++        )
++
++        assert resp.status_code == HTTPStatus.NO_CONTENT
++

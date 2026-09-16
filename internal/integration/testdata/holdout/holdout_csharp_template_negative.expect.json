@@ -1,0 +1,19 @@
+{
+  "description": "Frozen round-two holdout: csharp_template, negative. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "reference",
+    "csharp",
+    "negative"
+  ],
+  "pair": "holdout_csharp_template",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

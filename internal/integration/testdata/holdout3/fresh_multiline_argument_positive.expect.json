@@ -1,0 +1,22 @@
+{
+  "description": "Round-three frozen synthetic holdout. Only the literal line is credential material; the later argument is a reference.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "positive"
+  ],
+  "pair": "fresh_multiline_argument",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/connect.py",
+      "line": 2,
+      "kind": "credential",
+      "value": "b7Nm2Jr9Qc4La6Dx8Vs3"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,21 @@
+{
+  "parser_sha256": "47e51ed34c1ca618707e6d266b72f6f95de7c9e0c234f4baba137e210a994e26",
+  "method": "Execute only the installed native argument parsing functions; serialize to JSON and decode once. No inference, no backend edits.",
+  "checks": [
+    {
+      "source_backslashes": 1,
+      "native_parser_preserves_bytes": true,
+      "json_roundtrip_preserves_bytes": true
+    },
+    {
+      "source_backslashes": 2,
+      "native_parser_preserves_bytes": true,
+      "json_roundtrip_preserves_bytes": true
+    },
+    {
+      "source_backslashes": 1,
+      "native_parser_preserves_bytes": true,
+      "json_roundtrip_preserves_bytes": true
+    }
+  ]
+}

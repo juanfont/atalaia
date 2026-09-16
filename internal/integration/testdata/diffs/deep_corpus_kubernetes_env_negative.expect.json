@@ -1,0 +1,18 @@
+{
+  "description": "kubernetes env: synthetic or non-credential input must produce no alerts. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "reference",
+    "yaml",
+    "negative"
+  ],
+  "pair": "kubernetes_env",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

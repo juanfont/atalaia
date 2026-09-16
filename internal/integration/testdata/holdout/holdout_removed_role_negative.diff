@@ -1,0 +1,6 @@
+diff --git a/config/removal.env b/config/removal.env
+--- a/config/removal.env
++++ b/config/removal.env
+@@ -1,1 +1,1 @@
+-DB_PASSWORD=SycamoreCreek46
++DB_PASSWORD=${REPORT_AUTH}

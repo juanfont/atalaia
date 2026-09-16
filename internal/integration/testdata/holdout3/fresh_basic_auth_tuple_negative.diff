@@ -1,0 +1,5 @@
+diff --git a/app/session.py b/app/session.py
+--- /dev/null
++++ b/app/session.py
+@@ -0,0 +1,1 @@
++reply = requests.get("https://orders.internal/", auth=("worker", load_password()))

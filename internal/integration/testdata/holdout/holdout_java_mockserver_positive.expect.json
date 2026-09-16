@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: java_mockserver, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "test-auth",
+    "java",
+    "positive"
+  ],
+  "pair": "holdout_java_mockserver",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "src/test/java/ClientTest.java",
+      "line": 1,
+      "kind": "credential",
+      "value": "qe088935e49041e0ccd492dd16e060"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

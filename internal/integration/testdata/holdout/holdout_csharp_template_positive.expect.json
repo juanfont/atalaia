@@ -1,0 +1,24 @@
+{
+  "description": "Frozen round-two holdout: csharp_template, positive. All credential bytes are fabricated; labels fixed before model evaluation.",
+  "tags": [
+    "expanded",
+    "holdout",
+    "reference",
+    "csharp",
+    "positive"
+  ],
+  "pair": "holdout_csharp_template",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "app/Database.cs",
+      "line": 1,
+      "kind": "credential",
+      "value": "LaurelStrait62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

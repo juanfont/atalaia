@@ -1,0 +1,10 @@
+{
+  "case": "holdout_axios_adapter_negative",
+  "identical_deep_requests": true,
+  "thinking": "on",
+  "temperature": 0,
+  "prior_discoveries": 0,
+  "later_discoveries": 1,
+  "request_sha256": "6e67ff6a7b18abf7f0e40a9dfd301fe599168771f9e60531ed01a9894cf05232",
+  "note": "Different candidate output under identical deep requests at temperature zero. This is observed instability, not evidence that an adjudication-only prompt edit caused the change."
+}

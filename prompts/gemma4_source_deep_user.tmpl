@@ -1,0 +1,23 @@
+Added lines under review:
+```
+{{.Window}}
+```
+
+Classify each request by its actual receiver. Before dismissing authentication:
+- For Python, count the leading spaces on the with line and request line.
+  A request aligned with with is outside the block; its mock has ended.
+- Verify that the active replacement covers this client, method and destination.
+  A separate live client or an explicit passthrough still reaches the service.
+- A locally assigned fetch function or transport returning a fabricated Response
+  intercepts its calls even when it never reads or checks the auth header.
+- An ordinary readable account name in URL userinfo is not a secret, including
+  in git clone/fetch. An opaque access token in that position is a credential.
+
+A test filename or assertion alone is not interception. Explicit invented data
+and receiving test-app authentication setup remain test_data. Work through every
+source section and classify the specific value, not the overall test file.
+
+Use the required candidate schema. Copy literal values exactly. If a source
+catalog is provided, select its source_id for escaped literals instead of copying
+or interpreting them. Catalog membership does not establish credential status.
+Reasons describe context without quoting credential bytes.

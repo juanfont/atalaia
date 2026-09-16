@@ -1,0 +1,8 @@
+diff --git a/src/test/java/ClientTest.java b/src/test/java/ClientTest.java
+--- /dev/null
++++ b/src/test/java/ClientTest.java
+@@ -0,0 +1,4 @@
++@Test void remoteBalance() {
++  var client = new PaymentClient("https://payments.internal", "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf");
++  assertTrue(client.balance() >= 0);
++}

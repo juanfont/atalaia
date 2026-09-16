@@ -55,97 +55,140 @@ type GroundStats struct {
 // taken is the deduplicated detector finding set. Anything already
 // covered there belongs to verdicts[], the authoritative channel, and is
 // dropped here so the two arrays stay disjoint.
+// GroundDecision is an evaluation trace. It contains no credential bytes.
+type GroundDecision struct {
+	Candidate int
+	Outcome   string
+	File      string
+	Line      int
+}
+
+func GroundWithTrace(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding) ([]Discovery, GroundStats, []GroundDecision) {
+	var decisions []GroundDecision
+	out, stats := ground(diff, cands, taken, func(d GroundDecision) { decisions = append(decisions, d) })
+	return out, stats, decisions
+}
+
 func Ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding) ([]Discovery, GroundStats) {
+	return ground(diff, cands, taken, nil)
+}
+
+func ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding, trace func(GroundDecision)) ([]Discovery, GroundStats) {
 	stats := GroundStats{Candidates: len(cands)}
 	metrics.DeepCandidatesTotal.Add(float64(len(cands)))
 
 	seen := make(map[string]bool, len(cands))
 	out := make([]Discovery, 0, len(cands))
 
-	for _, c := range cands {
-		needle, ok := groundingNeedle(c)
-		if !ok {
-			stats.Ungrounded++
-			metrics.DeepUngroundedTotal.Inc()
-			continue
-		}
+	for i, c := range cands {
+		func() {
+			decision := GroundDecision{Candidate: i, Outcome: "rejected"}
+			defer func() {
+				if trace != nil {
+					trace(decision)
+				}
+			}()
 
-		// An assignment-shaped candidate ("KEY=value", "key: value")
-		// is located by the full text the model returned, which pins
-		// the line precisely, but the secret it describes is the
-		// value. Everything downstream (length, placeholder, sentinel,
-		// id, preview) must see the value, or "POSTGRES_PASSWORD=test"
-		// sails through as a 22-character secret and the preview
-		// redacts the key name.
-		var file string
-		var line int
-		var match string
-		if key, val, isAssign := assignmentValue(needle); isAssign {
-			if !isSecretKey(key, val) || isPlaceholder(val) || len(val) < minCandidateChars {
-				continue
+			// Grounding proves existence, not that a credential is live.
+			// Honor the model's explicit synthetic-test classification.
+			if c.Kind == KindTestData {
+				decision.Outcome = "test_data"
+				return
 			}
-			file, line, _ = locate(diff, needle)
+			needle, ok := groundingNeedle(diff, c)
+			if !ok {
+				decision.Outcome = "invalid_or_reference"
+				stats.Ungrounded++
+				metrics.DeepUngroundedTotal.Inc()
+				return
+			}
+
+			// An assignment-shaped candidate ("KEY=value", "key: value")
+			// is located by the full text the model returned, which pins
+			// the line precisely, but the secret it describes is the
+			// value. Everything downstream (length, placeholder, sentinel,
+			// id, preview) must see the value, or "POSTGRES_PASSWORD=test"
+			// sails through as a 22-character secret and the preview
+			// redacts the key name.
+			var file string
+			var line int
+			var match string
+			if key, val, isAssign := assignmentValue(needle); isAssign {
+				if !isSecretKey(key, val) || isPlaceholder(val) || len(val) < minCandidateChars {
+					decision.Outcome = "non_secret_assignment"
+					return
+				}
+				file, line, _ = locate(diff, needle)
+				if file == "" {
+					file, line, _ = locate(diff, val)
+				}
+				match = val
+			} else {
+				if isPlaceholder(needle) {
+					decision.Outcome = "placeholder"
+					return
+				}
+				file, line, match = locate(diff, needle)
+			}
 			if file == "" {
-				file, line, _ = locate(diff, val)
+				decision.Outcome = "not_found"
+				stats.Ungrounded++
+				metrics.DeepUngroundedTotal.Inc()
+				return
 			}
-			match = val
-		} else {
-			if isPlaceholder(needle) {
-				continue
+
+			// The sentinel table that auto-dismisses documented sample keys
+			// in the other channel applies here too. A cold-discovered
+			// AKIAIOSFODNN7EXAMPLE is the same non-secret.
+			if _, isSentinel := classifySentinel(match); isSentinel {
+				decision.Outcome = "sentinel"
+				return
 			}
-			file, line, match = locate(diff, needle)
-		}
-		if file == "" {
-			stats.Ungrounded++
-			metrics.DeepUngroundedTotal.Inc()
-			continue
-		}
 
-		// The sentinel table that auto-dismisses documented sample keys
-		// in the other channel applies here too. A cold-discovered
-		// AKIAIOSFODNN7EXAMPLE is the same non-secret.
-		if _, isSentinel := classifySentinel(match); isSentinel {
-			continue
-		}
+			// A bare variable NAME grounds happily, because it really is in
+			// the line: "PG_PASSWORD" is a substring of "${PG_PASSWORD}".
+			// isReference cannot catch that, since the value the model
+			// returned carries no $ or braces of its own. Look at where it
+			// actually landed instead: if every occurrence in the line sits
+			// inside a $VAR or ${VAR} reference, it names a secret rather
+			// than being one.
+			if txt := addedLineText(diff, file, line); txt != "" && onlyInVarReference(txt, match) {
+				decision.Outcome = "reference"
+				return
+			}
 
-		// A bare variable NAME grounds happily, because it really is in
-		// the line: "PG_PASSWORD" is a substring of "${PG_PASSWORD}".
-		// isReference cannot catch that, since the value the model
-		// returned carries no $ or braces of its own. Look at where it
-		// actually landed instead: if every occurrence in the line sits
-		// inside a $VAR or ${VAR} reference, it names a secret rather
-		// than being one.
-		if txt := addedLineText(diff, file, line); txt != "" && onlyInVarReference(txt, match) {
-			continue
-		}
+			decision.File, decision.Line = file, line
+			id := detector.FindingID(detector.Finding{File: file, Line: line, Match: match})
+			if seen[id] {
+				decision.Outcome = "duplicate"
+				return
+			}
+			if collidesWithVerdict(taken, file, line, match) {
+				decision.Outcome = "detector_overlap"
+				stats.Collisions++
+				return
+			}
+			seen[id] = true
 
-		id := detector.FindingID(detector.Finding{File: file, Line: line, Match: match})
-		if seen[id] {
-			continue
-		}
-		if collidesWithVerdict(taken, file, line, match) {
-			stats.Collisions++
-			continue
-		}
-		seen[id] = true
+			kind := c.Kind
+			if kind != "private_key" {
+				kind = "credential"
+			}
 
-		kind := c.Kind
-		if kind != "private_key" {
-			kind = "credential"
-		}
-
-		out = append(out, Discovery{
-			ID:           id,
-			File:         file,
-			Line:         line,
-			Match:        match,
-			MatchPreview: redact.Preview(match),
-			Kind:         kind,
-			Confidence:   c.Confidence,
-			Reason:       redact.Scrub(c.Reason, match),
-		})
-		stats.Discovered++
-		metrics.DeepDiscoveriesTotal.Inc()
+			out = append(out, Discovery{
+				ID:           id,
+				File:         file,
+				Line:         line,
+				Match:        match,
+				MatchPreview: redact.Preview(match),
+				Kind:         kind,
+				Confidence:   c.Confidence,
+				Reason:       redact.Scrub(c.Reason, match),
+			})
+			decision.Outcome = "discovered"
+			stats.Discovered++
+			metrics.DeepDiscoveriesTotal.Inc()
+		}()
 	}
 
 	return out, stats
@@ -160,20 +203,69 @@ func Ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding)
 // Requiring the BEGIN line specifically also rejects a candidate that
 // is only the END delimiter, which locates fine but is a marker, not a
 // credential, and would report the same key a second time.
-func groundingNeedle(c DeepCandidate) (string, bool) {
+func groundingNeedle(diff []byte, c DeepCandidate) (string, bool) {
 	v := c.Value
 	if c.Kind == "private_key" {
 		v = pemHeaderLine(v)
+	} else if (strings.Contains(v, "-----BEGIN ") || strings.Contains(v, "-----END ")) && pemHeaderLine(v) == "" {
+		// A public PEM object cannot become secret by changing its kind.
+		return "", false
 	}
 	v = strings.TrimSpace(v)
 
 	if len(v) < minCandidateChars {
 		return "", false
 	}
-	if isReference(v) {
+	if isReference(v) && !quotedCallLiteral(diff, v) {
 		return "", false
 	}
 	return v, true
+}
+
+// quotedCallLiteral distinguishes function-shaped password bytes from code.
+// It only rescues a complete quoted literal or a password component in a
+// quoted user:password@ connection string. The first grounded occurrence must
+// supply that evidence. Arbitrary quoted expressions and interpolations do not
+// qualify, and all non-call reference guards remain in force.
+func quotedCallLiteral(diff []byte, value string) bool {
+	if !functionReferenceRE.MatchString(value) || !strings.HasSuffix(value, ")") ||
+		strings.ContainsAny(value, "$\\{}") || strings.HasPrefix(value, "process.env.") || strings.HasPrefix(value, "os.environ") {
+		return false
+	}
+	file, line := detector.LocateInDiff(diff, value)
+	if file == "" {
+		return false
+	}
+	text := addedLineText(diff, file, line)
+	first := strings.Index(text, value)
+	for i := 0; i < len(text); i++ {
+		quote := text[i]
+		if quote != '\'' && quote != '"' {
+			continue
+		}
+		start := i + 1
+		for i++; i < len(text); i++ {
+			if text[i] == '\\' {
+				i++
+				continue
+			}
+			if text[i] != quote {
+				continue
+			}
+			literal := text[start:i]
+			if first >= start && first+len(value) <= i && !strings.ContainsAny(literal, "$\\{}") {
+				if literal == value {
+					return true
+				}
+				// Includes URI userinfo and the common MySQL user:pass@tcp DSN.
+				if at := strings.Index(literal, ":"+value+"@"); at > 0 {
+					return true
+				}
+			}
+			break
+		}
+	}
+	return false
 }
 
 // locate finds the value in an added line of the diff, retrying once
@@ -212,19 +304,28 @@ func normalizeCandidate(s string) string {
 // There are no secret bytes in a reference, so reporting one can only
 // be noise.
 func isReference(v string) bool {
+	// A basic-auth pair can have a literal username and a runtime-only
+	// password. The username does not turn that reference into a secret.
+	if basicAuthReferenceRE.MatchString(normalizeCandidate(v)) {
+		return true
+	}
 	switch {
 	case strings.HasPrefix(v, "$"):
 		return true
 	case strings.Contains(v, "${"):
 		return true
 	// A call or lookup: os.Getenv("X"), config.get(...), vault.read(...)
-	case strings.Contains(v, "(") && strings.Contains(v, ")"):
+	case functionReferenceRE.MatchString(v) && strings.HasSuffix(strings.TrimSpace(v), ")"):
 		return true
 	case strings.HasPrefix(v, "process.env."), strings.HasPrefix(v, "os.environ"):
 		return true
 	}
 	return false
 }
+
+var functionReferenceRE = regexp.MustCompile(`^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Za-z_][A-Za-z0-9_]*\s*\(`)
+
+var basicAuthReferenceRE = regexp.MustCompile(`^[^:\s]+:\$[A-Za-z_][A-Za-z0-9_]*$`)
 
 // collidesWithVerdict reports whether a detector finding already covers
 // this value. Id equality alone is not enough: the id embeds the match,
@@ -433,12 +534,16 @@ func isPlaceholder(v string) bool {
 	return false
 }
 
-// pemHeaderLine returns the first "-----BEGIN ...-----" line in s, or
+// pemHeaderLine returns the first recognized private-key BEGIN line in s, or
 // "" when there is none. A private-key candidate without a BEGIN line
 // is not groundable as key material.
 func pemHeaderLine(s string) string {
 	for _, line := range strings.Split(s, "\n") {
-		if t := strings.TrimSpace(line); strings.HasPrefix(t, "-----BEGIN") {
+		t := strings.TrimSpace(line)
+		switch t {
+		case "-----BEGIN PRIVATE KEY-----", "-----BEGIN ENCRYPTED PRIVATE KEY-----",
+			"-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN EC PRIVATE KEY-----",
+			"-----BEGIN DSA PRIVATE KEY-----", "-----BEGIN OPENSSH PRIVATE KEY-----":
 			return t
 		}
 	}

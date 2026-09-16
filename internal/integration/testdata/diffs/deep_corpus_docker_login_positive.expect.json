@@ -1,0 +1,23 @@
+{
+  "description": "docker login: literal authentication for an existing service must be reported. Paired with the opposite case; all values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "connection",
+    "shell",
+    "positive"
+  ],
+  "pair": "docker_login",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "scripts/publish.sh",
+      "line": 2,
+      "kind": "credential",
+      "value": "BirchHarbor62"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

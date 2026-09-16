@@ -1,0 +1,15 @@
+{
+  "description": "Round-three frozen synthetic holdout. Injected fetch behavior matters more than the fixture directory.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "negative"
+  ],
+  "pair": "fresh_fetch_factory",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

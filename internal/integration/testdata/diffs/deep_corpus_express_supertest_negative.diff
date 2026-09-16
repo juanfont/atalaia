@@ -1,0 +1,10 @@
+diff --git a/tests/api.test.ts b/tests/api.test.ts
+--- /dev/null
++++ b/tests/api.test.ts
+@@ -0,0 +1,6 @@
++import request from "supertest";
++import { createApp } from "../app";
++it("authorizes a test request", async () => {
++  const app = createApp({ apiToken: "d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf" });
++  await request(app).get("/private").set("Authorization", "Bearer d9Qm7Vs2Xp6Kr4Nc8Bw5Ht3Lf").expect(200);
++});

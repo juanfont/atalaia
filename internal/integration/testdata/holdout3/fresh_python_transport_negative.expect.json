@@ -1,0 +1,15 @@
+{
+  "description": "Round-three frozen synthetic holdout. A custom response transport versus a network client.",
+  "tags": [
+    "expanded",
+    "holdout3",
+    "negative"
+  ],
+  "pair": "fresh_python_transport",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0
+}

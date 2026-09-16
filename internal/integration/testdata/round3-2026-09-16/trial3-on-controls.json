@@ -1,0 +1,148 @@
+{
+  "cases": 11,
+  "cases_passed_all_runs": 10,
+  "requests": 11,
+  "model_calls": 24,
+  "calls_with_reasoning": 24,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 6042,
+    "p95": 59655,
+    "max": 59655
+  },
+  "model_call_latency_ms": {
+    "median": 3036.5,
+    "p95": 22826,
+    "max": 23455
+  },
+  "usage": {
+    "prompt_tokens": 78121,
+    "completion_tokens": 17070,
+    "total_tokens": 95191
+  },
+  "finish_reasons": {
+    "stop": 24
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "deep_corpus_weak_password_positive"
+  ],
+  "runs_per_case": {
+    "deep_corpus_junit_mock_secret_negative": 1,
+    "deep_corpus_junit_mock_secret_positive": 1,
+    "deep_corpus_laravel_config_negative": 1,
+    "deep_corpus_laravel_config_positive": 1,
+    "deep_corpus_multiline_assignment_negative": 1,
+    "deep_corpus_multiline_assignment_positive": 1,
+    "deep_corpus_smtp_login_negative": 1,
+    "deep_corpus_smtp_login_positive": 1,
+    "deep_corpus_weak_password_negative": 1,
+    "deep_corpus_weak_password_positive": 1,
+    "deep_multiwindow": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:9f0dc465dff7"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:d257f1b1b729"
+  ],
+  "fixture_hashes": {
+    "deep_corpus_junit_mock_secret_negative": {
+      "diff": "8a39b81d226b469faa7dcfb7aab83f0d193aa996643713560789c5195de87fa3",
+      "expectation": "ed07022995d5e3687b08c04ae40430db654796e8cc90d88d406d9a95f93abf4a"
+    },
+    "deep_corpus_junit_mock_secret_positive": {
+      "diff": "46f0add7f7fbd9dc6cc248864220f60cd99cd3788335e4a9b2a17b2aac938aa8",
+      "expectation": "4d52a6faa01dac5cf1605fe282dc91aba5e1e64133c8c6d4e804bfa0e0fd8885"
+    },
+    "deep_corpus_laravel_config_negative": {
+      "diff": "f51aafc210c9e623bb9d45bd54a567d4801fc8ca78241b4afee16e2566d0a01a",
+      "expectation": "71cf7aedc769d6053412af534d8542861911d31693eb4490c0c9a58d3978af2f"
+    },
+    "deep_corpus_laravel_config_positive": {
+      "diff": "fd068625d32b2443bdd29cdb00b8be76dff706fc83267b678d2c8e1a4c3f7f9d",
+      "expectation": "daf1f346db68b6d18d1db2711159473ec3b97fdeff28229eb69a5dca16639c5e"
+    },
+    "deep_corpus_multiline_assignment_negative": {
+      "diff": "3786b6e6ca801a8dde4b45497443696616fb77a5226518848e04f12c4a596f1d",
+      "expectation": "16247c9caeae614d33c3813db185a9c4971e044ae33dae63d8f1ec58146e0a1f"
+    },
+    "deep_corpus_multiline_assignment_positive": {
+      "diff": "0b9168d226649d03c96803b6025977993a7893a5c0ad73b3afd51a2252c09199",
+      "expectation": "af8e0eb66de14d5b7eb8257b18e7bb051e55f6a710381c0ed2a30b319932b746"
+    },
+    "deep_corpus_smtp_login_negative": {
+      "diff": "9a8a4b6b37e4df580b6f980ae41121dfaba8fe064171408df8d17aec91e2cabd",
+      "expectation": "55866e6ba937103313e5b5795dccc8cbfaf6250a130aa2d24f221386d506f267"
+    },
+    "deep_corpus_smtp_login_positive": {
+      "diff": "27bbc9a67ba25707df2cd4502cd47a84a2a7e3264fc9c5bd39cffd42da674a76",
+      "expectation": "3901407ea445f91da55087796eff6122317719246bed4910a17608a9872dafa9"
+    },
+    "deep_corpus_weak_password_negative": {
+      "diff": "8a93e9748da1eeddcf5ec133a7ddd2524e8941fd41b6f5212a9b3f5bc4c2c425",
+      "expectation": "a82cc3ead3d2cd5cb2c6263efd5fc2b3fd5713faace4e7fe1fac4201d14f0bb2"
+    },
+    "deep_corpus_weak_password_positive": {
+      "diff": "83d91232e2f9b2ca76ce810dc2107229294e93abf28ad7acb76533a86b8980cc",
+      "expectation": "c531c6dd1fb29d2029515be445955cc9212533021bae72efafdd91252d2f77d1"
+    },
+    "deep_multiwindow": {
+      "diff": "39e9536200a575932266d17118789a596097d562c1b7a17d4cd6148c186d5c97",
+      "expectation": "f8d78fa3fd742647ec18c81a69ca56f788020ad7102e730e9378508b047852f3"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 5,
+      "latency_ms": {
+        "median": 4440,
+        "p95": 7211,
+        "max": 7211
+      },
+      "usage": {
+        "prompt_tokens": 8472,
+        "completion_tokens": 3843,
+        "total_tokens": 12315
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 5
+      }
+    },
+    "deep": {
+      "calls": 19,
+      "latency_ms": {
+        "median": 2272,
+        "p95": 23455,
+        "max": 23455
+      },
+      "usage": {
+        "prompt_tokens": 69649,
+        "completion_tokens": 13227,
+        "total_tokens": 82876
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 19
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 4,
+    "total": 5
+  },
+  "clean_scans": {
+    "passed": 5,
+    "total": 5
+  },
+  "records_sha256": "05f619a9b4659bac5ea2d4ae3ee717c60c49dfa5c725413d5157c1aa9e61dc00",
+  "log_sha256": "6b8076b8fcafa6e639d528cba19c6b16e8b18dbdfddae3d9560f25a30ba12d4e"
+}

@@ -47,6 +47,10 @@ detectors:
     extra_args: []
 
 llm:
+  # Optional, for backends supporting chat_template_kwargs.enable_thinking.
+  # Recommended for the evaluated Gemma 4 E4B prompts; see docs/deployment.md.
+  # enable_thinking: true
+
   endpoint: http://127.0.0.1:8000/v1
   model: google/gemma-4-E4B-it
   max_inflight: 1                   # concurrent LLM calls; match vLLM --max-num-seqs
@@ -66,6 +70,8 @@ llm:
     window_tokens: 4000             # size of ONE window of added lines; deliberately smaller than context_budget.input_tokens (recall drops as the window grows)
     max_windows: 48                 # coverage cap on windows; smaller windows means more of them
     max_candidates: 50              # per LLM call; extras discarded before grounding
+    # Opt-in source selection; use with the gemma4_source profiles below.
+    source_literals: false
     profile: gemma4_deep            # entry under llm.profiles holding the deep templates
     require_findings: false         # true limits deep reads to diffs the detectors already flagged. A precision knob, not a load lever: it drops the coverage deep exists for
     max_added_lines: 0              # skip the deep read on diffs with more added lines than this; 0 = no limit. Load-shedding lever
@@ -79,6 +85,15 @@ llm:
     gemma4_deep:
       system_template: /etc/atalaia/prompts/gemma4_deep_system.tmpl
       user_template: /etc/atalaia/prompts/gemma4_deep_user.tmpl
+      response_format: json_schema
+    # Validated opt-in pair. Select both and set enable_thinking/source_literals true.
+    gemma4_source:
+      system_template: /etc/atalaia/prompts/gemma4_source_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_source_user.tmpl
+      response_format: json_schema
+    gemma4_source_deep:
+      system_template: /etc/atalaia/prompts/gemma4_source_deep_system.tmpl
+      user_template: /etc/atalaia/prompts/gemma4_source_deep_user.tmpl
       response_format: json_schema
 
 observability:

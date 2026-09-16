@@ -67,3 +67,36 @@ func TestScrub(t *testing.T) {
 		t.Errorf("Scrub mutated text on blank secret: %q", got)
 	}
 }
+
+func TestScrub_ConnectionStringComponents(t *testing.T) {
+	for _, tc := range []struct {
+		name, secret, reason string
+		private              []string
+	}{
+		{"password fragment", "postgres://reporter:BirchHarbor62@db.internal/reports", "Literal password BirchHarbor62 in a connection string", []string{"BirchHarbor62"}},
+		{"encoded and decoded", "https://reader:Pine%4aHill%3a82@service.internal/", "Password Pine%4aHill%3a82 decodes to PineJHill:82", []string{"Pine%4aHill%3a82", "PineJHill:82"}},
+		{"token username", "https://q7Nm9Vx4Kr6Ds2Pa@git.internal/repo", "The token q7Nm9Vx4Kr6Ds2Pa is used as username", []string{"q7Nm9Vx4Kr6Ds2Pa"}},
+		{"mysql password", "reader:Forest(27)@tcp(db.internal:3306)/orders", "The password Forest(27) is literal", []string{"Forest(27)"}},
+		{"mysql embedded at", "reader:Forest@Hill27@tcp(db.internal:3306)/orders", "Password Forest@Hill27 in DSN", []string{"Forest@Hill27"}},
+		{"unix socket", "reader:BirchHarbor62@unix(/tmp/db.sock)/orders", "Password BirchHarbor62 in DSN", []string{"BirchHarbor62"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Scrub(tc.reason, tc.secret)
+			for _, value := range tc.private {
+				if strings.Contains(got, value) {
+					t.Fatal("credential component leaked")
+				}
+			}
+			if !strings.Contains(got, "****") {
+				t.Fatal("missing redaction mask")
+			}
+		})
+	}
+}
+
+func TestPreview_MySQLDSN(t *testing.T) {
+	// Generic head/tail masking would reveal the entire two-character password.
+	if got := Preview("u:pw@tcp(db.internal:3306)/orders"); got != "****:****@tcp(db.internal:3306)/orders" {
+		t.Fatalf("unexpected DSN preview: %s", got)
+	}
+}

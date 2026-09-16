@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: fetch_restore. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_fetch_restore",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "tests/fetch.test.js",
+      "line": 4,
+      "kind": "credential",
+      "value": "h6Ns2Vp9Kc4Qa8Jm3Rd7"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

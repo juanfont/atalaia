@@ -1,0 +1,22 @@
+{
+  "description": "Frozen round-four contrast: env_backslash. All values are fabricated; fixture code is never executed.",
+  "tags": [
+    "expanded",
+    "holdout4",
+    "positive"
+  ],
+  "pair": "unseen4_env_backslash",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "config/worker.env",
+      "line": 1,
+      "kind": "credential",
+      "value": "Harbor\\Pavilion69"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

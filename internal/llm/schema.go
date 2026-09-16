@@ -103,7 +103,7 @@ var DeepSchema = map[string]any{
 					"value": map[string]any{"type": "string"},
 					"kind": map[string]any{
 						"type": "string",
-						"enum": []string{"credential", "private_key"},
+						"enum": []string{"credential", "private_key", "test_data"},
 					},
 					"confidence": map[string]any{
 						"type":    "number",
@@ -144,14 +144,17 @@ func DeepTool() Tool {
 		Type: "function",
 		Function: ToolFunction{
 			Name:        DeepToolName,
-			Description: "Submit credentials and private key material found in the added lines. Copy each value verbatim from the line it appears on. Return an empty list when there is nothing.",
+			Description: "Submit credentials and private key material found in the added lines. Copy each value verbatim from the line it appears on. Classify synthetic test credentials as test_data, not credential; they will be discarded. Return an empty list when there is nothing.",
 			Parameters:  DeepSchema,
 		},
 	}
 }
 
-// Discovery kinds, matching the DeepSchema enum.
+// Model candidate kinds, matching the DeepSchema enum. Only credentials
+// and private keys can become public discoveries.
 const (
 	KindCredential = "credential"
 	KindPrivateKey = "private_key"
+	// KindTestData is an internal model classification, never a discovery.
+	KindTestData = "test_data"
 )

@@ -1,0 +1,92 @@
+{
+  "cases": 1,
+  "cases_passed_all_runs": 1,
+  "requests": 1,
+  "model_calls": 2,
+  "calls_with_reasoning": 2,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 11460,
+    "p95": 11460,
+    "max": 11460
+  },
+  "model_call_latency_ms": {
+    "median": 5729.0,
+    "p95": 6966,
+    "max": 6966
+  },
+  "usage": {
+    "prompt_tokens": 3034,
+    "completion_tokens": 1155,
+    "total_tokens": 4189
+  },
+  "finish_reasons": {
+    "stop": 2
+  },
+  "deep_errors": 0,
+  "failed_cases": [],
+  "runs_per_case": {
+    "holdout_operational_docs_positive": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:d5f2cfefae2c"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:c93b5e72489d"
+  ],
+  "fixture_hashes": {
+    "holdout_operational_docs_positive": {
+      "diff": "1dffd2cc03ff0a197dc1c2a55eb8794a75ad1293fe6f94e498c7ecf1b1fbe1b6",
+      "expectation": "60b35edfe89ed0f54c4c8e6fd10b10a3104a2a4e21a10173aa233b162a6b588e"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 1,
+      "latency_ms": {
+        "median": 6966,
+        "p95": 6966,
+        "max": 6966
+      },
+      "usage": {
+        "prompt_tokens": 1607,
+        "completion_tokens": 711,
+        "total_tokens": 2318
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 1
+      }
+    },
+    "deep": {
+      "calls": 1,
+      "latency_ms": {
+        "median": 4492,
+        "p95": 4492,
+        "max": 4492
+      },
+      "usage": {
+        "prompt_tokens": 1427,
+        "completion_tokens": 444,
+        "total_tokens": 1871
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 1
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 1,
+    "total": 1
+  },
+  "records_sha256": "9d874145dbd3e2de87f4c0a228360709f50094f0f4a0d3063a4f0f039bed0a36",
+  "log_sha256": "3b9211411b5d37fe8fef933b36722ff5061038b6d633bc8f03ca9c9cc87567a6"
+}

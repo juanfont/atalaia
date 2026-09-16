@@ -1,0 +1,96 @@
+{
+  "cases": 4,
+  "cases_passed_all_runs": 3,
+  "requests": 4,
+  "model_calls": 4,
+  "calls_with_reasoning": 4,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 2149.5,
+    "p95": 2202,
+    "max": 2202
+  },
+  "model_call_latency_ms": {
+    "median": 2148.5,
+    "p95": 2201,
+    "max": 2201
+  },
+  "usage": {
+    "prompt_tokens": 10467,
+    "completion_tokens": 1308,
+    "total_tokens": 11775
+  },
+  "finish_reasons": {
+    "stop": 4
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "fresh_json_backslashes_positive"
+  ],
+  "runs_per_case": {
+    "fresh_json_backslashes_negative": 1,
+    "fresh_json_backslashes_positive": 1,
+    "fresh_json_source_bytes_negative": 1,
+    "fresh_json_source_bytes_positive": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:6e1ab740d653"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:89ac07473a28"
+  ],
+  "fixture_hashes": {
+    "fresh_json_backslashes_negative": {
+      "diff": "dc622f902caba416120260a7b06aa73cc4dfe9a2903c6d72104af6a314d11f44",
+      "expectation": "6c60ea9a560395c776fee1eb55c7f2cfae6ed046a54f10e19821adcc0874bca3"
+    },
+    "fresh_json_backslashes_positive": {
+      "diff": "d44acb13b642f36342f12b5fb489f32ffe536f10b8ba808980f91ca0c191afff",
+      "expectation": "df2d769e972c17a16921a39d037e8c6ec1eadc443912e375a7a21f255ba5677d"
+    },
+    "fresh_json_source_bytes_negative": {
+      "diff": "99408b8b197e743ebb7be7f0c9c7dd1052d115f53dea1741293f822ecd15a652",
+      "expectation": "0be513877d9c8823d620c6037c2940f873db4f7473584cfdbe75cbaf564633b6"
+    },
+    "fresh_json_source_bytes_positive": {
+      "diff": "e9409a9b2ea1db8bbb65527bc81478f0a328a42ec26cbfa563a8d51cf67fd56c",
+      "expectation": "58746fda4463c68e69961ff5c9d245c23cbf607da5ec1f5953f67920c6189410"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 4,
+      "latency_ms": {
+        "median": 2148.5,
+        "p95": 2201,
+        "max": 2201
+      },
+      "usage": {
+        "prompt_tokens": 10467,
+        "completion_tokens": 1308,
+        "total_tokens": 11775
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 4
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 1,
+    "total": 2
+  },
+  "clean_scans": {
+    "passed": 2,
+    "total": 2
+  },
+  "records_sha256": "cb38298d18889d9c8104ec23fb35029f32c73c66b503b98d825986520bd849d1",
+  "log_sha256": "186ca6fee5eca2f74837bef4e41373824b398f89306b3541dc44174378f27097"
+}

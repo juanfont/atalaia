@@ -1,0 +1,6 @@
+diff --git a/tests/client.rs b/tests/client.rs
+--- /dev/null
++++ b/tests/client.rs
+@@ -0,0 +1,2 @@
++let response = reqwest::Client::new().get("https://ledger.internal/private").bearer_auth("q3f835e01200c5d6ad29c837375cb4").send().await?;
++assert!(response.status().is_success());

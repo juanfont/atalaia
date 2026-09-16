@@ -1,0 +1,6 @@
+diff --git a/app/connections.py b/app/connections.py
+--- /dev/null
++++ b/app/connections.py
+@@ -0,0 +1,2 @@
++database = connect(os.environ["DATABASE_URL"])
++cache = Redis.from_url(os.environ["REDIS_URL"])

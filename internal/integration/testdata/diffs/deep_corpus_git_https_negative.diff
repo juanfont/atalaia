@@ -1,0 +1,6 @@
+diff --git a/scripts/sync.sh b/scripts/sync.sh
+--- /dev/null
++++ b/scripts/sync.sh
+@@ -0,0 +1,2 @@
++#!/bin/sh
++git clone "https://builder:${GIT_PASSWORD}@git.internal/team/repo.git"

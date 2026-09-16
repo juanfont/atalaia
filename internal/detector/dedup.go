@@ -1,6 +1,9 @@
 package detector
 
-import "sort"
+import (
+	"cmp"
+	"sort"
+)
 
 // Detection is the per-detector trail kept for one DedupedFinding.
 // Multiple detectors firing on the same (file, line, match) collapse
@@ -32,9 +35,9 @@ type dedupKey struct {
 	match string
 }
 
-// Dedup collapses findings by (file, line, match). Detection order
-// within a DedupedFinding is preserved by insertion; the output slice
-// itself is sorted by (file, line) for deterministic responses.
+// Dedup collapses findings by (file, line, match). Both findings and their
+// detection trails have a total order, so concurrent scanner/rule completion
+// cannot change prompts, truncation selection or API ordering.
 func Dedup(findings []Finding) []DedupedFinding {
 	byKey := map[dedupKey]*DedupedFinding{}
 	var order []dedupKey
@@ -64,13 +67,25 @@ func Dedup(findings []Finding) []DedupedFinding {
 
 	out := make([]DedupedFinding, 0, len(order))
 	for _, k := range order {
-		out = append(out, *byKey[k])
+		finding := byKey[k]
+		sort.Slice(finding.Detections, func(i, j int) bool {
+			a, b := finding.Detections[i], finding.Detections[j]
+			if n := cmp.Or(cmp.Compare(a.DetectorType, b.DetectorType),
+				cmp.Compare(a.DetectorName, b.DetectorName), cmp.Compare(a.Rule, b.Rule)); n != 0 {
+				return n < 0
+			}
+			return !a.Verified && b.Verified
+		})
+		out = append(out, *finding)
 	}
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].File != out[j].File {
 			return out[i].File < out[j].File
 		}
-		return out[i].Line < out[j].Line
+		if out[i].Line != out[j].Line {
+			return out[i].Line < out[j].Line
+		}
+		return out[i].Match < out[j].Match
 	})
 	return out
 }

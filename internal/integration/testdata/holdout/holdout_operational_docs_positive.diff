@@ -1,0 +1,7 @@
+diff --git a/docs/operations_example.py b/docs/operations_example.py
+--- /dev/null
++++ b/docs/operations_example.py
+@@ -0,0 +1,3 @@
++# Fetch invoices from the deployed billing service.
++client = BillingClient("https://ledger.internal", api_key="qbef9cf09708eef05ecf65e06c3730")
++client.download_invoices()

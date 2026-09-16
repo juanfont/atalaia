@@ -1,0 +1,13 @@
+diff --git a/app/keys/rsa.pem b/app/keys/rsa.pem
+--- a/app/keys/rsa.pem
++++ b/app/keys/rsa.pem
+@@ -0,0 +1,9 @@
++-----BEGIN PUBLIC KEY-----
++MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmkGIjoEf4p6lzdbAZ/uC
++7jkooPaFCPWzZaOGeaHu6eSNoCTo5CHmsEBW86veu4qzdyIa3huDo3FOIeNgy0St
++DSt8bD+2vD2UxcGun+GAdWl4QKqHg4Fh1gPA0GLxGbdsEcSp4sXnpePYKVyIp43k
++FKFQLY88AWScYJsQqOdTNakCBGb9LkQNs2OQyVmVJiuQAW0z37/T9D82GwWH86Ca
++tP9VsqXGs3cZntmTQN+mwla2WEkyEZROM0qHah+sMHCIJJQ/1preqaQ0TcqTCdb+
++IK6bLMfKZ6VJlr6XZqGippK5ytOFbbOZhieQex0Tf5h6A3WSUnogmzmZU+adObfy
++vQIDAQAB
++-----END PUBLIC KEY-----

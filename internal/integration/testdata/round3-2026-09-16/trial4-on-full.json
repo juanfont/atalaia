@@ -1,0 +1,974 @@
+{
+  "cases": 176,
+  "cases_passed_all_runs": 174,
+  "requests": 176,
+  "model_calls": 272,
+  "calls_with_reasoning": 272,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 5048.0,
+    "p95": 12306,
+    "max": 59699
+  },
+  "model_call_latency_ms": {
+    "median": 3195.0,
+    "p95": 7392,
+    "max": 23467
+  },
+  "usage": {
+    "prompt_tokens": 670328,
+    "completion_tokens": 154724,
+    "total_tokens": 825052
+  },
+  "finish_reasons": {
+    "stop": 272
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "deep_corpus_multiple_files_negative",
+    "deep_corpus_nock_interceptor_positive"
+  ],
+  "runs_per_case": {
+    "ci_var_curl_auth": 1,
+    "code_expression": 1,
+    "deep_corpus_amqp_url_negative": 1,
+    "deep_corpus_amqp_url_positive": 1,
+    "deep_corpus_ansible_auth_negative": 1,
+    "deep_corpus_ansible_auth_positive": 1,
+    "deep_corpus_aspnet_factory_negative": 1,
+    "deep_corpus_aspnet_factory_positive": 1,
+    "deep_corpus_auth_username_negative": 1,
+    "deep_corpus_auth_username_positive": 1,
+    "deep_corpus_axum_oneshot_negative": 1,
+    "deep_corpus_axum_oneshot_positive": 1,
+    "deep_corpus_base64_role_negative": 1,
+    "deep_corpus_base64_role_positive": 1,
+    "deep_corpus_certificate_vs_key_negative": 1,
+    "deep_corpus_certificate_vs_key_positive": 1,
+    "deep_corpus_compose_password_negative": 1,
+    "deep_corpus_compose_password_positive": 1,
+    "deep_corpus_context_and_added_same_value_negative": 1,
+    "deep_corpus_context_and_added_same_value_positive": 1,
+    "deep_corpus_context_secret_negative": 1,
+    "deep_corpus_context_secret_positive": 1,
+    "deep_corpus_csharp_environment_negative": 1,
+    "deep_corpus_csharp_environment_positive": 1,
+    "deep_corpus_curl_basic_auth_negative": 1,
+    "deep_corpus_curl_basic_auth_positive": 1,
+    "deep_corpus_cypress_intercept_negative": 1,
+    "deep_corpus_cypress_intercept_positive": 1,
+    "deep_corpus_distant_hunks_negative": 1,
+    "deep_corpus_distant_hunks_positive": 1,
+    "deep_corpus_django_override_negative": 1,
+    "deep_corpus_django_override_positive": 1,
+    "deep_corpus_docker_login_negative": 1,
+    "deep_corpus_docker_login_positive": 1,
+    "deep_corpus_documented_sample_negative": 1,
+    "deep_corpus_documented_sample_positive": 1,
+    "deep_corpus_express_supertest_negative": 1,
+    "deep_corpus_express_supertest_positive": 1,
+    "deep_corpus_fastapi_override_negative": 1,
+    "deep_corpus_fastapi_override_positive": 1,
+    "deep_corpus_fixture_path_live_negative": 1,
+    "deep_corpus_fixture_path_live_positive": 1,
+    "deep_corpus_flask_config_negative": 1,
+    "deep_corpus_flask_config_positive": 1,
+    "deep_corpus_generated_bundle_negative": 1,
+    "deep_corpus_generated_bundle_positive": 1,
+    "deep_corpus_gin_httptest_negative": 1,
+    "deep_corpus_gin_httptest_positive": 1,
+    "deep_corpus_git_https_negative": 1,
+    "deep_corpus_git_https_positive": 1,
+    "deep_corpus_github_actions_negative": 1,
+    "deep_corpus_github_actions_positive": 1,
+    "deep_corpus_gitlab_variables_negative": 1,
+    "deep_corpus_gitlab_variables_positive": 1,
+    "deep_corpus_go_getenv_negative": 1,
+    "deep_corpus_go_getenv_positive": 1,
+    "deep_corpus_hash_role_negative": 1,
+    "deep_corpus_hash_role_positive": 1,
+    "deep_corpus_helm_values_negative": 1,
+    "deep_corpus_helm_values_positive": 1,
+    "deep_corpus_java_getenv_negative": 1,
+    "deep_corpus_java_getenv_positive": 1,
+    "deep_corpus_javascript_env_negative": 1,
+    "deep_corpus_javascript_env_positive": 1,
+    "deep_corpus_jdbc_property_negative": 1,
+    "deep_corpus_jdbc_property_positive": 1,
+    "deep_corpus_junit_mock_secret_negative": 1,
+    "deep_corpus_junit_mock_secret_positive": 1,
+    "deep_corpus_key_ed25519_negative": 1,
+    "deep_corpus_key_ed25519_positive": 1,
+    "deep_corpus_key_rsa_negative": 1,
+    "deep_corpus_key_rsa_positive": 1,
+    "deep_corpus_kotlin_getenv_negative": 1,
+    "deep_corpus_kotlin_getenv_positive": 1,
+    "deep_corpus_kubernetes_env_negative": 1,
+    "deep_corpus_kubernetes_env_positive": 1,
+    "deep_corpus_kubernetes_secret_negative": 1,
+    "deep_corpus_kubernetes_secret_positive": 1,
+    "deep_corpus_laravel_config_negative": 1,
+    "deep_corpus_laravel_config_positive": 1,
+    "deep_corpus_line_offset_negative": 1,
+    "deep_corpus_line_offset_positive": 1,
+    "deep_corpus_localhost_not_mock_negative": 1,
+    "deep_corpus_localhost_not_mock_positive": 1,
+    "deep_corpus_mixed_interpolation_negative": 1,
+    "deep_corpus_mixed_interpolation_positive": 1,
+    "deep_corpus_mixed_same_file_negative": 1,
+    "deep_corpus_mixed_same_file_positive": 1,
+    "deep_corpus_mongodb_uri_negative": 1,
+    "deep_corpus_mongodb_uri_positive": 1,
+    "deep_corpus_multiline_assignment_negative": 1,
+    "deep_corpus_multiline_assignment_positive": 1,
+    "deep_corpus_multiple_files_negative": 1,
+    "deep_corpus_multiple_files_positive": 1,
+    "deep_corpus_multiple_values_negative": 1,
+    "deep_corpus_multiple_values_positive": 1,
+    "deep_corpus_mysql_dsn_negative": 1,
+    "deep_corpus_mysql_dsn_positive": 1,
+    "deep_corpus_nock_interceptor_negative": 1,
+    "deep_corpus_nock_interceptor_positive": 1,
+    "deep_corpus_percent_encoded_url_negative": 1,
+    "deep_corpus_percent_encoded_url_positive": 1,
+    "deep_corpus_php_getenv_negative": 1,
+    "deep_corpus_php_getenv_positive": 1,
+    "deep_corpus_postgres_url_negative": 1,
+    "deep_corpus_postgres_url_positive": 1,
+    "deep_corpus_prompt_injection_negative": 1,
+    "deep_corpus_prompt_injection_positive": 1,
+    "deep_corpus_pytest_env_negative": 1,
+    "deep_corpus_pytest_env_positive": 1,
+    "deep_corpus_python_getenv_negative": 1,
+    "deep_corpus_python_getenv_positive": 1,
+    "deep_corpus_python_responses_negative": 1,
+    "deep_corpus_python_responses_positive": 1,
+    "deep_corpus_rails_request_negative": 1,
+    "deep_corpus_rails_request_positive": 1,
+    "deep_corpus_redis_url_negative": 1,
+    "deep_corpus_redis_url_positive": 1,
+    "deep_corpus_removed_secret_negative": 1,
+    "deep_corpus_removed_secret_positive": 1,
+    "deep_corpus_rename_negative": 1,
+    "deep_corpus_rename_positive": 1,
+    "deep_corpus_rotation_negative": 1,
+    "deep_corpus_rotation_positive": 1,
+    "deep_corpus_ruby_env_negative": 1,
+    "deep_corpus_ruby_env_positive": 1,
+    "deep_corpus_rust_dsn_negative": 1,
+    "deep_corpus_rust_dsn_positive": 1,
+    "deep_corpus_schema_in_comment_negative": 1,
+    "deep_corpus_schema_in_comment_positive": 1,
+    "deep_corpus_shell_expansion_negative": 1,
+    "deep_corpus_shell_expansion_positive": 1,
+    "deep_corpus_smtp_login_negative": 1,
+    "deep_corpus_smtp_login_positive": 1,
+    "deep_corpus_spring_mockmvc_negative": 1,
+    "deep_corpus_spring_mockmvc_positive": 1,
+    "deep_corpus_terraform_data_negative": 1,
+    "deep_corpus_terraform_data_positive": 1,
+    "deep_corpus_terraform_password_negative": 1,
+    "deep_corpus_terraform_password_positive": 1,
+    "deep_corpus_toml_password_negative": 1,
+    "deep_corpus_toml_password_positive": 1,
+    "deep_corpus_typescript_lookup_negative": 1,
+    "deep_corpus_typescript_lookup_positive": 1,
+    "deep_corpus_unicode_password_negative": 1,
+    "deep_corpus_unicode_password_positive": 1,
+    "deep_corpus_uuid_role_negative": 1,
+    "deep_corpus_uuid_role_positive": 1,
+    "deep_corpus_weak_password_negative": 1,
+    "deep_corpus_weak_password_positive": 1,
+    "deep_corpus_wiremock_negative": 1,
+    "deep_corpus_wiremock_positive": 1,
+    "deep_env_example": 1,
+    "deep_multiwindow": 1,
+    "deep_private_key": 1,
+    "deep_quiet": 1,
+    "deep_quirk": 1,
+    "deep_references": 1,
+    "deep_sentinel_cold": 1,
+    "deep_test_client_opaque": 1,
+    "deep_test_client_token": 1,
+    "deep_test_external_password": 1,
+    "docs_example": 1,
+    "env_var_in_url": 1,
+    "go_env_ref": 1,
+    "hardcoded_db_password": 1,
+    "js_env_ref": 1,
+    "jwt_literal": 1,
+    "kwarg_passthrough": 1,
+    "many_findings": 1,
+    "minified_line": 1,
+    "placeholder_default": 1,
+    "real_aws_key": 1,
+    "real_generic_api_key": 1,
+    "real_github_pat": 1,
+    "test_fixture": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:6e1ab740d653"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:d257f1b1b729"
+  ],
+  "fixture_hashes": {
+    "ci_var_curl_auth": {
+      "diff": "9f6902691cfff6380732cb489ccfaa792fc6e49d500e9ef011bedebdc81fb6de",
+      "expectation": "3fc45aef14d26dcc2403d329a44372de8712d64bffddb500b293f60408c2aa4f"
+    },
+    "code_expression": {
+      "diff": "48421f91f38a90de878dce7da3582fa134e407e296542d3add3813ee2c078190",
+      "expectation": "26aea7697d85de8eecedf46e024da50d54cb1a6b471a21369505e4e3f387a997"
+    },
+    "deep_corpus_amqp_url_negative": {
+      "diff": "579f469ad8bd17e04b075ea4e51b503041ff1f5625d36f14214342d3059ff681",
+      "expectation": "3675cae0e7e00f23ab4689f4f7d1866e4dbd4e173d1294c654b58c6dd7048ea9"
+    },
+    "deep_corpus_amqp_url_positive": {
+      "diff": "d35ff73d3f40c378fd6f1dad07b8209fa18750783676f1bd1e0a97bc49b2e875",
+      "expectation": "2865b16f60fdef2a4c144e04aabec919d52a5575ebe8e52309c81a36fe325104"
+    },
+    "deep_corpus_ansible_auth_negative": {
+      "diff": "8aea43185cbe75bf6d12eccd6d20aa4e648eea2a17705cb7c30552014a241f73",
+      "expectation": "eb43679b96828ad5f13f696b1d8dd3cc847d2fb1e069aa9105599779366d30a9"
+    },
+    "deep_corpus_ansible_auth_positive": {
+      "diff": "15e48ca087ddff0ab0ccf2b4275a4fdeeefd6a5411115b0e8d6203b763e4aef7",
+      "expectation": "20d5e4e59d2ae3fc77d531b19cf48cb19a45d84e1af0a2e62f17928289e73a95"
+    },
+    "deep_corpus_aspnet_factory_negative": {
+      "diff": "e57b5bc5f6c9b400cef6be5c638c34e0816bacb76effff9683ce8a24903a696e",
+      "expectation": "3e440f3d00a273dcddd0a680e5a326dce6a96105c43241fd47bea35c83fce9fd"
+    },
+    "deep_corpus_aspnet_factory_positive": {
+      "diff": "9d64d691e7ea0c2830fc1be9e4c001a4643e57e3b8e59bb257f46d0094299753",
+      "expectation": "93060d0f200529dcf8f9a8e6da8d00991997e7341b2d357ee49c95df10c79a6c"
+    },
+    "deep_corpus_auth_username_negative": {
+      "diff": "41565afe9b34ee070ee63b764c83d159dc74b771f075fc408993099091d77d49",
+      "expectation": "8bb0aba514527bc3ac4d09881df971d60b73bc0e900a9994d31a3ec0c0feb23f"
+    },
+    "deep_corpus_auth_username_positive": {
+      "diff": "ab09dea326d83bc78b6961a1d1b07d5c2db3b40d906eb51d327c850971d26fc7",
+      "expectation": "650c1d0721c5c14ddd30d3cfc040f37ed402874a8213592302ddae5371df690a"
+    },
+    "deep_corpus_axum_oneshot_negative": {
+      "diff": "c0865346e881fba3239099b1bc951d5d39d63081115a3c7156f4b0c6828e4891",
+      "expectation": "ff26785c2bf1595d51a599075f7aa84f271f7bc40d50106df0da16ccaaebf8bb"
+    },
+    "deep_corpus_axum_oneshot_positive": {
+      "diff": "13feb3bb3c49800d3167907454fd2f9b92a8a31a11d5ce7bff5e3f8e89a9ca2a",
+      "expectation": "166ae6bc40f06d93d69af1e2cbadae7385dc94418c1ea89fb59f5382c4914fd3"
+    },
+    "deep_corpus_base64_role_negative": {
+      "diff": "a7a17996ea804392b33e26f28faefb9857a29846fd62c6e06c99b153d94c9801",
+      "expectation": "1175ada6b90e96f5814815e6d1eb66b37c35707f88c36c44b0c02baec5740714"
+    },
+    "deep_corpus_base64_role_positive": {
+      "diff": "08aaa0f5e838d4e3904c8f3119bfc85f236ad6913326137a19cb2fb364b4ab89",
+      "expectation": "b74fdc1b0eda8af97ba63c9c7facc26eaceaa5620bb43e5131c5a2ad7b995630"
+    },
+    "deep_corpus_certificate_vs_key_negative": {
+      "diff": "df2c38774849300b6d32aa861dbf0ddf48b2842658949d2281a9bfac8ccc4ec7",
+      "expectation": "d82d617627614eef10958dacc58ed10a915d0fae86e565f44320ab2bb9a08e60"
+    },
+    "deep_corpus_certificate_vs_key_positive": {
+      "diff": "522d243feb1675e6631dd4988976b6fd6accfde288451dcf72aeec75eb1f86ed",
+      "expectation": "9dee954c7da30df58ebc1806d5b179ccc1f0746ec20eee02e233d502bb4e326c"
+    },
+    "deep_corpus_compose_password_negative": {
+      "diff": "fd1267491fc3860a3bf595b98aae32f4da7d39bddfc1405a476522fbe57c0a96",
+      "expectation": "862963a9686e7c238d29502dff5bec7ce15023b7d8522deb175a7c521668f785"
+    },
+    "deep_corpus_compose_password_positive": {
+      "diff": "dc87c6249001502fd01c1f160614bb77b9db994948d6162d18532774818600c8",
+      "expectation": "8b89691406c32a9ef34764d1fc0c89e12a9ecff3004066eb166590f7a139e7ce"
+    },
+    "deep_corpus_context_and_added_same_value_negative": {
+      "diff": "0a8b84392c64117fef3e6fe452cd149a291915ffb52b5f03164b2a4e49b9f8a6",
+      "expectation": "1bded511c6faf077446ef63e7bb8c663d29ac419d65b41f8a617bd4feefaed54"
+    },
+    "deep_corpus_context_and_added_same_value_positive": {
+      "diff": "1df37d87ad9d341b118a91778e33cfa42f6332683a9f0e935f11ab9276ae8334",
+      "expectation": "9aaa2d78037627b53a036900c0acbfa4bb0028a3f5695988bcedaf5abb15c862"
+    },
+    "deep_corpus_context_secret_negative": {
+      "diff": "15a4bd182f2ebf2d6af6c17b9dfb7e66e2798e4f99f9a8d36ede242eb7858e45",
+      "expectation": "6746920857bb3df1abb9da7020c2e0045bd4b6c6d6148b6ebc11a9b27b6ef946"
+    },
+    "deep_corpus_context_secret_positive": {
+      "diff": "28ab2a34b22a1cc3da9b2d1076dc7c17246510d15af0297f28c6ac57ce297219",
+      "expectation": "efbcd356d5340895dbfe2488675d89edde0edb8bc6720fa9f1a16b1d80faeac0"
+    },
+    "deep_corpus_csharp_environment_negative": {
+      "diff": "b3ecafd334975d5818b3e222151d7f87afa2ebc9e796da55da5a4c3cf5fe0e40",
+      "expectation": "7084c112638f46e500418c0e7d7477091b3af3a91bc011fabb811a7acd29efb2"
+    },
+    "deep_corpus_csharp_environment_positive": {
+      "diff": "968d820fd0736c493d8046ab1cfe6e1c73edd961e65650ef72c988183d11c460",
+      "expectation": "a6b1e6ee6b98a79d80a22113679b5dd0b4ec1fa3c744ed48714b2a4dd5861ac1"
+    },
+    "deep_corpus_curl_basic_auth_negative": {
+      "diff": "91462c230ea8680931931e85d35ea42921a0ab835a6a3f89cf6df4e2b788d8e9",
+      "expectation": "6b17d28757edc28312b49e7940aaa8abe75a998f3d2dd9b26e63372195db0c41"
+    },
+    "deep_corpus_curl_basic_auth_positive": {
+      "diff": "7964536f524464a49601b8a8cd6d6d3c30fb9102874857cd081872fc806afb61",
+      "expectation": "0c2781b3124f6fd56fb8092421cf0e8f117b95c03d011ef55dcddd1b1d2a84e6"
+    },
+    "deep_corpus_cypress_intercept_negative": {
+      "diff": "329f4a0f7a19b8c666aafc23b9195e7d3f663f35f9b2c60e6c07fd4799e9db27",
+      "expectation": "2a02be835bd2c17dbcee361eccf10bad41cd6c9a60cdb17c82df554c3abab033"
+    },
+    "deep_corpus_cypress_intercept_positive": {
+      "diff": "480c11fb4dcdc2fbdd45cd26df000336a35920b69f0e6e341e6d7b402bdf3157",
+      "expectation": "c8bd3c73be1e29bb3345f6b6138028232ac96c6bf293cdd25399c2f5c65eedb7"
+    },
+    "deep_corpus_distant_hunks_negative": {
+      "diff": "e1dcc2b2c91f896507b79fe718453cc0187b108de0e3b2a795317ab8520a3a23",
+      "expectation": "fd180a1fba26bed13f04dbd7a8ed7389546fc19c8156240ec4d9b214c6f295ae"
+    },
+    "deep_corpus_distant_hunks_positive": {
+      "diff": "99971a148bbe62ac2603799e7027e5bfadf8892613e8406cf1457c1593dd5446",
+      "expectation": "13f7283226e94d61d3e6b13f5a5619c07cfd2438f0bfd4d2ba6787bf3f51f823"
+    },
+    "deep_corpus_django_override_negative": {
+      "diff": "76b0925cb6e0ef971313c3b0d256776bee04bb07cff5d06ffb6fd9d07e65917b",
+      "expectation": "062a333f0ca1f86e48cad4b9219270d6a3611411ac2fe2a16be6be6230d72f17"
+    },
+    "deep_corpus_django_override_positive": {
+      "diff": "b7db40cffb83e82315ece196ece93b5394a4115603c9a8ad125151bc9c1b3dae",
+      "expectation": "5bc64bf5ed6508c386d9d6fda0a90e0f5637094727dfb3b34c4f42e8fdce7e0f"
+    },
+    "deep_corpus_docker_login_negative": {
+      "diff": "6289bf9dcac802cdc47dd9a12090321dd8f3de989f4a749f738221da67f50628",
+      "expectation": "67f913300a88413ed594271aa9b7ff79548ea52f6b93ecd74ce10f824fc308a0"
+    },
+    "deep_corpus_docker_login_positive": {
+      "diff": "4bd9fed20109d2db7c379b9b2b765033e84fb44b9575a44adbc98a46727d09ca",
+      "expectation": "0a26bd68c867199c2682afc225667134eb4c6bca314292161e9ab8090ce93277"
+    },
+    "deep_corpus_documented_sample_negative": {
+      "diff": "06a9a0fd38acdbe80655fd4e662cf9bc914052574f5a944ec7bc7a79a445a37d",
+      "expectation": "83f1c63bb2aecec975258bbc6df9078bf744ca4204e48ff01c0226ade7663c44"
+    },
+    "deep_corpus_documented_sample_positive": {
+      "diff": "944c2cb546efec59ada2e247b6b6e80acbe2dd3442d7b5952afc5bf900f27c27",
+      "expectation": "b8f702e9cc8766fff30aadbb8bf3158521387bba02cd3eaa0ce64e38d8a7bfec"
+    },
+    "deep_corpus_express_supertest_negative": {
+      "diff": "a0884b8f84b62f1f6857bf3168a3e3b6664e82834a9c413821fbb0a1d7437550",
+      "expectation": "9273fbd0fd2c6d280ad5cdb66623c4159aac9f7956ec0149d082a358313971c8"
+    },
+    "deep_corpus_express_supertest_positive": {
+      "diff": "55d9e5dce686196e5df6797d4b648f3b60724dcbb9edf6dfa68fd2de7857b269",
+      "expectation": "9b56968736b6815465a83d79a766e1b641f9b7a5b4ce960bac4bbd766919e738"
+    },
+    "deep_corpus_fastapi_override_negative": {
+      "diff": "d828b25e8ee0b25a0a0092fe18f6fc12f1bfb852e2026f243982a9915108b649",
+      "expectation": "000e48be4462af25e0ee6a0f2862adadca37278670e1dd9e64aa93a4bad0bf6a"
+    },
+    "deep_corpus_fastapi_override_positive": {
+      "diff": "ef136d339f3e2059543608d76cb493a955a233f39a97ac622a72877969aafbbe",
+      "expectation": "7d3728897c5e82b6630a85ab7a607c09ce6e8c783aef11805b809cba8f7961dc"
+    },
+    "deep_corpus_fixture_path_live_negative": {
+      "diff": "91776ef6da72f587a6b1e93dcb23c9f47f2df66241f3157636fc761afd99a2f5",
+      "expectation": "ea4968def4652384ae01cdaebaeb20645628bedbdf5960c2489a03ca2fe8c63e"
+    },
+    "deep_corpus_fixture_path_live_positive": {
+      "diff": "d0f98217966d96008b4bad08d28778867ec5801ec60d3726f27b3e6c5661f07a",
+      "expectation": "68b08a2527cff82db57f1f4936ca4f3bae1346ff71572765a741783cf410a568"
+    },
+    "deep_corpus_flask_config_negative": {
+      "diff": "864ee4d9e969d0dfa979e68c910672efd00fc7d9779a806e8f54ec418952ceb5",
+      "expectation": "08c6276f48fe92e893fe8017fc2554c7783349e7b6339b1750145b20cdae44d1"
+    },
+    "deep_corpus_flask_config_positive": {
+      "diff": "0f37147876903b787ac386236d73552117016000c1d01b47ae440d03d4f1aa56",
+      "expectation": "779af39346c945f4c4d981fa5d4109f3b0e7e4f6869d2f2c40162d35c84fb015"
+    },
+    "deep_corpus_generated_bundle_negative": {
+      "diff": "2c216374c2e68a77eda7202fccd6532358bf5d7a3a40f172555aedb1aa01786a",
+      "expectation": "d7faa630335c5280cc8f7704983221725894fd65f949e405333ea6807f80eb38"
+    },
+    "deep_corpus_generated_bundle_positive": {
+      "diff": "ba9fea0b6b9d5de1815101f988b5520989e96b2050947b4bdcfab4ddd90245d1",
+      "expectation": "3be944da46c1aaa5daaf060b95e58ff783ac991b6b230b4e7175d76e1918a28f"
+    },
+    "deep_corpus_gin_httptest_negative": {
+      "diff": "25fcc4f265af1abe35318133f5747db0fc4891a615e953565e4f0306ba27504c",
+      "expectation": "c23dedc6e8ba1eee2b8a3e647a90fa40627ea7ab0fd2af17da6f3afd27a2acb6"
+    },
+    "deep_corpus_gin_httptest_positive": {
+      "diff": "20a4059abe7fffd35467ff77ee9368754ac78019f61117ae24910ec4370f33f0",
+      "expectation": "2605d6a108cd32b9a455c9d1990cf06ee48134f60860325de212167c4fe27ae2"
+    },
+    "deep_corpus_git_https_negative": {
+      "diff": "cce2d8614b91419bb963681a77fe12ee660330b229515873ea4e30bb6e4d5dd9",
+      "expectation": "1c186ec8ea947f820fb8467fd0ed6e805370e2ebbb0f9c960144c6f9d5ee6a30"
+    },
+    "deep_corpus_git_https_positive": {
+      "diff": "0f4da11014d137781d10ded0da62824fb916c5e9a6fb75c0c49851d5b3c143b3",
+      "expectation": "eb8dfdf00617970329c7bce45f3d84cb6cd718ca6d39b50da76915963a068723"
+    },
+    "deep_corpus_github_actions_negative": {
+      "diff": "5861b4941d035299194bf7ce207b4cecd5a64e0c27e55b8e96db1dc5d876ea04",
+      "expectation": "36d8c905b7d3bacd1e246cdb5ee1330c307c0f6a15bb343ba01e960495e08c3a"
+    },
+    "deep_corpus_github_actions_positive": {
+      "diff": "0e442254017f547eb13c1988256dd368a9983b3ca62327683b45a94fba615cd9",
+      "expectation": "767aeb74e86e031ebcb2229d8550970e035f661c3a043a630c2b365803e64857"
+    },
+    "deep_corpus_gitlab_variables_negative": {
+      "diff": "9d0b22bf380a7a832290bcc7fb7a87d6e6c65b7dce96fd4198832031cbe4e0a9",
+      "expectation": "4b9c1d4231f698792c194761e49b9e77b6f93a4a48ca0e55f122108fcb33a623"
+    },
+    "deep_corpus_gitlab_variables_positive": {
+      "diff": "c357ae93540bfcfad8b0c17ddfc3bea46fd127b8ed68bb8387bffd988f019986",
+      "expectation": "24fd936dc8b03fc685171cd35e804b3f2db3849eb9ec890869f7c8e2688e8fee"
+    },
+    "deep_corpus_go_getenv_negative": {
+      "diff": "6a5d4bcd31c539998bcd7f1f83fefd13e657bbaca335b3cdf92efbd4c5a4ba21",
+      "expectation": "e5bc67415b8e5630e6c694594a740f297bad68cf031cd5991a464d8c31889610"
+    },
+    "deep_corpus_go_getenv_positive": {
+      "diff": "a9cdfdafe37dcd9f899b6761aaff234d65065fef922b33e85c8ed9ac981cad65",
+      "expectation": "327c5854476431902ecf468c0162956da3da4f1d4d72500426b974c00f016817"
+    },
+    "deep_corpus_hash_role_negative": {
+      "diff": "3fa82fbc8cfc82bcc6519e18bdf0ff45b30da38a1d7b3ea65005c2dbba21a012",
+      "expectation": "41f69ad77a111c6ea266ba457c147669eb5b1e27048e502e3c7eedfe9da8ad09"
+    },
+    "deep_corpus_hash_role_positive": {
+      "diff": "84db0884b44e4fdab4ecd12e1b62a5f92b273fe743210ebc88330d510be57e78",
+      "expectation": "68ef6969f57d8d9c46de1194d5948da55a0392d94fe8e8fb8e94ba2a69c66658"
+    },
+    "deep_corpus_helm_values_negative": {
+      "diff": "4347f96ebc1452a11ec11f26f6d3e9f43d23fc3fb7b196aef041db436bffb91f",
+      "expectation": "ebc6650608005d49bad701fe18c3f45846888b88099a3982c9890c98c76d84b6"
+    },
+    "deep_corpus_helm_values_positive": {
+      "diff": "75336d7fdaba8965edf0194384be597ff1a090baf46e0464ab2db89069de5106",
+      "expectation": "1d19f5fef6b17f031d2dc074e13c0454a0130664a324a9d828455217e778a888"
+    },
+    "deep_corpus_java_getenv_negative": {
+      "diff": "88689e6a0085cd9dd862516821ba70358d65f119c6526da4212313f635e6fc29",
+      "expectation": "a05594104c2c3b158ce477607f85f578abd65f95769d385941b619e7f0ae4411"
+    },
+    "deep_corpus_java_getenv_positive": {
+      "diff": "a0e8efec5ae59e1cb032b30ca394c33790993e14e726c3cf79784efc4c1969d6",
+      "expectation": "89303829ec4e2f2e9c5a54a0080aeb092553128b8e8ce815821df736bc536e22"
+    },
+    "deep_corpus_javascript_env_negative": {
+      "diff": "dcfbc8a7962bd1fd1a6273b6a4da4ebab19fafa1fc23faaa00e199e12ecd8a03",
+      "expectation": "cb933a3662376f5df89d2fb7ffabc6ff5cfb0146b5725a0eb7f8bd69d3b01fc9"
+    },
+    "deep_corpus_javascript_env_positive": {
+      "diff": "d4065f3e688ce027f8ded2c6178d72734c66f060d1d1dab039b8360e72ee2eac",
+      "expectation": "6f529e3f423d9c1658fa132812cadec85c24b4ff2ce8f9f921fcf7b47ff1fe82"
+    },
+    "deep_corpus_jdbc_property_negative": {
+      "diff": "9f53ed1c3a00d226f2ad3f1b1c69fa2a64d50fe7e71fa0c7186e14b0f99a5279",
+      "expectation": "6a65d97df0eba8d5e6d62d2515195fb7947c1995b632ef52610d33f93188221c"
+    },
+    "deep_corpus_jdbc_property_positive": {
+      "diff": "206ef63f81f9b1c7a6b06186d7104a87063d138d1559e96ec48c79cc137653ea",
+      "expectation": "23c9439f9306311aa4c2a94f7863b782640b74cf000fd8104a123168c79d501d"
+    },
+    "deep_corpus_junit_mock_secret_negative": {
+      "diff": "8a39b81d226b469faa7dcfb7aab83f0d193aa996643713560789c5195de87fa3",
+      "expectation": "ed07022995d5e3687b08c04ae40430db654796e8cc90d88d406d9a95f93abf4a"
+    },
+    "deep_corpus_junit_mock_secret_positive": {
+      "diff": "46f0add7f7fbd9dc6cc248864220f60cd99cd3788335e4a9b2a17b2aac938aa8",
+      "expectation": "4d52a6faa01dac5cf1605fe282dc91aba5e1e64133c8c6d4e804bfa0e0fd8885"
+    },
+    "deep_corpus_key_ed25519_negative": {
+      "diff": "3bfbd5a14cafa858162cdad8d2d8b3ecd884bd4f1c6201dcb0bf9e07f4612936",
+      "expectation": "1746f028491e2ae18a2f869a997aac15e3d1c4e7e8b26af65c03d9d497e4a4c0"
+    },
+    "deep_corpus_key_ed25519_positive": {
+      "diff": "1be3f9eca1036d31753f139d2d4454671979fcbdce3260f651fa25ea51e0c4e9",
+      "expectation": "c0af6399141811b57b68940c53344133f580559f574bdc08d8b4914adb065fb9"
+    },
+    "deep_corpus_key_rsa_negative": {
+      "diff": "9fba45ed00570dc76b15c089ac7e3915e373d685245c1bc933d54eeb1c55e966",
+      "expectation": "1e141553d2aa6046cb468ded7f88e44a3487e2905789ee2f9069f431de190f4f"
+    },
+    "deep_corpus_key_rsa_positive": {
+      "diff": "dd1d37413f2e2a321dab2ecfd5c2d876374a662278f260d4a6a6d84b5e8729a7",
+      "expectation": "8503f622fd098c33d5901431654091aeb37f65d3b55da362b4f39c1f017c1829"
+    },
+    "deep_corpus_kotlin_getenv_negative": {
+      "diff": "7fd60163d87779262c493eb8b879a19da615ae597a4f8f4c419926cd5b06db1c",
+      "expectation": "559732903ad6276a551d23575ca3ef63a76e3ef1e7db090fb87653a947fad7f1"
+    },
+    "deep_corpus_kotlin_getenv_positive": {
+      "diff": "5f15ff916a029b3be4a333a0dcb4319424a562e532564f8432f8b8225d67ed29",
+      "expectation": "bb0b86b4855ee9994094fe8c867ca09ecf76b791b0a7ac4dc05dbbc044e16203"
+    },
+    "deep_corpus_kubernetes_env_negative": {
+      "diff": "ee6224e06aefe4b38cbba5cb77547540c1c621532e65cc1e6762bc5194d3108c",
+      "expectation": "13504216a5d36e357af8f70d7aafac0c97751d0763c14c21c9d96a9eb8d6fe9e"
+    },
+    "deep_corpus_kubernetes_env_positive": {
+      "diff": "5884eb539915d9e00c3215e6fe74ddc93bfd2b47df5c04eb9e70fe07b16b5037",
+      "expectation": "5d9d56394ca7a95f6e8523d2630eed20c0fb6417f2306ec8f3170ad1beec8877"
+    },
+    "deep_corpus_kubernetes_secret_negative": {
+      "diff": "e2227cecf192a648b2f4abf28f053fd4a5f3233d7bbdc09a2479a5efb088f4c9",
+      "expectation": "f5499ffd373e05823308e881aa998828e05935a413ac1ebe410d22d3724a5111"
+    },
+    "deep_corpus_kubernetes_secret_positive": {
+      "diff": "3fa98b4b37aad040af3cac12ee5bf3d196432a6d0ecc8389debff668e0ab6a0b",
+      "expectation": "517136c07b16e6832bad100b0865dc503ca43cd4d59d214e8bab59166e4d335c"
+    },
+    "deep_corpus_laravel_config_negative": {
+      "diff": "f51aafc210c9e623bb9d45bd54a567d4801fc8ca78241b4afee16e2566d0a01a",
+      "expectation": "71cf7aedc769d6053412af534d8542861911d31693eb4490c0c9a58d3978af2f"
+    },
+    "deep_corpus_laravel_config_positive": {
+      "diff": "fd068625d32b2443bdd29cdb00b8be76dff706fc83267b678d2c8e1a4c3f7f9d",
+      "expectation": "daf1f346db68b6d18d1db2711159473ec3b97fdeff28229eb69a5dca16639c5e"
+    },
+    "deep_corpus_line_offset_negative": {
+      "diff": "1480de4f016379728667d87a4f8563fda7e350b112eb97a234c47f479272f2f7",
+      "expectation": "31d26e1658d9c605feb32db7e5461ef69305765918357f898bec754123def035"
+    },
+    "deep_corpus_line_offset_positive": {
+      "diff": "0cd8420409e7f32c457223a0d854356d4945e9529c0d4dd915a6fcd39ca0af30",
+      "expectation": "9af1c00c80eb1b27c9e3da18292cbcd2a649e43263726a09c90f99c27616a0d6"
+    },
+    "deep_corpus_localhost_not_mock_negative": {
+      "diff": "e80273ebeb8315ab0da21db4d3732c2f5bed3fb243349903f6a9279f4d42cfd4",
+      "expectation": "f1de6789052961e46725e960c1200ff713bb9699f819952e7529bc8c5a759458"
+    },
+    "deep_corpus_localhost_not_mock_positive": {
+      "diff": "d6dc13a5f91c19f0a09a9d10f075380e259513eebbea0d72de0820b6bd90d7c4",
+      "expectation": "8e78ef3f9c05a9c3b50187547fcb54030edd2186ba65cd5baff0a90ab234fa08"
+    },
+    "deep_corpus_mixed_interpolation_negative": {
+      "diff": "3de6203201b20107df133e8b69549df56e9b57f488eb907515e988116ed7d67f",
+      "expectation": "726968cc7b4440cdc4aae436e8b0bb868aabd0ba56a9f0cb31a02d793b5e6528"
+    },
+    "deep_corpus_mixed_interpolation_positive": {
+      "diff": "f032df8aa1a8302d0cf07de35811a85d8c76d25f1164c59aa4d75d05a581a633",
+      "expectation": "5fe085ee17d6c2d7f9ec79767a28d6c782dbe871211c133a2ba10eaa9c98ba44"
+    },
+    "deep_corpus_mixed_same_file_negative": {
+      "diff": "91cbbb38923e6f980be069c08d6ea557c797ecd6a90afe64f55350671357e58d",
+      "expectation": "b58b2fa32186f2c4cc1b9f172870bf3a74c45c7aa8229fb2a9b8fe074ce445b4"
+    },
+    "deep_corpus_mixed_same_file_positive": {
+      "diff": "a3736f64085bb962679fea9ad8d643e2ad4ad2cf019410a6ae3cd1965397fa3f",
+      "expectation": "0d398db96791a890387bc3dec4bb1ddbef09f689a6415d5355d47b67a8b8dca0"
+    },
+    "deep_corpus_mongodb_uri_negative": {
+      "diff": "8603addb9129725cf33bd79fec33889cbe63d5880da1394a649eab6f9fe0bb1b",
+      "expectation": "a652edde87e9aaa504bb61e977089b5c8424f296a9c18da09a0de2d326fa34cf"
+    },
+    "deep_corpus_mongodb_uri_positive": {
+      "diff": "667d4e8028ee81b85cec0f0b23abb50feee54f0482462bacf097fbefdc7524b0",
+      "expectation": "a1f2685d714fae8586f818fe110e0710ae8e22d0073ff25ae0020ca785936423"
+    },
+    "deep_corpus_multiline_assignment_negative": {
+      "diff": "3786b6e6ca801a8dde4b45497443696616fb77a5226518848e04f12c4a596f1d",
+      "expectation": "16247c9caeae614d33c3813db185a9c4971e044ae33dae63d8f1ec58146e0a1f"
+    },
+    "deep_corpus_multiline_assignment_positive": {
+      "diff": "0b9168d226649d03c96803b6025977993a7893a5c0ad73b3afd51a2252c09199",
+      "expectation": "af8e0eb66de14d5b7eb8257b18e7bb051e55f6a710381c0ed2a30b319932b746"
+    },
+    "deep_corpus_multiple_files_negative": {
+      "diff": "337a5cef56ef050c51f57447a3a1a14b0c72f37f2186ddba74595d38c3b424b1",
+      "expectation": "a47480133f81c6d01e3886f8b831846247e6f05b4fa62d684f112caf58a5b89c"
+    },
+    "deep_corpus_multiple_files_positive": {
+      "diff": "a800f2286d15f7b775b3c8b8c98819031d8a8de710e91b69fecb8bac01fb6141",
+      "expectation": "ee3e24229ac92344a921c06825f6962aef2c528076bda565c01f751708b1026e"
+    },
+    "deep_corpus_multiple_values_negative": {
+      "diff": "003c8c7e2eb5b1b28993f2ee5d65d8abfd81e55d85bef0ddb4cae6a0fbc2da7f",
+      "expectation": "dfa4069dc30a3ee746649bcc4bf75e360c6dcbf99621972cc21d52988a12e39b"
+    },
+    "deep_corpus_multiple_values_positive": {
+      "diff": "8d4eb3e5cb46850183178346c60b96cfe4dad150c6265d426776478164449144",
+      "expectation": "58204a3acc98c590bba51f15475aa52865b2e3c9528ed65bd3a2935284038d1a"
+    },
+    "deep_corpus_mysql_dsn_negative": {
+      "diff": "cf3ffda6477fb49e0125d0613147c132b5878811e9aa0300ac36e392ec0c1188",
+      "expectation": "e4b20e9f731c7f04a0c3bb0d76d76b154e12a60a648ed9ee8b48449e0b19ee4a"
+    },
+    "deep_corpus_mysql_dsn_positive": {
+      "diff": "aa44aed67032547fdd914770baba777fe7079fc8caa34c154d90f1bcfff5f1d1",
+      "expectation": "de8916b9ccd315563a5e583e29f3269b9ad187fd88def0586d367e943e807044"
+    },
+    "deep_corpus_nock_interceptor_negative": {
+      "diff": "ee37f246bacee71497c060729c3daf945e27ae64d9f309949aa9ad510daf34b3",
+      "expectation": "6386fbb60382a6699150562f1bfd9c8dbb7e5a6bd1370a74d9e4447d54414171"
+    },
+    "deep_corpus_nock_interceptor_positive": {
+      "diff": "64e7cd973d5012d1105fe3b6de0ebb70e57a6ae937db07cc60d3458c4c6e111d",
+      "expectation": "06875f5da0d0318852c561a33a34510501ca245ec3e4f8980fff776b85cd8b1b"
+    },
+    "deep_corpus_percent_encoded_url_negative": {
+      "diff": "aa0dd41144388088fd5b56b69d52fa245aae52e6d99a8ec941d743b30bca1909",
+      "expectation": "7166ad6c4b49a55536a645f0e423032ae3fc6dfb64976d8c565a182181e6a0c2"
+    },
+    "deep_corpus_percent_encoded_url_positive": {
+      "diff": "02754670d7cd5560ff6b97a46059f360c5f639e08d258cd62b5aeb1496befa15",
+      "expectation": "293fcd9bdd08eef83e9aae1520853108331ad7f8be2ed9dcc97f36ffe62f368d"
+    },
+    "deep_corpus_php_getenv_negative": {
+      "diff": "e665ae8650020087fed4088f697c91892ee03f171e0f04b0b3040967f6246351",
+      "expectation": "d32b5f556f3e3766e3e1c5f3fc7f480c2130a7ce33240bf5229b96b43d800091"
+    },
+    "deep_corpus_php_getenv_positive": {
+      "diff": "578e7b99890befa30665b1aa570576ecb16ea70b0ae534ef0cda85e6c02821bd",
+      "expectation": "65fdac0b65ecf8de1f60208d54458c50aad5fe0c38f412d0bbc456cc13e5de13"
+    },
+    "deep_corpus_postgres_url_negative": {
+      "diff": "39164bc62f2576f3e5e62e6158fe220f24120d548fba0f9407cdeee504db8a4b",
+      "expectation": "34757205cb4aafba09059cef3493e00e7041c983c9928685c80b3feb51c5f516"
+    },
+    "deep_corpus_postgres_url_positive": {
+      "diff": "aecaffbe3c2d01960b371b2ecb927ba8133bb520cec974c060d99e0057f1df3d",
+      "expectation": "4b7ec95acf7d0d31b0a16bce4f62cdc96f781a733d1a940c5b418574cbb5a807"
+    },
+    "deep_corpus_prompt_injection_negative": {
+      "diff": "743f68ad2b8bb66853845e50f13449ddb16d3e0b96d29aa42aa69d35c78efbad",
+      "expectation": "7db6625c60b48c20f2ba2f92bd175d7c9f7feb1dbaffca84a0756aaf53179810"
+    },
+    "deep_corpus_prompt_injection_positive": {
+      "diff": "5882729925105a417d7aa458d130a57d7f6edc9903657332798ee1ce6287d79a",
+      "expectation": "8e3a23f61991e9c05eac12b5da9926b6d577a40cffa5a10a7907c0c728d1e389"
+    },
+    "deep_corpus_pytest_env_negative": {
+      "diff": "94143e13605935b5b2272d720e7f61e4fad7b27497527824242feef833c36c52",
+      "expectation": "3ef180435f846d9d26c5cc77deeacd22957c143bed48f2880ca06b18f4d741bf"
+    },
+    "deep_corpus_pytest_env_positive": {
+      "diff": "71748c7730a8d6bcc9a1dbcbd2904cd3b39d8783fd1208149efe99d8b7428f1d",
+      "expectation": "fb6539f9d5cc1e5bf60160179983317bd46053766a7e79d996a15276c9c54fae"
+    },
+    "deep_corpus_python_getenv_negative": {
+      "diff": "f0d7fe200d6a67e75e0a73fc34b2dd18b12bbe200d1f02dc7402f97fb3f3a7dd",
+      "expectation": "249f891fdda7118366840d90313568e823d45685a0a9aaa311712937927df316"
+    },
+    "deep_corpus_python_getenv_positive": {
+      "diff": "f9bc4e58f3eca4cf550589c26c89792f0bee7eab72d4aa311a3036395bb8a31e",
+      "expectation": "04ef36c41b3e207e6c2bfd1426829b5b93c646103d64da7a83da11d81eed1978"
+    },
+    "deep_corpus_python_responses_negative": {
+      "diff": "8ac076941369330a29ffac8aa7dd971bf4a61acb7ce5e67d283bbad8288a1a9a",
+      "expectation": "0b5388e17fe88490a0c158b995b3de62fa783c2312bdc790097d14ba8bfd58e9"
+    },
+    "deep_corpus_python_responses_positive": {
+      "diff": "75eeea1b91299266c18f67b2ca689c2693451ad0ff0c49a00280924d9c15be35",
+      "expectation": "1699e5d12c8ffeb5c9e378d7f8e1360ced34df741730c6548583409ffb569086"
+    },
+    "deep_corpus_rails_request_negative": {
+      "diff": "89f7bfa8bcff625df463fed97e528f6faeb7bd70c218a24ee0271fb544937289",
+      "expectation": "3d756b34225fe167c4baf6ec66ec5afb5a4f2e345408d38de72c2d9a4fab89cc"
+    },
+    "deep_corpus_rails_request_positive": {
+      "diff": "06099d0cc8e527b07d6e1b5e2f9f3fad8ad14054747c18b5fde703936740a2d9",
+      "expectation": "a1cdf2895c1c3e3b26633c3aec03ea75e3f6ac18e9d74697296c8c26c4e77d86"
+    },
+    "deep_corpus_redis_url_negative": {
+      "diff": "cda7ff16c8f647bfe73db24320aed5fc11cf299d763d7f86cae63989b6097392",
+      "expectation": "80daa34f536d6c5bd5efb50c520639b82635a3d26cd36bc6b02eb48dc399ee00"
+    },
+    "deep_corpus_redis_url_positive": {
+      "diff": "6853ac888e8c598c41ae5c4363dbf14f08e19964a5b9abe9ba968ff27402d8af",
+      "expectation": "d2b3328a6a0142923425f05eb0ed885a05babb25f8674e9ad3cf971ac76f12da"
+    },
+    "deep_corpus_removed_secret_negative": {
+      "diff": "f4e4c0ab121923206e8568449130e30eab35adee6107f8465fc72ab5e84f706e",
+      "expectation": "df57ca8ed70a2cbb18667e9ef4a558aae2816280102399b368ab8713fbee5e03"
+    },
+    "deep_corpus_removed_secret_positive": {
+      "diff": "4efa930b559ba4d6c324d3eee56ae0c550826c3a978bfad6615d5802869c581e",
+      "expectation": "e58eb5312f9a11813457b85d1c9da2e0b048430ea2513118efc2921e56a58493"
+    },
+    "deep_corpus_rename_negative": {
+      "diff": "b94fab03f6a4310f0909b2993f49190a0fc18f064ac29a3fad3103a3683ff10e",
+      "expectation": "b8b7eb99fc840b9b3988ffe361264620b28ab001e208316baf6c1bca861d168b"
+    },
+    "deep_corpus_rename_positive": {
+      "diff": "dffa9260308b3b4de763534b4a1137f92f79a2333b81e1990efbb0719bc6ba06",
+      "expectation": "b837f8cfa5cbfa775c1216c9bf3979d40ff9fd46aa9737947f42768eda3a3306"
+    },
+    "deep_corpus_rotation_negative": {
+      "diff": "c85f793e4fce4ee219f30eff1d84d061e4889ed6647d42ff6d679078aa08db4d",
+      "expectation": "3f963d7cbbca0e8321d669b3f80015994eaf74fa9e160efca8e34276674803b5"
+    },
+    "deep_corpus_rotation_positive": {
+      "diff": "e3429e75ed00a7bafa28a8d3f9d3323af09a3d24f84cdbc7fe306e74138e72a7",
+      "expectation": "91bafaecf89a1dcd786820e75d532b0ddcfb74d1d540d84f4d988e0e7a07dbba"
+    },
+    "deep_corpus_ruby_env_negative": {
+      "diff": "e9a3b9534fc6ea922a5cc166c587072e7da87885b9d8f15d80cdaa484222fb63",
+      "expectation": "0132e84936de09493bc42247253d9abcd9ed038dc2c0b4eb6c90ff5b71ba0798"
+    },
+    "deep_corpus_ruby_env_positive": {
+      "diff": "04850af91f8a2190d8653c737fc7e15330be712271478b68e229b5064c51d658",
+      "expectation": "ddc9cb02f10fcde4f67c3f001d73db93ebf6ea333188183d7c28ae04985ab816"
+    },
+    "deep_corpus_rust_dsn_negative": {
+      "diff": "f652d0f18836c535953c3bf4ef92e140ad5bec48a3cc4539324c26faf7320344",
+      "expectation": "4bc4b58b56b615005066bf9701dd74107fcd79b4b6fd7c53ba1566a4b4335e3e"
+    },
+    "deep_corpus_rust_dsn_positive": {
+      "diff": "5ce244a778dfee05da10ac465e133bff62f6055dcbbcc19e0da9d0fd8766bd84",
+      "expectation": "0c5a142f519f8b0cee672ce3b144f83f2d045f906d617637c71d2e980f560802"
+    },
+    "deep_corpus_schema_in_comment_negative": {
+      "diff": "2868335ad861ed134b53e28fd94e4206947d3f1780ae145822446444be124592",
+      "expectation": "f4d0da8f1482b9159a9c6d8064ba5b832433d445aafe85c9f102a8849875aa89"
+    },
+    "deep_corpus_schema_in_comment_positive": {
+      "diff": "9cb9e88242f3c12a67c321439a1afc012566606d98518ba7e37601905389cb47",
+      "expectation": "c4c211f891b02e459211f1c045041ce6a7c27e71bfda52edb05308cff4a5ddbd"
+    },
+    "deep_corpus_shell_expansion_negative": {
+      "diff": "39d57fab24328c31082ef9eeda194adce319148efc13ae97aee0c9a6c46e855b",
+      "expectation": "6e86df404162012bab5fece856cbe0bbd18fe20345ba4a330676b7d653a221dc"
+    },
+    "deep_corpus_shell_expansion_positive": {
+      "diff": "e79f07b1340238061420cc6f9398c42f919818ed107bad02251b6d2725f7168a",
+      "expectation": "cb2c2f4d3bc10dc1fdb30d585267f83b08517f0c5efbe609a898361740c93a01"
+    },
+    "deep_corpus_smtp_login_negative": {
+      "diff": "9a8a4b6b37e4df580b6f980ae41121dfaba8fe064171408df8d17aec91e2cabd",
+      "expectation": "55866e6ba937103313e5b5795dccc8cbfaf6250a130aa2d24f221386d506f267"
+    },
+    "deep_corpus_smtp_login_positive": {
+      "diff": "27bbc9a67ba25707df2cd4502cd47a84a2a7e3264fc9c5bd39cffd42da674a76",
+      "expectation": "3901407ea445f91da55087796eff6122317719246bed4910a17608a9872dafa9"
+    },
+    "deep_corpus_spring_mockmvc_negative": {
+      "diff": "bd44b7f5454661261b34a7785adb27e8848f910346b03fb535f63fb4cf776278",
+      "expectation": "1586bb226ebb6b977cc6f0092afea67d4d7f8e70ece71618dad5254de8385e41"
+    },
+    "deep_corpus_spring_mockmvc_positive": {
+      "diff": "79fbf29107b3117a160142e094832ac1d69262308eb9f85a04bc922b014376f7",
+      "expectation": "438e2288e69c8d30702223aa765cbe67d7e346f25f8947aed2a6c51942c64896"
+    },
+    "deep_corpus_terraform_data_negative": {
+      "diff": "e87f6c226ff378f7a5d12bd1bfaf10e833cd7e752269c31d0e1c02033cb3b84e",
+      "expectation": "bf0fbe923b66103e11296da9e87b41da4951ef4d80f16c68ef674ba6d33039ee"
+    },
+    "deep_corpus_terraform_data_positive": {
+      "diff": "19d36a77dd3ddbb9f4f172850ad414210936c4f28cee193d60de5cf096d0680d",
+      "expectation": "f091c660d25f57f6e77c28b6b39c207dcb6ba0c7704abcc8527150528bd58420"
+    },
+    "deep_corpus_terraform_password_negative": {
+      "diff": "aaa181f1e20793c297beb13938d8a45955621a669d43275ccfd9fc37b083a094",
+      "expectation": "83d0b5bae6d9b5dc24ea81babc39dbf16f2859f48f66e04875a6c34d14e4b066"
+    },
+    "deep_corpus_terraform_password_positive": {
+      "diff": "06ea1368b14e9b1c4c0d6d7d550ace99c11e828918f2aae98b5594a15e0d1a3a",
+      "expectation": "25e3fb21db9ec81a0251af750a3b6821a3227518c2c5145317cc94c66844b1ec"
+    },
+    "deep_corpus_toml_password_negative": {
+      "diff": "98cca5b2574491965174c0c0ed5de137ab370f4754c08d9d4b12ca8be9332c22",
+      "expectation": "88de1f2fb0697ab6dd4481a626932dfdd235c0f03b16c87a67536ddf1ff49608"
+    },
+    "deep_corpus_toml_password_positive": {
+      "diff": "84e1e8154d26de12e19279bf78ae4cd7eafff45e95155c8d99a225bf0a3b86a7",
+      "expectation": "aa42fd45d911b464afe6a06bdb4664b36839ab61760bfc6bc237f8f606af1109"
+    },
+    "deep_corpus_typescript_lookup_negative": {
+      "diff": "def4858ac38c88c0fc2d42103914c24b57d091fef62d6e73bc29da1cee41ed6d",
+      "expectation": "b40fd2d5ca92544dd42483fbf9c417655b85c587b052f1bc67622ef0d811bb2a"
+    },
+    "deep_corpus_typescript_lookup_positive": {
+      "diff": "609e3f1c230d75c9dc6d9e6bc2bfc330d261f47731ede971a0af3dd6b65539a3",
+      "expectation": "f526687bb8ca01e5ff4535b3f0dab7f7ca24563060373a51f3261df2ffb6f0da"
+    },
+    "deep_corpus_unicode_password_negative": {
+      "diff": "f0e7dea5feab1a262e951add145a2b4c059c23a11fe0db4b6cb7d87dd8085034",
+      "expectation": "ea8c7c172951eb1199e7f74f885730a9c42d7b3a698a316d6cb2e63695d486fa"
+    },
+    "deep_corpus_unicode_password_positive": {
+      "diff": "617b673a50d10a85add184e411adff34e78bf113d09bbb6e108b60e02203a0a3",
+      "expectation": "70322b0dff5fc14651ffe136da679087641fd63656ef50162254c624d122077a"
+    },
+    "deep_corpus_uuid_role_negative": {
+      "diff": "a2747f46adce5e3640c893bb0049dfede51cd11fcae244e0cf1e4bec937ee682",
+      "expectation": "d8482f400ba87c19000af78b178ae724c349bee86b0dccf6ca10bc9334717c1d"
+    },
+    "deep_corpus_uuid_role_positive": {
+      "diff": "a430191817b55916b5816f3850fb9b75ad8b656d69db5befda47d992ed6972fb",
+      "expectation": "c39592bc3e6b966d28ad541abcaad00bf5b05270b513171dbb59cf22686c8aa4"
+    },
+    "deep_corpus_weak_password_negative": {
+      "diff": "8a93e9748da1eeddcf5ec133a7ddd2524e8941fd41b6f5212a9b3f5bc4c2c425",
+      "expectation": "a82cc3ead3d2cd5cb2c6263efd5fc2b3fd5713faace4e7fe1fac4201d14f0bb2"
+    },
+    "deep_corpus_weak_password_positive": {
+      "diff": "83d91232e2f9b2ca76ce810dc2107229294e93abf28ad7acb76533a86b8980cc",
+      "expectation": "c531c6dd1fb29d2029515be445955cc9212533021bae72efafdd91252d2f77d1"
+    },
+    "deep_corpus_wiremock_negative": {
+      "diff": "6b436b3d34aa0e4abc953101e1f6b0c89e44cbac2d7b1f8996008db7fe2226e9",
+      "expectation": "740b4679f684af964b0cbd7e89e0bb08a8bc4d63ea84cb3d475b1f492907c465"
+    },
+    "deep_corpus_wiremock_positive": {
+      "diff": "8dad80b944959f4680dcb03c47fd88479a2e644efb5bbe4e51701b99cb4e7f73",
+      "expectation": "1022c6f3c8e0c98b85b8c1fdcad16c3790b75d18ed855a46740737d165f57f11"
+    },
+    "deep_env_example": {
+      "diff": "b7d13e4ac7b464f937e907cb14bd1edb58a3302b9149e3fc649150370d5f7cf1",
+      "expectation": "bbb619e0a2ae2df2b79b9f58c3d290b11871d2fa5f966775638dba28da4a4001"
+    },
+    "deep_multiwindow": {
+      "diff": "39e9536200a575932266d17118789a596097d562c1b7a17d4cd6148c186d5c97",
+      "expectation": "f8d78fa3fd742647ec18c81a69ca56f788020ad7102e730e9378508b047852f3"
+    },
+    "deep_private_key": {
+      "diff": "7e9f64ffb2e4de54c929946c7425ad374d3a3ec012c6cf7b50e95df1835f57df",
+      "expectation": "bc8f51225b1593a79c2c5ad4498e6e31a82dcacb671df3fa640041e8629e7d0a"
+    },
+    "deep_quiet": {
+      "diff": "ecb73331a79e8b2437442a3d33a36b356808394c9f845d40df99610a85dc23a3",
+      "expectation": "ba50b29f9a3b8bdc0b27d6b49daf0aa17396f6121b96dacf10f1069774245b35"
+    },
+    "deep_quirk": {
+      "diff": "79be02126590fc2264da78162d58bf975c4dbc4360fe8673b903a58c4fdbfc15",
+      "expectation": "b6a914b65eb5f515728f16f231a8180b170a0e1667990251caa2f59a18b15147"
+    },
+    "deep_references": {
+      "diff": "50af9c1ec3a0f8cb9fc73344d1753d949003ff05e456469aa392b6b6f0294621",
+      "expectation": "e430725ad3459a6a55cf5b817ff37eb3b4675cab26b01697d427df636f3008e2"
+    },
+    "deep_sentinel_cold": {
+      "diff": "2a9e8bc1c8076c9c7844c82e9601ff0c99691edc86af992bd6fd8e9721114f1c",
+      "expectation": "470c7a3e8d51715edaf1be12ac197828f4900e25053a2f6e42830e5209cd0791"
+    },
+    "deep_test_client_opaque": {
+      "diff": "53ad2e72adb210202355f06fb2d0a34764d89820bc4dbde1542b1e8daa5ee4e3",
+      "expectation": "8000650ec5e113eebd3d0ba1cd4ffbdb62987200df2129d9618f7dae6b92d7d7"
+    },
+    "deep_test_client_token": {
+      "diff": "ff0afd85219c1bc788d804778a67290e0e1235fd804aa00c010762c0572eb3ba",
+      "expectation": "a98c6c30f7e37298a34abe7530177f81aac6acf055f33fef0dbf194723cb7e07"
+    },
+    "deep_test_external_password": {
+      "diff": "40d13f1648ca2cc9d2ca143449c6e9b06683af5ff69028a23214bb874f311ba0",
+      "expectation": "b1c3ff913722dd5da095ef9f79df1e26dd3c328605b18d25fe77d4f1772e3dcc"
+    },
+    "docs_example": {
+      "diff": "5b48bc46be42ad20229c977938677e158995359b6a3c8a0217eff0e328f32b47",
+      "expectation": "9d9b423d45b277421fb50f5e785c8c20647f7cbc57b32b9fd26906513454f3a2"
+    },
+    "env_var_in_url": {
+      "diff": "ebf14be6c8e80647e7610d54e790308c2967772b34684940ad2ce7d2db05b11e",
+      "expectation": "bc183dc7f150969daab844bdebd1c6fd2f48a544582dad3ab169d9ed8b401926"
+    },
+    "go_env_ref": {
+      "diff": "d723e8c86b8f9be84f5c9591dd7956d4dfc84c0e3cdd183db45b08db18ca51e8",
+      "expectation": "cc3e37dc38f68b51ed4f5ed9c27a506d8454f092a43a49ace0ae8fc8715a443f"
+    },
+    "hardcoded_db_password": {
+      "diff": "7f54f098d9dea04ca31a29290ed16cfadf2eaa60907be97ac3ef2117183c9e46",
+      "expectation": "f0663e612253a81852a038a1f4edea8a54be91cb00061eb06c5480bb4cf76185"
+    },
+    "js_env_ref": {
+      "diff": "2db17390ee19d94722a294aaf172c79f637e30f604975794632e7f7a49517455",
+      "expectation": "836edd94c7eba0eb1adbc8ab0601ab8c7192ed7144366bebc04e9046e1f58fac"
+    },
+    "jwt_literal": {
+      "diff": "b74b4628d63afa92feb7b58b684602f3c33133690c79e6608b1804ac36b3b15e",
+      "expectation": "1be873ec322508ce46076c960a578ecc6ada3a0a17b0f9aa5c9ad229d517d61f"
+    },
+    "kwarg_passthrough": {
+      "diff": "f68b86eedbcac75d31f5b3e706bb7ed986f7e20baabe57490b9e229b09eebeba",
+      "expectation": "eda02d8f5472a15f6f9f90f52f87aba9eba87d3998fd428105d3d9bdbf685397"
+    },
+    "many_findings": {
+      "diff": "e944f9ab06bbf6f9ca4a2fb8294b5aa026ce616187d546ef6a549d0301fdcce3",
+      "expectation": "435446b822ad5cd604fbf1771de0686a31fc8f37123564a78932fce0df5a740e"
+    },
+    "minified_line": {
+      "diff": "2e1afe0376314e6007d027c74adc74ebba4f6d58ded48899b04922ca475f8058",
+      "expectation": "ef65e357c558732c7d400bc93a11ac215be2d3694851b2ec0b2fe6237ac0ce53"
+    },
+    "placeholder_default": {
+      "diff": "b56dfb0d83b0a96f8d198546d79009edb84ff33a67803130080912a2f1b3d552",
+      "expectation": "a4b4f24607d51a76781f5e0fc1a01cd3b73ce8ab088fc77d6e077af5ec56cdf1"
+    },
+    "real_aws_key": {
+      "diff": "2eb80694aabd40b84ac3fc945834d8c1be57bd85c93d1833f274f53f6babc8ee",
+      "expectation": "22109e4e3fe6018c82426adec91e35478d42c7d11b3e5a1e8a67b33569849078"
+    },
+    "real_generic_api_key": {
+      "diff": "95bd357d41e2dc6085e95245dfb73ec9a1ba96163a4b69826c23b7f15c004843",
+      "expectation": "ccc812bccb42208c824542399e53c7331b05cbe5c213cf51dfc50160700bd4dc"
+    },
+    "real_github_pat": {
+      "diff": "73142a94652fc21094af485e03be681948fc68b9a950ec5f861c17a1ba225155",
+      "expectation": "37e376a10c8f8b5ed033ee72386bbdc89735667c0f91a6c319f18ffddd9785be"
+    },
+    "test_fixture": {
+      "diff": "9cdf316f7b402ddf60154b3bbbe6dfd7ad4bae27846895521f11d926fa735e7a",
+      "expectation": "f8c38c160a53f44f7978cc329f91a897672a3d5d341880443c826284d8831f43"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 101,
+      "latency_ms": {
+        "median": 3985,
+        "p95": 7899,
+        "max": 14760
+      },
+      "usage": {
+        "prompt_tokens": 268054,
+        "completion_tokens": 70370,
+        "total_tokens": 338424
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 101
+      }
+    },
+    "deep": {
+      "calls": 171,
+      "latency_ms": {
+        "median": 2588,
+        "p95": 6910,
+        "max": 23467
+      },
+      "usage": {
+        "prompt_tokens": 402274,
+        "completion_tokens": 84354,
+        "total_tokens": 486628
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 171
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 75,
+    "total": 76
+  },
+  "clean_scans": {
+    "passed": 74,
+    "total": 75
+  },
+  "records_sha256": "568e5f1bf3d9ce262ca872084c4a07b0b4226a79eabea1c78d470f702db79a02",
+  "log_sha256": "dcdf4c4516a65ce31332883b122283cfcaf842e33e21a92569e4184b8b8c79ac"
+}
