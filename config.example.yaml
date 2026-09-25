@@ -56,6 +56,12 @@ llm:
   max_inflight: 1                   # concurrent LLM calls; match vLLM --max-num-seqs
   queue_max: 16                     # beyond this Atalaia returns 503
   request_timeout: 90s
+  # thinking_token_budget caps reasoning tokens per call when enable_thinking
+  # is true; 0 (default) sends no cap. Gemma 4 with thinking on occasionally
+  # reasons until max_tokens and never answers, which vLLM 0.20.2 turns into
+  # a 500 on forced tool calls. Keep it well below context_budget.output_tokens.
+  # vLLM honours it when started with --reasoning-parser (or --reasoning-config).
+  # thinking_token_budget: 2048
   healthcheck_interval: 30s         # background ping cadence; /readyz reads the cached result
   profile: gemma4
   max_findings_per_request: 200     # hard cap on findings adjudicated; truncated:true beyond this (client-visible)

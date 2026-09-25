@@ -59,7 +59,19 @@ type ChatRequest struct {
 	ResponseFormat     map[string]any `json:"response_format,omitempty"`
 	Tools              []Tool         `json:"tools,omitempty"`
 	ToolChoice         any            `json:"tool_choice,omitempty"`
+	// ThinkingTokenBudget caps reasoning tokens (vLLM extension). When
+	// reached, vLLM forces the thinking block closed so the model must
+	// still answer within max_tokens. Requires --reasoning-config on the
+	// server; vLLM rejects the request otherwise, so it is opt-in.
+	ThinkingTokenBudget int `json:"thinking_token_budget,omitempty"`
 }
+
+// StatusError is a non-2xx answer from the LLM backend. Typed so the
+// recovery loop can tell a transient backend failure (5xx) from our own
+// bad request (4xx) and from transport errors.
+type StatusError struct{ Code int }
+
+func (e *StatusError) Error() string { return fmt.Sprintf("llm status %d", e.Code) }
 
 // TokenUsage contains backend accounting, including reasoning tokens when exposed.
 type TokenUsage struct {
@@ -131,7 +143,7 @@ func (c *Client) Complete(ctx context.Context, req ChatRequest) (ChatResponse, e
 
 	if resp.StatusCode/100 != 2 {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-		return ChatResponse{}, fmt.Errorf("llm status %d", resp.StatusCode)
+		return ChatResponse{}, &StatusError{Code: resp.StatusCode}
 	}
 
 	var out ChatResponse
@@ -159,6 +171,17 @@ func (c *Client) Probe(ctx context.Context) error {
 
 // thinkingParameters leaves generic backends untouched unless the operator
 // explicitly opts into a supported chat-template parameter.
+// thinkingBudget returns the reasoning-token cap to send: the configured
+// budget, but only when thinking is explicitly on. With thinking off or
+// unset there is nothing to cap, and sending it anyway would make vLLM
+// reject requests on servers without --reasoning-config.
+func thinkingBudget(enabled *bool, budget int) int {
+	if enabled == nil || !*enabled || budget <= 0 {
+		return 0
+	}
+	return budget
+}
+
 func thinkingParameters(enabled *bool) map[string]any {
 	if enabled == nil {
 		return nil

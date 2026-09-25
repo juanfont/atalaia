@@ -93,7 +93,7 @@ Start an OpenAI-compatible model server. vLLM on a 10 GB-VRAM GPU:
 ```sh
 vllm serve google/gemma-4-E4B-it \
     --quantization fp8 --kv-cache-dtype fp8 \
-    --max-model-len 131072 --max-num-seqs 1 \
+    --max-model-len 131072 --max-num-seqs 8 \
     --host 127.0.0.1 --port 8000
 ```
 

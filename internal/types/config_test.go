@@ -271,3 +271,25 @@ func TestSourceLiteralsConfigOptIn(t *testing.T) {
 		t.Fatal("source-literal env override ignored")
 	}
 }
+
+func TestValidateConfig_ThinkingTokenBudget(t *testing.T) {
+	cfg := deepScanTestConfig()
+	cfg.LLM.ContextBudget.OutputTokens = 4096
+
+	cfg.LLM.ThinkingTokenBudget = 2048
+	if err := validateConfig(cfg); err != nil {
+		t.Errorf("budget below output_tokens must pass: %v", err)
+	}
+	cfg.LLM.ThinkingTokenBudget = 4096
+	if err := validateConfig(cfg); err == nil || !strings.Contains(err.Error(), "thinking_token_budget") {
+		t.Errorf("budget >= output_tokens leaves no room to answer, must be rejected: %v", err)
+	}
+	cfg.LLM.ThinkingTokenBudget = -1
+	if err := validateConfig(cfg); err == nil {
+		t.Error("negative budget must be rejected")
+	}
+	cfg.LLM.ThinkingTokenBudget = 0
+	if err := validateConfig(cfg); err != nil {
+		t.Errorf("0 means no cap and must pass: %v", err)
+	}
+}

@@ -4,6 +4,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.8.1], 2026-09-25
+
+### Fixed
+
+- **Deep reads and adjudications no longer fail when Gemma 4 thinks until
+  `max_tokens`.** With `enable_thinking: true` the model occasionally
+  reasons for the whole output budget and never writes its answer. On
+  atalaia's forced tool calls vLLM 0.20.2 answers that with a 500 from an
+  unhandled assert, instead of the `finish_reason: length` response that
+  atalaia already retries. In production it surfaced as `deep window N/M:
+  llm status 500` on about 1% of scans; every such call ran ~29 s, the
+  time to exhaust 4096 tokens.
+
+  Two changes. A backend 5xx is now retried once, like a truncated
+  response; 4xx and transport errors still are not. And a new
+  `llm.thinking_token_budget` (default 0, off) caps reasoning per call:
+  vLLM closes the thinking block at the cap and the model still answers.
+  vLLM honours it when started with `--reasoning-parser gemma4`. It must
+  stay below `context_budget.output_tokens`; config validation enforces
+  that. Validated at 2048 on the round-4 holdout: 32/32 credentials found
+  and 32/32 clean over two runs, no truncated calls, same latency.
+
 ## [0.8.0], 2026-09-16
 
 ### Added
