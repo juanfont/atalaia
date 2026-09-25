@@ -172,3 +172,98 @@ func TestConfiguredThinkingAndAdjudicationRecovery(t *testing.T) {
 		}
 	}
 }
+
+// vLLM 0.20.2 answers a forced tool call whose completion is all
+// reasoning (thinking ran into max_tokens, so no content) with a 500
+// from an unhandled assert, instead of a finish_reason=length response.
+// That hid the truncation from the retry above. A backend 5xx is now
+// retried once, like a truncated response.
+func TestRecoveryRetriesBackend5xxOnce(t *testing.T) {
+	const valid = `{"candidates":[]}`
+	client := &flakyClient{errs: []error{&StatusError{Code: 500}}, resp: completion(valid, "stop")}
+	_, calls, err := completeParsed(context.Background(), client, ChatRequest{}, func(m Message) ([]DeepCandidate, error) { return parseDeepResponse(m.Content) })
+	if err != nil || calls != 2 {
+		t.Fatalf("one 500 then success: calls=%d err=%v", calls, err)
+	}
+
+	client = &flakyClient{errs: []error{&StatusError{Code: 500}, &StatusError{Code: 502}}}
+	_, calls, err = completeParsed(context.Background(), client, ChatRequest{}, func(m Message) ([]DeepCandidate, error) { return parseDeepResponse(m.Content) })
+	if err == nil || calls != 2 {
+		t.Fatalf("two 5xx must fail after 2 attempts: calls=%d err=%v", calls, err)
+	}
+	var se *StatusError
+	if !errors.As(err, &se) || se.Code != 502 {
+		t.Errorf("final error should carry the last status, got %v", err)
+	}
+}
+
+func TestRecoveryDoesNotRetryBackend4xx(t *testing.T) {
+	client := &flakyClient{errs: []error{&StatusError{Code: 400}}}
+	_, calls, err := completeParsed(context.Background(), client, ChatRequest{}, func(m Message) ([]DeepCandidate, error) { return parseDeepResponse(m.Content) })
+	if err == nil || calls != 1 {
+		t.Fatalf("a 400 is our request, not a transient: calls=%d err=%v", calls, err)
+	}
+}
+
+func TestStatusErrorKeepsMessage(t *testing.T) {
+	if got := (&StatusError{Code: 500}).Error(); got != "llm status 500" {
+		t.Errorf("message changed: %q (watchers and logs match on it)", got)
+	}
+}
+
+// flakyClient returns errs in order, then resp.
+type flakyClient struct {
+	errs  []error
+	resp  ChatResponse
+	calls int
+}
+
+func (c *flakyClient) Complete(context.Context, ChatRequest) (ChatResponse, error) {
+	c.calls++
+	if len(c.errs) > 0 {
+		e := c.errs[0]
+		c.errs = c.errs[1:]
+		return ChatResponse{}, e
+	}
+	return c.resp, nil
+}
+func (c *flakyClient) Probe(context.Context) error { return nil }
+
+func TestThinkingTokenBudgetSentOnlyWithThinking(t *testing.T) {
+	on, off := true, false
+	for _, tc := range []struct {
+		name     string
+		thinking *bool
+		budget   int
+		want     int
+	}{
+		{"thinking on, budget set", &on, 2048, 2048},
+		{"thinking on, no budget", &on, 0, 0},
+		{"thinking off, budget set", &off, 2048, 0},
+		{"thinking unset, budget set", nil, 2048, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := thinkingBudget(tc.thinking, tc.budget); got != tc.want {
+				t.Errorf("thinkingBudget = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDeepAndAdjudicationSendThinkingBudget(t *testing.T) {
+	on := true
+	cfg := deepTestConfig(t, 8)
+	cfg.EnableThinking = &on
+	cfg.ThinkingTokenBudget = 1024
+	client := &fakeDeepClient{}
+	r, err := NewDeepReader(cfg, client, NewSemaphore(1, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.Scan(context.Background(), []byte(twoFileDiff), 0); err != nil {
+		t.Fatal(err)
+	}
+	if len(client.requests) == 0 || client.requests[0].ThinkingTokenBudget != 1024 {
+		t.Fatalf("deep request must carry thinking_token_budget=1024, got %+v", client.requests)
+	}
+}

@@ -108,7 +108,16 @@ type KingfisherConfig struct {
 type LLMConfig struct {
 	// EnableThinking is an optional backend chat-template override. Nil leaves
 	// backend defaults untouched; false explicitly disables reasoning.
-	EnableThinking        *bool
+	EnableThinking *bool
+	// ThinkingTokenBudget caps reasoning tokens per LLM call when
+	// EnableThinking is true. 0 (default) sends no cap. Gemma 4 with
+	// thinking on occasionally reasons until max_tokens and never
+	// answers; vLLM then fails the forced tool call with a 500. A cap
+	// below context_budget.output_tokens makes vLLM close the thinking
+	// block and leaves room for the answer. Needs vLLM started with
+	// --reasoning-config naming the model's thinking delimiters, or
+	// every request is rejected.
+	ThinkingTokenBudget   int
 	Endpoint              string
 	Model                 string
 	MaxInflight           int
@@ -418,6 +427,7 @@ func readLLMConfig() LLMConfig {
 		},
 	}
 
+	c.ThinkingTokenBudget = viper.GetInt("llm.thinking_token_budget")
 	if viper.IsSet("llm.enable_thinking") {
 		enabled := viper.GetBool("llm.enable_thinking")
 		c.EnableThinking = &enabled
@@ -505,6 +515,11 @@ func validateConfig(cfg *Config) error {
 	}
 	if cfg.LLM.QueueMax < 0 {
 		errs = append(errs, "llm.queue_max must be >= 0")
+	}
+	if b := cfg.LLM.ThinkingTokenBudget; b < 0 {
+		errs = append(errs, "llm.thinking_token_budget must be >= 0")
+	} else if out := cfg.LLM.ContextBudget.OutputTokens; b > 0 && out > 0 && b >= out {
+		errs = append(errs, fmt.Sprintf("llm.thinking_token_budget (%d) must be below context_budget.output_tokens (%d), or the answer has no room", b, out))
 	}
 	if cfg.LLM.DeepScan.Enabled {
 		p, ok := cfg.LLM.Profiles[cfg.LLM.DeepScan.Profile]

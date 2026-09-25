@@ -196,8 +196,9 @@ func (r *DeepReader) scanWindow(ctx context.Context, window string, i, total int
 	}
 
 	req := ChatRequest{
-		ChatTemplateKwargs: thinkingParameters(r.cfg.EnableThinking),
-		Model:              r.cfg.Model,
+		ChatTemplateKwargs:  thinkingParameters(r.cfg.EnableThinking),
+		ThinkingTokenBudget: thinkingBudget(r.cfg.EnableThinking, r.cfg.ThinkingTokenBudget),
+		Model:               r.cfg.Model,
 		Messages: []Message{
 			{Role: "system", Content: system},
 			{Role: "user", Content: user},

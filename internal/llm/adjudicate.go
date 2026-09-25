@@ -156,8 +156,9 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 		}
 
 		req := ChatRequest{
-			ChatTemplateKwargs: thinkingParameters(a.cfg.EnableThinking),
-			Model:              a.cfg.Model,
+			ChatTemplateKwargs:  thinkingParameters(a.cfg.EnableThinking),
+			ThinkingTokenBudget: thinkingBudget(a.cfg.EnableThinking, a.cfg.ThinkingTokenBudget),
+			Model:               a.cfg.Model,
 			Messages: []Message{
 				{Role: "system", Content: system},
 				{Role: "user", Content: user},

@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -15,6 +16,17 @@ func completeParsed[T any](ctx context.Context, client ChatCompleter, req ChatRe
 		}
 		resp, err := client.Complete(ctx, req)
 		if err != nil {
+			// A backend 5xx is retried once. vLLM 0.20.2 answers a forced
+			// tool call whose completion is all reasoning (thinking ran
+			// into max_tokens, leaving no content) with a 500 from an
+			// unhandled assert, instead of finish_reason=length, which
+			// would otherwise land in the truncation retry below. 4xx is
+			// our request and transport errors are the caller's deadline
+			// or connection; neither is retried.
+			var se *StatusError
+			if errors.As(err, &se) && se.Code >= 500 && calls < 2 {
+				continue
+			}
 			return nil, calls, err
 		}
 		failure := "empty choices"
