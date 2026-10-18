@@ -1,7 +1,7 @@
 # Secret-scanning evaluation corpus
 
-176 fixtures: 26 existing regression cases plus 150 expanded cases in
-75 positive/negative contrast pairs. All credentials and keys are
+194 fixtures in `diffs/`: 26 existing regression cases plus 168 expanded cases in
+84 positive/negative contrast pairs. All credentials and keys are
 fabricated evaluation data. The fixtures are submitted as diff text;
 the programs and commands inside them are never executed.
 
@@ -20,9 +20,10 @@ removed lines, and unchanged context are negative controls.
 | --- | ---: | ---: |
 | adversarial | 2 | 4 |
 | connection | 11 | 22 |
+| ciphertext | 6 | 12 |
 | context | 4 | 8 |
-| data-role | 4 | 8 |
-| deployment | 5 | 10 |
+| data-role | 6 | 12 |
+| deployment | 6 | 12 |
 | diff-boundary | 7 | 14 |
 | encoding | 2 | 4 |
 | key-material | 3 | 6 |
@@ -203,3 +204,19 @@ Keep the new set's labels fixed and do not tune after inspecting its results.
 tuning. Use `EVAL_SET=holdout4` in the diagnostic runner. `TestFrozenHoldout`
 checks its immutable manifest. Earlier sets are development data. The ordinary
 corpus still defaults to `diffs/`; fixture programs are never executed.
+
+## Ciphertext regression
+
+Twelve additional cases (`deep_ciphertext_*`, tag `ciphertext`) distinguish
+recognized encrypted payloads from credentials. They cover an encrypted Ansible
+variable versus plaintext, adjacent API tokens and Vault passwords, AES-GCM
+payloads versus the same base64/hex bytes used directly as bearer tokens, and
+literal versus externally supplied decryption keys. Ciphertext exemptions apply
+to individual values, never an entire file. All payloads were generated from
+fabricated values; none reproduce the reported production ciphertext.
+
+There are now 348 fixtures across the four sets. The 160 frozen fixtures and
+their manifests are unchanged. These new cases are regression tests derived
+from a reported failure, not an independent held-out accuracy measurement.
+
+See the [ciphertext comparison](CIPHERTEXT.md) for measured results and reproduction commands.

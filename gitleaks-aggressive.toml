@@ -85,3 +85,18 @@ keywords = [
   "credential",
   "auth",
 ]
+
+# A key that names a file, path, directory or name holding a secret is
+# not the secret: DEPLOY_SSH_PRIVATE_KEY_FILE_NAME, POSTGRES_PASSWORD_FILE
+# (the Docker *_FILE convention), ssh_private_key_path, secret_name. The
+# keyword run above lets PRIVATE_KEY absorb a _FILE_NAME suffix, so
+# without this the rule flags the file name and leaves the call to the
+# model, which got it wrong 4 times in 10 in production.
+#
+# The pattern reads the key only. [^\s:='"]* cannot cross the first
+# delimiter, so a value that happens to contain "file" or "path" is
+# never exempted.
+[[rules.allowlists]]
+description = "key names where the secret lives, not the secret"
+regexTarget = "match"
+regexes = ['''(?i)^[^\s:='"]*(file|file[_.-]?name|path|dir|name)[ \t]*[:=]''']

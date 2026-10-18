@@ -346,7 +346,7 @@ with tolerable precision, and the spec itself names noise as the
 expected failure mode of a 4B model asked for recall. That assumption is
 cheap to test before `deep.go` exists: draft
 `prompts/gemma4_deep_system.tmpl`, drive it by hand against vLLM over
-the existing corpus diffs plus `issue.diff` and a few clean ones, and
+the existing corpus diffs plus a large multi-file diff and a few clean ones, and
 count two rates — how often a returned value is not in the diff
 (hallucination), and how often a clean diff yields any candidate at all
 (false alarm).
@@ -441,7 +441,7 @@ discoveries. The channel does not cry wolf on normal code, so
 designed.
 
 **Hallucination rate: 0.** Every value the model returned across the
-fixtures plus `example4.diff` and `example5.diff` appears verbatim in
+fixtures plus two further sample diffs appears verbatim in
 its diff. The grounding gate discarded nothing because there was
 nothing to discard. It stays in regardless: it is the reason a
 fabricated value cannot be reported, and 0% today is a measurement, not
@@ -492,7 +492,7 @@ subsequent captures.
 **Mode 2: first hit wins.** The remaining misses were the model finding
 the decoy in the window's first file and stopping, never reaching the
 second file's secret. Prompting alone did not fix it, so windows now
-hold at most one file. On real diffs this costs nothing: `issue.diff`
+hold at most one file. On real diffs this costs nothing: a 261 KB sample diff
 already produced 22 windows for 21 files at a 4k budget.
 
 **What is left is genuinely the serving stack.** With the file alone in
@@ -525,11 +525,6 @@ prefix caching and chunked prefill, at a throughput cost) or
 caller-side (a watcher that re-runs). Neither is worth it for a channel
 that is explicitly lower-trust and does not gate a merge, so the
 residual is documented rather than engineered around.
-
-**Real-world catch.** On `example4.diff`, an actual diff from this
-repo's working tree, the deep read found `a hardcoded database password` at
-line 50: a hardcoded low-entropy database password that no detector
-flagged.
 
 ### Reference grounding
 

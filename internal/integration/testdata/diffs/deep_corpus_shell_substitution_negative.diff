@@ -1,0 +1,19 @@
+diff --git a/tools/export-workers.sh b/tools/export-workers.sh
+new file mode 100755
+--- /dev/null
++++ b/tools/export-workers.sh
+@@ -0,0 +1,14 @@
++#!/usr/bin/env bash
++# Export the list of running workers as CSV.
++APP_HOME="$( cd "$( dirname "$(readlink -f $0)" )/.." >/dev/null 2>&1 && pwd )"
++OUT_DIR=$APP_HOME/var/export
++
++function list_workers() {
++    timeout 5s ${APP_HOME}/bin/ctl.sh "worker:list" 2>/dev/null | sed "s/$(printf '\u2503')/,/g"
++}
++
++function stamp() {
++    echo "$(date -u +%Y%m%dT%H%M%S)\u00b7export"
++}
++
++list_workers | tr -d "$(printf '\r')" > "$OUT_DIR/workers-$(stamp).csv"

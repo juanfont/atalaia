@@ -183,3 +183,50 @@ func TestGitleaks_KubernetesScalarDeduplicatesAtValueLine(t *testing.T) {
 		})
 	}
 }
+
+// A key that names a file, path or name holding a secret is not the
+// secret. Our own generic rule used to flag a key like
+// DEPLOY_SSH_PRIVATE_KEY_FILE_NAME: "staging_svc_deployer_id_ed25519" (the name
+// of a GitLab Secret File), and the model confirmed it 4 times in 10.
+// The fix is deterministic and lives in the rule, not the model.
+func TestGitleaks_AggressiveConfigSkipsKeysThatNameAFile(t *testing.T) {
+	aggr, err := NewGitleaks(types.GitleaksConfig{Config: "../../gitleaks-aggressive.toml"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	caught := func(line string) bool {
+		diff := []byte("diff --git a/x b/x\nnew file mode 100644\n--- /dev/null\n+++ b/x\n@@ -0,0 +1,1 @@\n+" + line + "\n")
+		fs, _ := aggr.Scan(context.Background(), diff)
+		for _, f := range fs {
+			if f.Rule == "atalaia-generic-secret-assignment" {
+				return true
+			}
+		}
+		return false
+	}
+	for _, line := range []string{
+		`  DEPLOY_SSH_PRIVATE_KEY_FILE_NAME: "staging_svc_deployer_id_ed25519"`,
+		`POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`,
+		`ssh_private_key_path: ~/.ssh/deploy_ed25519`,
+		`api_key_filename = "service-account.json"`,
+		`TOKEN_DIR=/var/lib/app/tokens`,
+		`secret_name: app-database-credentials`,
+		`--password-file=/etc/app/pass.txt`,
+	} {
+		if caught(line) {
+			t.Errorf("key names a file/path/name, not a secret; must not be flagged: %q", line)
+		}
+	}
+	// The exemption reads the key only. A value that merely contains
+	// "file" or "path", or a key without such a suffix, still flags.
+	for _, line := range []string{
+		`DB_PASSWORD=profile_path_9x7Q`,
+		`private_key: "filenameLookingSecret42"`,
+		`password_prod: hunter2hunter2`,
+		`TOKEN=ghx_namefile_path_token_77`,
+	} {
+		if !caught(line) {
+			t.Errorf("real secret assignment must still be flagged: %q", line)
+		}
+	}
+}

@@ -27,6 +27,7 @@ func (s SourceLiteral) JSON() string {
 }
 
 // sourceLiterals lexes closed quoted strings without evaluating any escapes.
+// Formatting strings (whitespace escapes, markup) are left out.
 // A catalog entry is not a secret finding. Raw source remains in the window,
 // including strings omitted because of syntax or size limits.
 func sourceLiterals(window string) []SourceLiteral {
@@ -56,6 +57,16 @@ func sourceLiterals(window string) []SourceLiteral {
 				value := line[start:i]
 				i++
 				if !utf8.ValidString(value) || len(value) > maxSourceLiteralBytes || !strings.Contains(value, "\\") || seen[value] {
+					break
+				}
+				// The catalogue exists so the model can select a
+				// credential whose escapes it would mangle when copying.
+				// Display text qualifies only by its \n or \t, and
+				// offering it as a selectable candidate invites the
+				// model to pick it. Grounding refuses it anyway. The same
+				// holds for references and command substitutions, whose
+				// escape is incidental to the code around it.
+				if isFormattingText(value) || isReference(value) {
 					break
 				}
 				entry := SourceLiteral{ID: fmt.Sprintf("literal_%d", len(out)+1), Value: value}

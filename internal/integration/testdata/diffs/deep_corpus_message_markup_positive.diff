@@ -1,0 +1,20 @@
+diff --git a/notifier.py b/notifier.py
+--- /dev/null
++++ b/notifier.py
+@@ -0,0 +1,16 @@
++import os
++
++RELAY_URL = "https://notifier:QuillMeadow47@relay.example.internal/v1/send"
++
++def build_digest(items, title):
++    message = f"<b>{title}</b>\n\n"
++    for item in items:
++        message += f"<b>{item.label}</b>\n{item.summary}\n"
++    message += "\n<b>BUILD SUMMARY</b>\n"
++    message += f"<i>{len(items)} checks passed</i>\n\n"
++    return message
++
++def build_failure(error):
++    return ("<b>RUN FAILED</b>\n"
++            "The job could not be completed:\n"
++            f"<i>{error}</i>\n\n")

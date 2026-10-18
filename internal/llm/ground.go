@@ -128,6 +128,10 @@ func ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding,
 					decision.Outcome = "placeholder"
 					return
 				}
+				if c.Kind != "private_key" && isFormattingText(needle) {
+					decision.Outcome = "formatting_text"
+					return
+				}
 				file, line, match = locate(diff, needle)
 			}
 			if file == "" {
@@ -314,6 +318,11 @@ func isReference(v string) bool {
 		return true
 	case strings.Contains(v, "${"):
 		return true
+	// Shell command substitution: the value is computed when the line
+	// runs, so the diff holds a command, not secret bytes. An escaped
+	// \$( is literal text and stays eligible.
+	case commandSubstitutionRE.MatchString(v):
+		return true
 	// A call or lookup: os.Getenv("X"), config.get(...), vault.read(...)
 	case functionReferenceRE.MatchString(v) && strings.HasSuffix(strings.TrimSpace(v), ")"):
 		return true
@@ -324,6 +333,8 @@ func isReference(v string) bool {
 }
 
 var functionReferenceRE = regexp.MustCompile(`^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Za-z_][A-Za-z0-9_]*\s*\(`)
+
+var commandSubstitutionRE = regexp.MustCompile(`(?:^|[^\\])\$\(`)
 
 var basicAuthReferenceRE = regexp.MustCompile(`^[^:\s]+:\$[A-Za-z_][A-Za-z0-9_]*$`)
 
@@ -427,6 +438,9 @@ var nonSecretKeySuffixes = []string{
 	"DB", "DATABASE", "DBNAME", "DB_NAME", "SCHEMA", "TABLE",
 	"CLIENT_ID", "APP_ID", "ACCOUNT_ID", "PROJECT_ID", "TENANT_ID", "ORG_ID",
 	"NAME", "ENV", "ENVIRONMENT", "MODE", "LEVEL", "VERSION",
+	// Where a secret lives, not the secret: POSTGRES_PASSWORD_FILE,
+	// SSH_PRIVATE_KEY_PATH. FILE_NAME is covered by NAME.
+	"FILE", "FILENAME", "PATH", "DIR",
 }
 
 // isSecretKey reports whether an assignment key could name a secret.
@@ -532,6 +546,30 @@ func isPlaceholder(v string) bool {
 		return true
 	}
 	return false
+}
+
+// htmlElementRE matches an opening tag followed later by a closing tag:
+// markup wrapped around display text.
+var htmlElementRE = regexp.MustCompile(`<[A-Za-z][A-Za-z0-9]*(\s[^<>]*)?>.*</[A-Za-z][A-Za-z0-9]*>`)
+
+// isFormattingText reports whether a value is display text rather than
+// a credential: it carries whitespace escapes in source spelling (\n,
+// \r, \t) or HTML markup. A message heading like "\n<b>TITLE</b>\n"
+// or a log format like "done\tstatus=%s\n" is the common case, and the
+// model has reported exactly that as a credential while describing it
+// as "a static string used in message formatting".
+//
+// Two shapes are exempt because they are real secrets that can carry
+// those characters: a URL with embedded credentials, and PEM material
+// written as a one-line string with \n separators.
+func isFormattingText(v string) bool {
+	if urlWithCredentials(v) || strings.Contains(v, "-----BEGIN") {
+		return false
+	}
+	if strings.Contains(v, `\n`) || strings.Contains(v, `\r`) || strings.Contains(v, `\t`) {
+		return true
+	}
+	return htmlElementRE.MatchString(v)
 }
 
 // pemHeaderLine returns the first recognized private-key BEGIN line in s, or

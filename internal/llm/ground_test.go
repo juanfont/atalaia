@@ -577,3 +577,133 @@ func TestGround_ScrubsPasswordComponentOfConnectionString(t *testing.T) {
 		t.Fatal("redaction changed audit source bytes")
 	}
 }
+
+// ---- formatting text is not a credential ----
+//
+// Seen in production: the source catalogue offered "\n<b>BUILD SUMMARY</b>\n"
+// (a chat message heading) because it contains a backslash; the model
+// picked it by ID with the reason "a static string used in message
+// formatting" and it was reported as a credential at confidence 1.00.
+
+const formatDiff = `diff --git a/lib/notify.py b/lib/notify.py
+--- a/lib/notify.py
++++ b/lib/notify.py
+@@ -209,3 +209,9 @@
++        message += "\n<b>BUILD SUMMARY</b>\n"
++    message = f"<b>WEEKLY DIGEST - {week}</b>\n\n"
++    log.info("Run finished\tstatus=%s\n", status)
++    banner = "<h1>Service status</h1>"
++    key = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7\n-----END RSA PRIVATE KEY-----"
++    dsn = "postgres://app:Tr0ubad0ur-Winter-2026@db.internal/app"
++    pw = "Cedar\\Trail85-Aspen?Brook72"
+`
+
+func TestGround_FormattingTextIsNotACredential(t *testing.T) {
+	for _, v := range []string{
+		`\n<b>BUILD SUMMARY</b>\n`,
+		`<b>WEEKLY DIGEST - {week}</b>\n\n`,
+		`Run finished\tstatus=%s\n`,
+		`<h1>Service status</h1>`,
+	} {
+		got, _ := Ground([]byte(formatDiff), []DeepCandidate{cand(v)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q is display text, must not be reported: %+v", v, got)
+		}
+	}
+}
+
+// The guard must not swallow real credentials that carry escapes or
+// sit next to markup.
+func TestGround_FormattingGuardKeepsRealCredentials(t *testing.T) {
+	for _, v := range []string{
+		`postgres://app:Tr0ubad0ur-Winter-2026@db.internal/app`,
+		`Cedar\\Trail85-Aspen?Brook72`,
+	} {
+		got, _ := Ground([]byte(formatDiff), []DeepCandidate{cand(v)}, nil)
+		if len(got) != 1 {
+			t.Errorf("%q is a real credential and must still be reported, got %d", v, len(got))
+		}
+	}
+}
+
+func TestSourceLiterals_SkipFormattingStrings(t *testing.T) {
+	window := "=== lib/notify.py\n" +
+		`        message += "\n<b>BUILD SUMMARY</b>\n"` + "\n" +
+		`    log.info("Run finished\tstatus=%s\n", status)` + "\n" +
+		`    pw = "Cedar\\Trail85-Aspen?Brook72"` + "\n" +
+		`    key = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7\n-----END RSA PRIVATE KEY-----"` + "\n"
+	got := sourceLiterals(window)
+	var values []string
+	for _, s := range got {
+		values = append(values, s.Value)
+	}
+	joined := strings.Join(values, " | ")
+	if strings.Contains(joined, "BUILD SUMMARY") || strings.Contains(joined, "Run finished") {
+		t.Errorf("formatting strings must not be offered as candidates: %s", joined)
+	}
+	if !strings.Contains(joined, `Cedar\\Trail85`) {
+		t.Errorf("an escaped credential-shaped literal must stay in the catalogue: %s", joined)
+	}
+	if !strings.Contains(joined, "BEGIN RSA PRIVATE KEY") {
+		t.Errorf("a one-line PEM literal must stay in the catalogue: %s", joined)
+	}
+}
+
+func TestGround_KeysThatNameAFileAreNotSecrets(t *testing.T) {
+	diff := "diff --git a/c.yml b/c.yml\n--- a/c.yml\n+++ b/c.yml\n@@ -0,0 +1,3 @@\n" +
+		"+  DEPLOY_SSH_PRIVATE_KEY_FILE_NAME: \"staging_svc_deployer_id_ed25519\"\n" +
+		"+  POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password\n" +
+		"+  SSH_PRIVATE_KEY_PATH: /home/deploy/.ssh/id_ed25519\n"
+	for _, v := range []string{
+		`DEPLOY_SSH_PRIVATE_KEY_FILE_NAME: "staging_svc_deployer_id_ed25519"`,
+		`POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password`,
+		`SSH_PRIVATE_KEY_PATH: /home/deploy/.ssh/id_ed25519`,
+	} {
+		if got, _ := Ground([]byte(diff), []DeepCandidate{cand(v)}, nil); len(got) != 0 {
+			t.Errorf("%q names where a secret lives, must not be reported: %+v", v, got)
+		}
+	}
+}
+
+// A double-quoted shell string with an unescaped $(...) is computed at
+// run time. The bytes in the diff are a command, not a stored secret,
+// even when they carry an escape that put them in the source catalogue.
+const shellSubstDiff = "diff --git a/tools/backup.sh b/tools/backup.sh\n--- a/tools/backup.sh\n+++ b/tools/backup.sh\n@@ -0,0 +1,4 @@\n" +
+	"+    timeout 5s ${APP_HOME}/bin/list.sh 2>/dev/null | sed \"s/$(printf '\\u2503')/,/g\"\n" +
+	"+    STAMP=\"$(date -u +%Y%m%dT%H%M%S)\\u00b7snapshot\"\n" +
+	"+    tr -d \"$(printf '\\r')\" < \"$IN\" > \"$OUT\"\n" +
+	"+    ADMIN_PASS=\"Quarry\\$(Lynx)47-Harbor\"\n"
+
+func TestGround_CommandSubstitutionIsNotACredential(t *testing.T) {
+	for _, v := range []string{
+		`s/$(printf '\u2503')/,/g`,
+		`$(date -u +%Y%m%dT%H%M%S)\u00b7snapshot`,
+		`$(printf '\r')`,
+	} {
+		got, _ := Ground([]byte(shellSubstDiff), []DeepCandidate{cand(v)}, nil)
+		if len(got) != 0 {
+			t.Errorf("%q runs a command, must not be reported: %+v", v, got)
+		}
+	}
+	// An escaped \$( is literal text, so a password can still carry it.
+	v := `Quarry\$(Lynx)47-Harbor`
+	if got, _ := Ground([]byte(shellSubstDiff), []DeepCandidate{cand(v)}, nil); len(got) != 1 {
+		t.Errorf("%q is a literal password and must still be reported, got %d", v, len(got))
+	}
+}
+
+func TestSourceLiterals_SkipCommandSubstitution(t *testing.T) {
+	window := "=== tools/backup.sh\n" + strings.ReplaceAll(strings.SplitN(shellSubstDiff, "@@\n", 2)[1], "\n+", "\n")
+	window = strings.TrimPrefix(window, "+")
+	var values []string
+	for _, s := range sourceLiterals(window) {
+		values = append(values, s.Value)
+	}
+	joined := strings.Join(values, " | ")
+	if strings.Contains(joined, "printf") || strings.Contains(joined, "date -u") {
+		t.Errorf("command substitutions must not be offered as candidates: %s", joined)
+	}
+	if !strings.Contains(joined, `Quarry\$(Lynx)47-Harbor`) {
+		t.Errorf("an escaped literal password must stay in the catalogue: %s", joined)
+	}
+}
