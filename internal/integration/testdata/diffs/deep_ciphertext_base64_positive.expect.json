@@ -1,0 +1,22 @@
+{
+  "description": "The same opaque bytes are now used directly as a bearer token; shape is not encryption evidence. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "ciphertext",
+    "positive"
+  ],
+  "pair": "ciphertext_base64",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "service/client.py",
+      "line": 3,
+      "kind": "credential",
+      "value": "nMxacKMYjpFeVy8jGehm5np+eehvMD3zKsD8G+GL5BVtFFk="
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

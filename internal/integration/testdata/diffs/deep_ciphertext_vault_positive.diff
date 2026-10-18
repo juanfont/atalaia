@@ -1,0 +1,5 @@
+diff --git a/deploy/group_vars/service.yml b/deploy/group_vars/service.yml
+--- /dev/null
++++ b/deploy/group_vars/service.yml
+@@ -0,0 +1,1 @@
++config_web_upload_api_token: CedarBirch74Maple29

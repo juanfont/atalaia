@@ -1,0 +1,131 @@
+{
+  "cases": 8,
+  "cases_passed_all_runs": 8,
+  "requests": 8,
+  "model_calls": 12,
+  "calls_with_reasoning": 12,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 7113.5,
+    "p95": 19088,
+    "max": 19088
+  },
+  "model_call_latency_ms": {
+    "median": 4625.5,
+    "p95": 14530,
+    "max": 14530
+  },
+  "usage": {
+    "prompt_tokens": 38768,
+    "completion_tokens": 7769,
+    "total_tokens": 46537
+  },
+  "finish_reasons": {
+    "stop": 12
+  },
+  "deep_errors": 0,
+  "failed_cases": [],
+  "runs_per_case": {
+    "deep_corpus_base64_role_negative": 1,
+    "deep_corpus_base64_role_positive": 1,
+    "deep_corpus_certificate_vs_key_negative": 1,
+    "deep_corpus_certificate_vs_key_positive": 1,
+    "deep_corpus_key_ed25519_negative": 1,
+    "deep_corpus_key_ed25519_positive": 1,
+    "deep_corpus_key_rsa_negative": 1,
+    "deep_corpus_key_rsa_positive": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:0ed29187ff92"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:4270f7bfc570"
+  ],
+  "fixture_hashes": {
+    "deep_corpus_base64_role_negative": {
+      "diff": "a7a17996ea804392b33e26f28faefb9857a29846fd62c6e06c99b153d94c9801",
+      "expectation": "1175ada6b90e96f5814815e6d1eb66b37c35707f88c36c44b0c02baec5740714"
+    },
+    "deep_corpus_base64_role_positive": {
+      "diff": "08aaa0f5e838d4e3904c8f3119bfc85f236ad6913326137a19cb2fb364b4ab89",
+      "expectation": "b74fdc1b0eda8af97ba63c9c7facc26eaceaa5620bb43e5131c5a2ad7b995630"
+    },
+    "deep_corpus_certificate_vs_key_negative": {
+      "diff": "df2c38774849300b6d32aa861dbf0ddf48b2842658949d2281a9bfac8ccc4ec7",
+      "expectation": "d82d617627614eef10958dacc58ed10a915d0fae86e565f44320ab2bb9a08e60"
+    },
+    "deep_corpus_certificate_vs_key_positive": {
+      "diff": "522d243feb1675e6631dd4988976b6fd6accfde288451dcf72aeec75eb1f86ed",
+      "expectation": "9dee954c7da30df58ebc1806d5b179ccc1f0746ec20eee02e233d502bb4e326c"
+    },
+    "deep_corpus_key_ed25519_negative": {
+      "diff": "3bfbd5a14cafa858162cdad8d2d8b3ecd884bd4f1c6201dcb0bf9e07f4612936",
+      "expectation": "1746f028491e2ae18a2f869a997aac15e3d1c4e7e8b26af65c03d9d497e4a4c0"
+    },
+    "deep_corpus_key_ed25519_positive": {
+      "diff": "1be3f9eca1036d31753f139d2d4454671979fcbdce3260f651fa25ea51e0c4e9",
+      "expectation": "c0af6399141811b57b68940c53344133f580559f574bdc08d8b4914adb065fb9"
+    },
+    "deep_corpus_key_rsa_negative": {
+      "diff": "9fba45ed00570dc76b15c089ac7e3915e373d685245c1bc933d54eeb1c55e966",
+      "expectation": "1e141553d2aa6046cb468ded7f88e44a3487e2905789ee2f9069f431de190f4f"
+    },
+    "deep_corpus_key_rsa_positive": {
+      "diff": "dd1d37413f2e2a321dab2ecfd5c2d876374a662278f260d4a6a6d84b5e8729a7",
+      "expectation": "8503f622fd098c33d5901431654091aeb37f65d3b55da362b4f39c1f017c1829"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 4,
+      "latency_ms": {
+        "median": 4666.0,
+        "p95": 6186,
+        "max": 6186
+      },
+      "usage": {
+        "prompt_tokens": 12679,
+        "completion_tokens": 1872,
+        "total_tokens": 14551
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 4
+      }
+    },
+    "deep": {
+      "calls": 8,
+      "latency_ms": {
+        "median": 4459.5,
+        "p95": 14530,
+        "max": 14530
+      },
+      "usage": {
+        "prompt_tokens": 26089,
+        "completion_tokens": 5897,
+        "total_tokens": 31986
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 8
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 4,
+    "total": 4
+  },
+  "clean_scans": {
+    "passed": 4,
+    "total": 4
+  },
+  "records_sha256": "569de916b6950cefe2ed9900267cacadae6efa1dcd4f033c239a18c52ce08ba1",
+  "log_sha256": "543c31dae68f6989667317c265f8827c822ea29e3e05d3dfccc2acdf878f5380"
+}

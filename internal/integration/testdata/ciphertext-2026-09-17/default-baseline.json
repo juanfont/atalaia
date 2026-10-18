@@ -1,0 +1,155 @@
+{
+  "cases": 12,
+  "cases_passed_all_runs": 9,
+  "requests": 12,
+  "model_calls": 24,
+  "calls_with_reasoning": 24,
+  "recovery_calls": 0,
+  "http_errors": 0,
+  "request_latency_ms": {
+    "median": 13275.5,
+    "p95": 24911,
+    "max": 24911
+  },
+  "model_call_latency_ms": {
+    "median": 6437.0,
+    "p95": 14515,
+    "max": 15138
+  },
+  "usage": {
+    "prompt_tokens": 46342,
+    "completion_tokens": 20822,
+    "total_tokens": 67164
+  },
+  "finish_reasons": {
+    "stop": 24
+  },
+  "deep_errors": 0,
+  "failed_cases": [
+    "deep_ciphertext_base64_negative",
+    "deep_ciphertext_decryption_key_negative",
+    "deep_ciphertext_decryption_key_positive"
+  ],
+  "runs_per_case": {
+    "deep_ciphertext_base64_negative": 1,
+    "deep_ciphertext_base64_positive": 1,
+    "deep_ciphertext_decryption_key_negative": 1,
+    "deep_ciphertext_decryption_key_positive": 1,
+    "deep_ciphertext_hex_negative": 1,
+    "deep_ciphertext_hex_positive": 1,
+    "deep_ciphertext_vault_negative": 1,
+    "deep_ciphertext_vault_neighbor_negative": 1,
+    "deep_ciphertext_vault_neighbor_positive": 1,
+    "deep_ciphertext_vault_password_negative": 1,
+    "deep_ciphertext_vault_password_positive": 1,
+    "deep_ciphertext_vault_positive": 1
+  },
+  "model": [
+    "google/gemma-4-E4B-it"
+  ],
+  "thinking": [
+    "on"
+  ],
+  "prompt": [
+    "gemma4:ce4f03272bfb"
+  ],
+  "prompt_deep": [
+    "gemma4_deep:036049944ddc"
+  ],
+  "fixture_hashes": {
+    "deep_ciphertext_base64_negative": {
+      "diff": "32ab5509bd2617edf9da5eb9c063abd0505e194fecfd6837a17fb6435320c940",
+      "expectation": "307400b40017c2847f83ecc97431a9a4c45feb8f2d9d0845055ae653ed25215b"
+    },
+    "deep_ciphertext_base64_positive": {
+      "diff": "8c6d65b021ec4991979452475f3113c4fdf130a20dfe78a925d5cddddb12e441",
+      "expectation": "8d54e8ebc387311a38854f56441855c0a93712dd9b14ee1b1d4bc9a4264761b5"
+    },
+    "deep_ciphertext_decryption_key_negative": {
+      "diff": "a1e12935bcf3a4dd162b226031e37438f72a916171e0a81f8d987ad6754382b0",
+      "expectation": "95cc896e84deae2b2c80724a9b26aedb08d2ea844c6c0365efad0bd00bc6151e"
+    },
+    "deep_ciphertext_decryption_key_positive": {
+      "diff": "a5b6568b2bd260a047b3607f24069bd7ce35904145b71f1fc4e8a71c5bd26933",
+      "expectation": "6901880869e208feee396b23adb5d9c0968b0d81a19bba31fcea0cb451b71d8e"
+    },
+    "deep_ciphertext_hex_negative": {
+      "diff": "e6ad17e5ea30e75cca7742bad70b494d9629ca93067ebd7809c12b5de47386a5",
+      "expectation": "c3cb247c2cc2ed641bc9e53402f3c27297f593ee73f082f96c357c134aa4bec2"
+    },
+    "deep_ciphertext_hex_positive": {
+      "diff": "1c4265df3c4c69379348070a3ecd0eeae444a37fb29f604bba2475eef4711e8e",
+      "expectation": "a239ae830ef4e6d2e77dba0649447d1a82f29294b8e4fca01c4ed6075fe08b5d"
+    },
+    "deep_ciphertext_vault_negative": {
+      "diff": "b8b327237f97ae55a4615c9d21b5fd517453a3fe7beac4456ca7d7e55b68fc2a",
+      "expectation": "b9ad6d918c45c3b79bb84071016242c37cf30b68eb049447f4b650b0da1afdc0"
+    },
+    "deep_ciphertext_vault_neighbor_negative": {
+      "diff": "a508b262d3c732b1197892ed197371c880de14fd08df42352e8d95ffa904a33b",
+      "expectation": "6b4b7dac84285b8e4bfb47bd097b1719e8f378e0d56d36f58fb24338aba79cb5"
+    },
+    "deep_ciphertext_vault_neighbor_positive": {
+      "diff": "b1289c336484d6caa84f7bfd96f65b4705db3de1335ceee9bfdd73c455bea83c",
+      "expectation": "84038a0367c9f8bca63ebaf354eb5777a3781541f6745828d5d6889446e816f6"
+    },
+    "deep_ciphertext_vault_password_negative": {
+      "diff": "35e6eaf6324ce8f5d89262f859dad0ac5fb305629e802b40241970b791d1cae5",
+      "expectation": "abd797bc1a10a3c5b8d5f424299a5f32835c63c6c560ba20510c64a33244fda9"
+    },
+    "deep_ciphertext_vault_password_positive": {
+      "diff": "7e4a47fe67a73bc12b95a09f0a63d721e420654a25736456710908be1e992c64",
+      "expectation": "c16884a517167d34856dde163b97d27cef91356c1993e1e88a34aae6bf7fb5c2"
+    },
+    "deep_ciphertext_vault_positive": {
+      "diff": "f97fa4d6e6bdb760dfab6e13997d3dec3b9338f746133c0e17ddf6afe987498d",
+      "expectation": "82988905bcc7b8a9ec46a27da8ca98aae4509d6cef7dc9c73d0debe2f98cfaac"
+    }
+  },
+  "stages": {
+    "adjudication": {
+      "calls": 12,
+      "latency_ms": {
+        "median": 6567.5,
+        "p95": 14515,
+        "max": 14515
+      },
+      "usage": {
+        "prompt_tokens": 20444,
+        "completion_tokens": 11214,
+        "total_tokens": 31658
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 12
+      }
+    },
+    "deep": {
+      "calls": 12,
+      "latency_ms": {
+        "median": 6042.5,
+        "p95": 15138,
+        "max": 15138
+      },
+      "usage": {
+        "prompt_tokens": 25898,
+        "completion_tokens": 9608,
+        "total_tokens": 35506
+      },
+      "transport_errors": 0,
+      "finish_reasons": {
+        "stop": 12
+      }
+    }
+  },
+  "credentials_found": {
+    "passed": 6,
+    "total": 6
+  },
+  "clean_scans": {
+    "passed": 4,
+    "total": 6
+  },
+  "records_sha256": "687122efe1284f55ffd89e017901c9815b2d4d74df51fa6b589eb5e0cf012cac",
+  "log_sha256": "68a231e37508e4ef29da037be3b3d6880a1e0d80b8000391b6d6ebffe37836cc"
+}

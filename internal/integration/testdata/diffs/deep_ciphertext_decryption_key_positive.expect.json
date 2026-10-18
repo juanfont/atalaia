@@ -1,0 +1,22 @@
+{
+  "description": "Only a literal decryption key is exposed; the encrypted payload itself must not become an extra alert. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "ciphertext",
+    "positive"
+  ],
+  "pair": "ciphertext_decryption_key",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [
+    {
+      "file": "service/client.py",
+      "line": 5,
+      "kind": "credential",
+      "value": "0e57d8a9f430c46d9bc5e6112fdceb9898c0e1c52abafccf940c5abc9cce2734"
+    }
+  ],
+  "max_alerts": 1,
+  "max_unreviewed": 0
+}

@@ -1,0 +1,10 @@
+{
+  "initial_inputs_preserved_and_final_inputs_verified": true,
+  "archived_initial_templates": [
+    "prompts/gemma4_system.tmpl",
+    "prompts/gemma4_deep_system.tmpl"
+  ],
+  "api_responses_checked_for_expected_literal_echoes": 136,
+  "literal_echoes": 0,
+  "limits": "New ciphertext-regression expected secret literals of at least eight characters only; not a proof against all representations or other credentials."
+}

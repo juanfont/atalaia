@@ -4,6 +4,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- Distinguish encrypted credential storage from exposed credentials in both Gemma
+  prompt stages, including the source-selection profiles. Keep encoded bearer
+  tokens, plaintext credentials and exposed decryption secrets reportable.
+  Add twelve synthetic contrast cases covering encrypted payloads and adjacent
+  credentials. Private-key reporting is unchanged. See the
+  [ciphertext regression results](internal/integration/testdata/CIPHERTEXT.md).
+
 ## [0.8.1], 2026-09-25
 
 ### Fixed

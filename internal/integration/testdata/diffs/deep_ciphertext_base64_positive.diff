@@ -1,0 +1,8 @@
+diff --git a/service/client.py b/service/client.py
+--- /dev/null
++++ b/service/client.py
+@@ -0,0 +1,4 @@
++import os, base64, requests
++from cryptography.hazmat.primitives.ciphers.aead import AESGCM
++api_token = "nMxacKMYjpFeVy8jGehm5np+eehvMD3zKsD8G+GL5BVtFFk="
++requests.get("https://gateway.internal/status", headers={"Authorization": "Bearer " + api_token})

@@ -1,0 +1,14 @@
+{
+  "reason": "Clarify decryption data flow and encoded literal keys after two failures in the first default-profile candidate. Source profiles remain unchanged.",
+  "sha256": {
+    "prompts/gemma4_source_user.tmpl": "0650e7fc78609d0eda4ab7756846b4ea7d28fcad933f128cfc837842ceb772b0",
+    "prompts/gemma4_source_system.tmpl": "6a08fcb5858f65d8906c8e81b70d48015a6d1af8e4be8a1a3144bb605a4dc253",
+    "prompts/gemma4_source_deep_user.tmpl": "1e11d628d2dbdee5f5575091d6b8a3aa559ee6f070b81e3ebe9f39d1741662c2",
+    "prompts/gemma4_user.tmpl": "a168b4ed13a52748f7fb7a51adc47fa47a934962d0eed1d7f7995e84052c93ea",
+    "prompts/gemma4_deep_system.tmpl": "397821ef536814e66342ea2bcae9d10dd5235dffcadc629060f153cd8a2d2700",
+    "prompts/gemma4_system.tmpl": "eafe509ba36d7bdcfd7b495b90f9d799cbcc3d28d4acaf5a7b6369b4af9c92d8",
+    "prompts/gemma4_source_deep_system.tmpl": "ee0f6eb4790aa8211ec6d933bb597a9dafd46e839ea4cea1ac13dbb1ec6e03de",
+    "prompts/gemma4_deep_user.tmpl": "ea5f42fa7c9439eff6834b9a6d8190322f7f5c0c6e30def50bcbb98726ffb25c",
+    "internal/integration/testdata/ciphertext-2026-09-17/default-revised.yaml": "e93f6cab3e9192b411db3188ed24f403af2f4d73f98c98b6ab1ba67ad2188d22"
+  }
+}

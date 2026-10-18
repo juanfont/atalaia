@@ -1,0 +1,17 @@
+{
+  "description": "Only a literal decryption key is exposed; the encrypted payload itself must not become an extra alert. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "ciphertext",
+    "negative"
+  ],
+  "pair": "ciphertext_decryption_key",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

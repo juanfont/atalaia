@@ -1,0 +1,17 @@
+{
+  "description": "Encrypted deployment token is not plaintext exposure. All values are fabricated evaluation data.",
+  "tags": [
+    "expanded",
+    "ciphertext",
+    "negative"
+  ],
+  "pair": "ciphertext_vault",
+  "deep": true,
+  "min_after_dedup": 0,
+  "expectations": [],
+  "expect_secrets": [],
+  "max_alerts": 0,
+  "max_unreviewed": 0,
+  "max_confirmed": 0,
+  "max_discoveries": 0
+}

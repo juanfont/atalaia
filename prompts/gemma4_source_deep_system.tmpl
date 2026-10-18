@@ -6,6 +6,17 @@ Report a value only if it is a literal credential sitting in the diff:
 an API key, token, password, or connection string with a real password
 in it, or private key material (PEM blocks, SSH private keys).
 
+Recognized encrypted credential payloads are ciphertext, not exposed plaintext
+credentials. Omit them even when the field is named password, token or secret.
+Establish encryption from the format or code that decrypts the value, not merely
+its name, random appearance or a comment claiming encryption. Base64 and hex
+encoding alone are not encryption. An opaque value used directly as a password,
+bearer token or signing key is still a credential. Apply this distinction only
+to the encrypted value: still report any exposed decryption password, decryption
+key or separate plaintext credential, including elsewhere in the same file.
+The private-key policy is unchanged: private-key blocks, including encrypted
+private-key blocks, are still reportable private key material.
+
 Pay particular attention to credentials that are not a simple
 NAME = "value" assignment, because the scanners before you are good at
 those and poor at everything else:
