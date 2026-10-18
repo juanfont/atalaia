@@ -93,11 +93,22 @@ var (
 		Help: "Deep-read candidates discarded as not present in the diff.",
 	})
 
-	// DeepDiscoveriesTotal counts grounded discoveries actually returned.
+	// DeepDiscoveriesTotal counts discoveries actually returned: grounded
+	// and, when llm.deep_scan.review is on, confirmed by review.
 	DeepDiscoveriesTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "atalaia_deep_discoveries_total",
-		Help: "Grounded discoveries returned to callers.",
+		Help: "Deep discoveries returned to callers.",
 	})
+
+	// DeepReviewTotal counts grounded discoveries by review outcome:
+	// confirmed (returned), dismissed (the adjudicator judged it not a
+	// credential), withheld (no verdict, or no slot to review it).
+	// dismissed over the sum is the share of deep-read output that
+	// would have been a false alarm without review.
+	DeepReviewTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "atalaia_deep_review_total",
+		Help: "Grounded deep discoveries by review outcome.",
+	}, []string{"outcome"})
 
 	// DeepWindows is the per-request distribution of scanned windows.
 	DeepWindows = promauto.NewHistogram(prometheus.HistogramOpts{

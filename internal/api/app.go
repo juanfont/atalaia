@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/juanfont/atalaia/internal/audit"
@@ -16,6 +17,7 @@ import (
 // *llm.Adjudicator implements it; tests substitute a fake.
 type Adjudicator interface {
 	Adjudicate(ctx context.Context, diff []byte, deduped []detector.DedupedFinding) (llm.AdjudicateResult, error)
+	Review(ctx context.Context, diff []byte, discoveries []llm.Discovery, wait time.Duration) (llm.ReviewResult, error)
 	Probe(ctx context.Context) error
 	PromptFingerprint() string
 }

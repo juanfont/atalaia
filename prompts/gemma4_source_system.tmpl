@@ -44,8 +44,8 @@ password field is still a leaked credential; it need not look random.
 Dismiss values that are clearly not live secrets: known example and
 sentinel values (AKIAIOSFODNN7EXAMPLE, ya29.dummy, sk-test-…),
 placeholders (<your-key>, changeme), and literals the file or its
-comments present as fake, sample, or illustrative — a key inside a test
-fixture or mock, or one explicitly described as invented in documentation or a README
+comments present as fake, sample, or illustrative — a value created by the
+test's own fixture or mock (see below), or one explicitly described as invented in documentation or a README
 (prose like "an example … looks like" or "replace with your own").
 A filename containing example is only a clue. If the code explicitly
 accesses a deployed service with that literal, confirm it unless the
@@ -62,20 +62,26 @@ key or separate plaintext credential, including elsewhere in the same file.
 The private-key policy is unchanged: private-key blocks, including encrypted
 private-key blocks, are still reportable private key material.
 
-A test that sets a value in a local test application's config, mock,
-or fixture and sends that same value through its test client creates
-its own credential. Dismiss that synthetic value, even if it looks
-random or appears in an Authorization header. The setup and use are
-enough evidence; an explicit "fake" comment is not required. A test
-filename alone is not evidence: a credential used to access an existing
-service whose authentication the test does not create or mock can
-still be a real leak. Judge each value independently.
-
-A replaced request is also synthetic when a mock transport, handler, adapter,
-engine or interceptor returns a response without examining authentication.
-It need not configure an expected token. Check that the replacement applies
-to this request and client. A different mocked request proves nothing about
-an actual network request.
+Decide a value in a test by what receives it, not by where the code lives.
+A test function, an assertion, a test filename or "hardcoded in a test" is
+never evidence on its own. Check which case applies:
+- The test creates the receiver. It configures a local test application,
+  in-memory fake, fixture or mock with the value, then sends that same value
+  to it. The value is synthetic: dismiss it, even if it looks random or sits
+  in an Authorization header. No "fake" comment is needed. Settings,
+  config or environment overrides made by the test configure the
+  application under test, and a framework test client (a Django or Flask
+  test client, Laravel $this->get or $this->post, Rails request specs,
+  Spring MockMvc, supertest, httptest) calls that application in process.
+  Neither is a network service.
+- A stub, mock server, mock transport, handler, adapter, engine or
+  interceptor returns a fabricated response for this request. Dismiss. It
+  need not check authentication. Check that it covers this client and this
+  request; a different mocked request proves nothing about this one.
+- Otherwise the value reaches an actual service: a real database driver,
+  HTTP client or SDK pointed at a host, including localhost, 127.0.0.1 and
+  internal hostnames. Confirm it.
+Judge each value independently.
 
 Judge the exact captured value at the reported file and line. The finding
 contains no source column, so do not invent a column or assume that its first
@@ -102,6 +108,15 @@ source: client = ApiClient("https://billing.internal", token="u7Nm4Qp8Vr3Lx6Hs2K
 scanner match: u7Nm4Qp8Vr3Lx6Hs2Kz9
 verdict: confirmed. A literal token is used for existing-service authentication;
 there is no mock setup or prose declaring it invented.
+
+Worked example of a test that reaches a service:
+source file: tests/test_cache.py
+source: client = redis.Redis(host="127.0.0.1", password="OakLantern58"); assert client.ping()
+scanner match: OakLantern58
+verdict: confirmed. The test sends the password to a Redis server it does not
+create or mock. A local host is still an actual service.
+The contrasting case: fake = FakeRedis(password="OakLantern58") followed by
+fake.auth("OakLantern58") is dismissed, because the test builds the receiver.
 
 Worked example of unquoted configuration data:
 source YAML:

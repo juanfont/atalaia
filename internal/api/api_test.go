@@ -30,6 +30,17 @@ type fakeAdjudicator struct {
 	probeErr     error
 	adjudicate   func(deduped []detector.DedupedFinding) (llm.AdjudicateResult, error)
 	captureFinds *[]detector.DedupedFinding
+	review       func(ds []llm.Discovery) (llm.ReviewResult, error)
+	reviewed     []llm.Discovery
+}
+
+// Review confirms every discovery unless a test supplies review.
+func (f *fakeAdjudicator) Review(_ context.Context, _ []byte, ds []llm.Discovery, _ time.Duration) (llm.ReviewResult, error) {
+	f.reviewed = append(f.reviewed, ds...)
+	if f.review != nil {
+		return f.review(ds)
+	}
+	return llm.ReviewResult{Admitted: true, Kept: ds}, nil
 }
 
 func (f *fakeAdjudicator) Probe(_ context.Context) error { return f.probeErr }
@@ -630,10 +641,15 @@ const deepURLPassword = "Tr0ubad0ur-Winter-2026"
 
 func newDeepTestServer(t *testing.T, deep DeepScanner) *httptest.Server {
 	t.Helper()
+	return newDeepReviewTestServer(t, deep, &fakeAdjudicator{}, false)
+}
+
+func newDeepReviewTestServer(t *testing.T, deep DeepScanner, adj *fakeAdjudicator, review bool) *httptest.Server {
+	t.Helper()
 	cfg := &types.Config{
 		Server:    types.ServerConfig{MaxBodyBytes: 1 << 20},
 		Detectors: types.DetectorsConfig{Enabled: []string{"gitleaks"}},
-		LLM:       types.LLMConfig{Model: "test-model"},
+		LLM:       types.LLMConfig{Model: "test-model", DeepScan: types.DeepScanConfig{Review: review}},
 	}
 	g, err := detector.NewGitleaks(cfg.Detectors.Gitleaks)
 	if err != nil {
@@ -644,7 +660,7 @@ func newDeepTestServer(t *testing.T, deep DeepScanner) *httptest.Server {
 	if _, err := NewApp(context.Background(), Deps{
 		Config:       cfg,
 		Detectors:    []detector.Detector{g},
-		Adjudicator:  &fakeAdjudicator{},
+		Adjudicator:  adj,
 		DeepScanner:  deep,
 		Reachability: fakeReachability{ready: true},
 		Version:      "test",
@@ -1033,5 +1049,117 @@ func TestCheck_FailedDeepRetainsAttemptAccounting(t *testing.T) {
 	}
 	if len(body.Discoveries) != 0 {
 		t.Fatal("partial candidates from a failed scan must not appear as complete discoveries")
+	}
+}
+
+// deepURLCandidate is the grounded candidate the review tests feed in.
+func deepURLCandidate() *fakeDeepScanner {
+	return &fakeDeepScanner{result: llm.DeepResult{
+		Status:     llm.DeepComplete,
+		Candidates: []llm.DeepCandidate{{Value: deepURLPassword, Kind: "credential", Confidence: 1, Reason: "deep read"}},
+		Calls:      1,
+		Windows:    1,
+	}}
+}
+
+func TestCheck_DeepReviewDismissalDropsDiscovery(t *testing.T) {
+	adj := &fakeAdjudicator{review: func(ds []llm.Discovery) (llm.ReviewResult, error) {
+		return llm.ReviewResult{Admitted: true, Dismissed: len(ds), Calls: 1}, nil
+	}}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, true)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if len(adj.reviewed) != 1 {
+		t.Fatalf("the grounded discovery must go to review, reviewed %d", len(adj.reviewed))
+	}
+	if len(resp.Discoveries) != 0 {
+		t.Errorf("a dismissed discovery must not be reported: %+v", resp.Discoveries)
+	}
+	ds := resp.Stats.DeepScan
+	if ds.Status != apitypes.DeepStatusComplete || ds.ReviewDismissed != 1 || ds.Discovered != 0 || ds.Calls != 2 {
+		t.Errorf("stats = %+v, want complete, review_dismissed 1, discovered 0, calls 2", ds)
+	}
+}
+
+func TestCheck_DeepReviewConfirmationKeepsDiscovery(t *testing.T) {
+	adj := &fakeAdjudicator{review: func(ds []llm.Discovery) (llm.ReviewResult, error) {
+		kept := ds[0]
+		kept.Confidence, kept.Reason = 0.8, "password in a request URL"
+		return llm.ReviewResult{Admitted: true, Kept: []llm.Discovery{kept}}, nil
+	}}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, true)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if len(resp.Discoveries) != 1 {
+		t.Fatalf("a confirmed discovery must be reported, got %d", len(resp.Discoveries))
+	}
+	if d := resp.Discoveries[0]; d.Confidence != 0.8 || d.Reason != "password in a request URL" {
+		t.Errorf("discovery must carry the review's judgement: %+v", d)
+	}
+	if resp.Stats.DeepScan.Discovered != 1 {
+		t.Errorf("Discovered = %d, want 1", resp.Stats.DeepScan.Discovered)
+	}
+}
+
+// A discovery nobody reviewed is withheld, and the status says so: an
+// empty discoveries[] under partial is not a clean diff.
+func TestCheck_DeepReviewNotAdmittedWithholds(t *testing.T) {
+	adj := &fakeAdjudicator{review: func([]llm.Discovery) (llm.ReviewResult, error) {
+		return llm.ReviewResult{}, nil
+	}}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, true)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	ds := resp.Stats.DeepScan
+	if len(resp.Discoveries) != 0 || ds.Status != apitypes.DeepStatusPartial || ds.Reason != "review deferred" || ds.ReviewWithheld != 1 {
+		t.Errorf("want withheld under partial/review deferred, got discoveries=%d stats=%+v", len(resp.Discoveries), ds)
+	}
+}
+
+func TestCheck_DeepReviewUnansweredWithholds(t *testing.T) {
+	adj := &fakeAdjudicator{review: func(ds []llm.Discovery) (llm.ReviewResult, error) {
+		return llm.ReviewResult{Admitted: true, Withheld: len(ds)}, nil
+	}}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, true)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	ds := resp.Stats.DeepScan
+	if len(resp.Discoveries) != 0 || ds.Status != apitypes.DeepStatusPartial || ds.Reason != "review incomplete" || ds.ReviewWithheld != 1 {
+		t.Errorf("want withheld under partial/review incomplete, got discoveries=%d stats=%+v", len(resp.Discoveries), ds)
+	}
+}
+
+func TestCheck_DeepReviewFailureDoesNotFailRequest(t *testing.T) {
+	adj := &fakeAdjudicator{review: func([]llm.Discovery) (llm.ReviewResult, error) {
+		return llm.ReviewResult{Admitted: true}, errors.New("backend exploded")
+	}}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, true)
+	defer srv.Close()
+
+	res, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("a review failure must not fail the request, status %d", res.StatusCode)
+	}
+	ds := resp.Stats.DeepScan
+	if len(resp.Discoveries) != 0 || ds.Status != apitypes.DeepStatusFailed || !strings.HasPrefix(ds.Error, "review: ") {
+		t.Errorf("want failed with review error and no discoveries, got discoveries=%d stats=%+v", len(resp.Discoveries), ds)
+	}
+	if len(resp.Verdicts) != 1 {
+		t.Errorf("verdicts[] must stand alone, got %d", len(resp.Verdicts))
+	}
+}
+
+func TestCheck_DeepReviewOffSkipsReview(t *testing.T) {
+	adj := &fakeAdjudicator{}
+	srv := newDeepReviewTestServer(t, deepURLCandidate(), adj, false)
+	defer srv.Close()
+
+	_, resp := postDeepCheck(t, srv, apiDeepDiff, true)
+	if len(adj.reviewed) != 0 || len(resp.Discoveries) != 1 {
+		t.Errorf("review off must report grounded discoveries unreviewed: reviewed=%d discoveries=%d", len(adj.reviewed), len(resp.Discoveries))
 	}
 }

@@ -4,8 +4,59 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.9.0], 2026-10-18
+
+### Added
+
+- **Deep-scan review.** Every grounded deep discovery now goes through
+  the adjudicator, the same default-dismiss judgement detector findings
+  get, and only confirmed values are reported. The deep read proposes,
+  the adjudicator decides, so one recall-posture model call can no
+  longer raise an alert on its own. A discovery's `confidence` and
+  `reason` are now the review's. Controlled by `llm.deep_scan.review`,
+  **on by default**.
+
+  Review borrows an idle LLM slot like the deep read and never queues
+  behind adjudication. A value it cannot review (no free slot, or no
+  verdict from the model) is withheld and `stats.deep_scan.status`
+  becomes `partial` with reason `review deferred` or `review
+  incomplete`, so an empty `discoveries[]` is never read as clean. A
+  review error reports `status: failed` with an error starting
+  `review: `; the request still succeeds. New fields
+  `stats.deep_scan.review_dismissed` and `review_withheld`, and a new
+  counter `atalaia_deep_review_total{outcome}`. `discovered` and
+  `atalaia_deep_discoveries_total` now count what was returned, after
+  review.
+
+  Measured on the 194-fixture development set with the production
+  profile pair: no false alarm on any negative fixture, against two
+  without review. Replaying review five times on each of the 33 values
+  the deep read reported: both false alarms dismissed every time, real
+  credentials kept in 147 of 155 runs.
+
+### Changed
+
+- **`gemma4_source` adjudication decides a credential in a test by what
+  receives it.** A test that builds its own receiver (local test app,
+  in-memory fake, mock, settings override called through a framework
+  test client) is synthetic. A test that sends the value to an actual
+  service, including localhost, is a leak. The model had been
+  dismissing anything "hardcoded in a test". On the frozen holdout set
+  real credentials found rose from 126/144 to 132/144 with no false
+  alarm on any negative; the development set gained two fixtures and
+  lost none. The default `gemma4` profile is unchanged.
+
 ### Fixed
 
+- **Three production false-positive shapes are ruled out by fixed rules
+  instead of model judgement.** Keys naming where a secret lives
+  (`*_FILE_NAME`, `*_FILE`, `*_PATH`, `*_DIR`, `*_NAME`) no longer trip
+  the aggressive gitleaks rule; the adjudicator had confirmed such a
+  filename 4 times in 10. Grounding rejects formatting text (`\n`,
+  `\r`, `\t` escapes or HTML markup around display text) and shell
+  command substitutions (`$(...)`), and the source-literal catalogue no
+  longer offers either to the deep read. Three synthetic contrast
+  pairs cover them.
 - Distinguish encrypted credential storage from exposed credentials in both Gemma
   prompt stages, including the source-selection profiles. Keep encoded bearer
   tokens, plaintext credentials and exposed decryption secrets reportable.

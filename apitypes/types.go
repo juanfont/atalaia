@@ -70,11 +70,18 @@ type DeepScanStats struct {
 	Windows        int    `json:"windows"`
 	WindowsScanned int    `json:"windows_scanned"`
 	Candidates     int    `json:"candidates"`
-	Discovered     int    `json:"discovered"`
-	Ungrounded     int    `json:"ungrounded"`
-	Truncated      bool   `json:"truncated"`
-	LatencyMs      int64  `json:"latency_ms"`
-	Error          string `json:"error,omitempty"`
+	// Discovered counts discoveries returned in discoveries[].
+	Discovered int `json:"discovered"`
+	Ungrounded int `json:"ungrounded"`
+	// ReviewDismissed counts grounded candidates the review judged not
+	// to be credentials. ReviewWithheld counts grounded candidates not
+	// reported because review gave no verdict or found no free LLM
+	// slot; a nonzero value makes the status partial.
+	ReviewDismissed int    `json:"review_dismissed,omitempty"`
+	ReviewWithheld  int    `json:"review_withheld,omitempty"`
+	Truncated       bool   `json:"truncated"`
+	LatencyMs       int64  `json:"latency_ms"`
+	Error           string `json:"error,omitempty"`
 }
 
 // DeepScanStats.Status values.

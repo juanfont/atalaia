@@ -191,7 +191,6 @@ func ground(diff []byte, cands []DeepCandidate, taken []detector.DedupedFinding,
 			})
 			decision.Outcome = "discovered"
 			stats.Discovered++
-			metrics.DeepDiscoveriesTotal.Inc()
 		}()
 	}
 

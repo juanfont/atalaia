@@ -151,7 +151,13 @@ Credentials the LLM found in the diff that **no detector flagged**. Present only
 
 **Recall is good, not perfect.** Measured ~95% on a basic-auth password inside a URL that no gitleaks rule matches. The residual is non-determinism in the model server, not in atalaia: a logging proxy confirmed the request bytes are identical across runs, and on a miss the model returns an empty candidate list. That is a large improvement over a channel that could not report such a secret at all, but an empty `discoveries[]` is **not** proof that a diff is clean.
 
-**This is a lower-trust channel than `verdicts[]`.** Nothing corroborates a discovery but the model's judgement, checked against exactly one requirement: the value must appear verbatim in the diff you submitted. Atalaia searches the added lines for it and derives `file` and `line` itself; a candidate it cannot locate is discarded and counted in `stats.deep_scan.ungrounded`. So a fabricated secret and a fabricated line number are both impossible — but a real string the model *misjudged* as a credential is not. **Do not gate a merge on a discovery without review.**
+**This is a lower-trust channel than `verdicts[]`.** No detector corroborates a discovery. It passes three gates instead:
+
+1. **Proposal.** The deep read reads the added lines with a recall posture and proposes values.
+2. **Grounding.** The value must appear verbatim in the diff you submitted. Atalaia searches the added lines for it and derives `file` and `line` itself. A candidate it cannot locate is discarded and counted in `stats.deep_scan.ungrounded`. Fixed rules also drop references, placeholders, formatting text and shell command substitutions.
+3. **Review** (`llm.deep_scan.review`, on by default). Each grounded value goes through the same default-dismiss adjudication a detector finding gets. Only confirmed values are reported. A discovery's `confidence` and `reason` are the review's.
+
+A fabricated secret or line number cannot get through. A real string misjudged twice, once by the deep read and once by review, can. **Do not gate a merge on a discovery without a human look.**
 
 Field notes:
 
@@ -213,19 +219,20 @@ Per-request observability. Counts, not summaries.
 | `status` | Meaning | `discoveries[]` |
 |---|---|---|
 | `complete` | Every planned window was scanned. | Authoritative for this channel. |
-| `partial` | Some windows scanned, then the read stepped aside for queued adjudication work. `windows_scanned < windows`. | Valid for the scanned windows; the rest of the diff was not read. |
+| `partial` | Some windows scanned, then the read stepped aside for queued adjudication work (`windows_scanned < windows`). Or review could not judge every grounded value: `reason` is `review deferred` (no free LLM slot) or `review incomplete` (no verdict for some), and `review_withheld` counts them. | Valid for what was scanned and reviewed. Withheld values are not reported. |
 | `deferred` | Backend busy; no window scanned. | Absent. Re-request `deep` later, or accept the shallow result. |
 | `skipped` | A selection rule excluded this diff (`reason` names it: `require_findings`, `max_added_lines`, `sample_rate`). | Absent, by policy. |
 | `disabled` | The operator has `llm.deep_scan.enabled: false`. | Absent. |
-| `failed` | The deep read errored (`error` says why). The request still succeeded. | Absent; coverage unknown. Same contract as `detector_errors[]`. |
+| `failed` | The deep read or its review errored (`error` says why; a review error starts with `review: `). The request still succeeded. | Absent; coverage unknown. Same contract as `detector_errors[]`. |
 
 `ran` is kept for compatibility and is true for `complete` and `partial`.
 
 **For a watcher, the rule is:** `deferred`, `partial` and `skipped` are *not* incomplete scans. The detector-driven scan ran in full and its verdicts stand. Mark a scan incomplete only on a non-2xx, on `detector_errors[]`, or on `unreviewed > 0`. If you want deep coverage on a deferred push, re-request it when the backend is quieter; the shallow result does not need re-scanning.
 - `truncated: true` means coverage stopped at `llm.deep_scan.max_windows` with added lines left unscanned. Raise the cap or split the diff.
 - `windows` and `calls` are the added-line set split into scanning units, one LLM call each. Two things size them. `llm.deep_scan.window_tokens` (default 4000) caps one window, deliberately far below `llm.context_budget.input_tokens`: recall on a buried secret falls off as the window grows (measured 3/5 at ~20k tokens per window versus 5/5 at ~4k). And **a window holds at most one file**, because when one window carried two files the model would report a credential from the first and stop, never mentioning the second. Both trade extra calls for finding things; a call is roughly 200 ms.
-- `candidates` is what the model claimed; `discovered` is what survived grounding; `ungrounded` is what was discarded as not present in the diff. **`ungrounded ÷ candidates` is the model's hallucination rate for this request** — the number worth alerting on across requests (`atalaia_deep_ungrounded_total` / `atalaia_deep_candidates_total`).
-- **These three do not add up, by design.** `candidates − discovered − ungrounded` is the remainder dropped by the filters between locating a value and reporting it: known sentinel values, bare variable names that only ever occur inside a `$VAR` / `${VAR}` reference, the same secret found in two windows, and secrets a detector already reported (those belong to `verdicts[]`). A non-zero remainder is normal and healthy. It is not currently broken out per reason; ask if you want that as separate counters.
+- `candidates` is what the model claimed; `discovered` is what was returned in `discoveries[]`, after grounding and review; `ungrounded` is what was discarded as not present in the diff. **`ungrounded ÷ candidates` is the model's hallucination rate for this request** — the number worth alerting on across requests (`atalaia_deep_ungrounded_total` / `atalaia_deep_candidates_total`).
+- `review_dismissed` counts grounded values review judged not to be credentials; `review_withheld` counts grounded values not reported because review gave no verdict or found no free slot. Both are omitted when zero. Across requests, `atalaia_deep_review_total{outcome="dismissed"}` over the sum of all outcomes is the share of deep-read output that would have been a false alarm without review.
+- **These three do not add up, by design.** `candidates − discovered − ungrounded` is the remainder dropped by the filters between locating a value and reporting it: known sentinel values, bare variable names that only ever occur inside a `$VAR` / `${VAR}` reference, the same secret found in two windows, secrets a detector already reported (those belong to `verdicts[]`), and values review dismissed or withheld. A non-zero remainder is normal and healthy. It is not currently broken out per reason; ask if you want that as separate counters.
 
 ### A realistic worked example
 

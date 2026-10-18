@@ -66,7 +66,7 @@ Atalaia is the regex-then-LLM pattern packaged as a self-hostable service. The L
 
 One Go binary. The LLM is a sibling process (vLLM, llama.cpp, Ollama, anything OpenAI-compatible). Same host or private network.
 
-Detectors give recall, the LLM gives precision. The opt-in **deep read** covers the third case: a real credential no detector rule matches, sitting in a diff whose only flagged finding was a false positive. It reads the added lines cold and every value it reports is located in the diff first, so it cannot invent a secret or a line number. Those land in a separate `discoveries[]` channel that never gates a merge on its own. Off by default; see [docs/api.md](docs/api.md).
+Detectors give recall, the LLM gives precision. The opt-in **deep read** covers the third case: a real credential no detector rule matches, sitting in a diff whose only flagged finding was a false positive. It reads the added lines cold and proposes values. Each one is located in the diff, so it cannot invent a secret or a line number, and then goes through the same default-dismiss adjudication as a detector finding. Only confirmed values are reported. Those land in a separate `discoveries[]` channel that never gates a merge on its own. Off by default; see [docs/api.md](docs/api.md).
 
 ## Quickstart
 

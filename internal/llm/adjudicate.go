@@ -110,6 +110,18 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 	}
 	defer a.sem.Release()
 
+	res, err := a.adjudicateHeld(ctx, diff, llmBound)
+	if err != nil {
+		return AdjudicateResult{}, err
+	}
+	res.Verdicts = append(verdicts, res.Verdicts...)
+	return AdjudicateResult{Result: res, Truncated: truncated}, nil
+}
+
+// adjudicateHeld runs the LLM stage for findings that need the model.
+// The caller holds a semaphore slot. Every finding comes back with a
+// verdict, gap-filled as unreviewed when the model skipped it.
+func (a *Adjudicator) adjudicateHeld(ctx context.Context, diff []byte, llmBound []detector.DedupedFinding) (Result, error) {
 	cb := a.cfg.ContextBudget
 	maxPerCall := a.cfg.MaxFindingsPerCall
 	// Single whole-diff call only when the diff fits the input budget AND
@@ -152,7 +164,7 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 
 		system, user, err := a.prompt.Render(batch)
 		if err != nil {
-			return AdjudicateResult{}, fmt.Errorf("render batch %d/%d: %w", i+1, len(batches), err)
+			return Result{}, fmt.Errorf("render batch %d/%d: %w", i+1, len(batches), err)
 		}
 
 		req := ChatRequest{
@@ -188,21 +200,17 @@ func (a *Adjudicator) Adjudicate(ctx context.Context, diff []byte, deduped []det
 		totalLatency += time.Since(start)
 		totalCalls += calls
 		if err != nil {
-			return AdjudicateResult{}, fmt.Errorf("llm batch %d/%d: %w", i+1, len(batches), err)
+			return Result{}, fmt.Errorf("llm batch %d/%d: %w", i+1, len(batches), err)
 		}
 
 		llmVerdicts = append(llmVerdicts, parsed...)
 	}
 
-	verdicts = append(verdicts, mergeAndFill(llmBound, llmVerdicts)...)
-	return AdjudicateResult{
-		Result: Result{
-			Verdicts:   verdicts,
-			LLMInvoked: true,
-			LLMCalls:   totalCalls,
-			LLMLatency: totalLatency,
-		},
-		Truncated: truncated,
+	return Result{
+		Verdicts:   mergeAndFill(llmBound, llmVerdicts),
+		LLMInvoked: true,
+		LLMCalls:   totalCalls,
+		LLMLatency: totalLatency,
 	}, nil
 }
 

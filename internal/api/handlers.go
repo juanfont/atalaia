@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -124,11 +125,15 @@ func (a *App) Check(w http.ResponseWriter, r *http.Request) {
 			deepStats.Ran = res.Status == llm.DeepComplete || res.Status == llm.DeepPartial
 			if deepStats.Ran {
 				grounded, gstats := llm.Ground(diff, res.Candidates, deduped)
+				deepStats.Candidates = gstats.Candidates
+				deepStats.Ungrounded = gstats.Ungrounded
+				if a.config.LLM.DeepScan.Review {
+					grounded = a.reviewDiscoveries(r.Context(), reqID, diff, grounded, deepStats)
+				}
 				deepRaw = grounded
 				discoveries = convertDiscoveries(grounded)
-				deepStats.Candidates = gstats.Candidates
-				deepStats.Discovered = gstats.Discovered
-				deepStats.Ungrounded = gstats.Ungrounded
+				deepStats.Discovered = len(discoveries)
+				metrics.DeepDiscoveriesTotal.Add(float64(len(discoveries)))
 			}
 		}
 		metrics.DeepScanTotal.WithLabelValues(deepStats.Status).Inc()
@@ -526,4 +531,42 @@ func sanitizeRequestID(raw string) (string, bool) {
 		}
 	}
 	return id, true
+}
+
+// reviewDiscoveries hands grounded deep discoveries to the adjudicator
+// and returns the ones it confirmed. The deep read proposes with a
+// recall posture; review is the default-dismiss judgement detector
+// findings already get. Anything not confirmed is not reported: a
+// dismissal is dropped, and a discovery that could not be reviewed is
+// withheld with the status downgraded to partial, so an empty
+// discoveries[] is never mistaken for a clean diff.
+func (a *App) reviewDiscoveries(ctx context.Context, reqID string, diff []byte, grounded []llm.Discovery, ds *apitypes.DeepScanStats) []llm.Discovery {
+	if len(grounded) == 0 {
+		return grounded
+	}
+	rv, err := a.adjudicator.Review(ctx, diff, grounded, a.config.LLM.DeepScan.AdmissionWait)
+	ds.Calls += rv.Calls
+	ds.LatencyMs += rv.Latency.Milliseconds()
+	switch {
+	case err != nil:
+		ds.Status = apitypes.DeepStatusFailed
+		ds.Error = "review: " + err.Error()
+		ds.ReviewWithheld = len(grounded)
+		a.logger.Warn().Str("request_id", reqID).Err(err).Msg("deep review failed")
+	case !rv.Admitted:
+		ds.Status = apitypes.DeepStatusPartial
+		ds.Reason = "review deferred"
+		ds.ReviewWithheld = len(grounded)
+	default:
+		ds.ReviewDismissed = rv.Dismissed
+		ds.ReviewWithheld = rv.Withheld
+		if rv.Withheld > 0 {
+			ds.Status = apitypes.DeepStatusPartial
+			ds.Reason = "review incomplete"
+		}
+	}
+	metrics.DeepReviewTotal.WithLabelValues("confirmed").Add(float64(len(rv.Kept)))
+	metrics.DeepReviewTotal.WithLabelValues("dismissed").Add(float64(ds.ReviewDismissed))
+	metrics.DeepReviewTotal.WithLabelValues("withheld").Add(float64(ds.ReviewWithheld))
+	return rv.Kept
 }

@@ -117,7 +117,11 @@ container image. Enabling/disabling is a config flag, not a reinstall.
   acquisition sharing the Adjudicator's gate. The model returns values
   verbatim; `Ground` locates each with `detector.LocateInDiff` and
   discards what it cannot find, so hallucinated secrets and line
-  numbers are both inexpressible. A deep failure never fails the
+  numbers are both inexpressible. With `llm.deep_scan.review` (default
+  on), each grounded value then goes through `Adjudicator.Review`
+  (`internal/llm/review.go`): the default-dismiss adjudication prompt
+  decides, and only confirmed values are reported. The deep read
+  proposes, the adjudicator decides. A deep failure never fails the
   request: it reports in `stats.deep_scan.error` and `verdicts[]`
   stands alone.
 
@@ -215,7 +219,7 @@ Loaded via Viper, wired through Cobra.
   scan (`llm.deep_scan`, off by default) lets the LLM read a diff cold
   and report credentials no detector flagged. Those land in
   `discoveries[]`, never in `verdicts[]`, and every one is grounded
-  against the diff before it is reported. The load-bearing channel is
+  against the diff and confirmed by adjudication before it is reported. The load-bearing channel is
   still detector-driven. See
   [the design doc](docs/superpowers/specs/2026-08-05-deep-scan-design.md).
 - **Statelessness is a design goal**, not an accident. Don't introduce

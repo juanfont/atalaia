@@ -158,6 +158,12 @@ type DeepScanConfig struct {
 	SourceLiterals bool
 
 	Enabled bool
+	// Review sends every grounded discovery through the adjudicator,
+	// the same default-dismiss judgement detector findings get, and
+	// keeps only the confirmed ones. The deep read proposes, the
+	// adjudicator decides: one recall-posture call can no longer raise
+	// an alert on its own.
+	Review bool
 	// WindowTokens is the token budget for ONE window of added lines.
 	// Deliberately smaller than llm.context_budget.input_tokens: the
 	// adjudication prompt judges a candidate handed to it, while the
@@ -306,6 +312,7 @@ func setDefaults() {
 	viper.SetDefault("llm.context_budget.finding_context_lines", 30)
 	viper.SetDefault("llm.use_tools", true)
 	viper.SetDefault("llm.deep_scan.enabled", false)
+	viper.SetDefault("llm.deep_scan.review", true)
 	viper.SetDefault("llm.deep_scan.window_tokens", 4000)
 	viper.SetDefault("llm.deep_scan.max_windows", 48)
 	viper.SetDefault("llm.deep_scan.max_candidates", 50)
@@ -416,6 +423,7 @@ func readLLMConfig() LLMConfig {
 		DeepScan: DeepScanConfig{
 			SourceLiterals:  viper.GetBool("llm.deep_scan.source_literals"),
 			Enabled:         viper.GetBool("llm.deep_scan.enabled"),
+			Review:          viper.GetBool("llm.deep_scan.review"),
 			WindowTokens:    viper.GetInt("llm.deep_scan.window_tokens"),
 			MaxWindows:      viper.GetInt("llm.deep_scan.max_windows"),
 			MaxCandidates:   viper.GetInt("llm.deep_scan.max_candidates"),
